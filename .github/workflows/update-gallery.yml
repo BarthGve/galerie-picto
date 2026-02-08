@@ -1,0 +1,64 @@
+name: Update Pictograms Gallery
+
+on:
+  # Exécution automatique 2 fois par jour (8h et 20h heure de Paris)
+  schedule:
+    - cron: '0 7,19 * * *'  # 7h et 19h UTC = 8h et 20h Paris
+
+  # Déclenchement manuel via l'interface GitHub
+  workflow_dispatch:
+
+  # Déclenchement sur push (pour tester)
+  push:
+    branches: [main]
+
+jobs:
+  update-and-deploy:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: galerie-app
+
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 📦 Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: 'galerie-app/pnpm-lock.yaml'
+
+      - name: 📚 Install dependencies
+        run: pnpm install
+
+      - name: 🎨 Fetch pictograms from Minio
+        run: node scripts/fetch-pictograms.js
+        env:
+          MINIO_ENDPOINT: ${{ secrets.MINIO_ENDPOINT }}
+          MINIO_ACCESS_KEY: ${{ secrets.MINIO_ACCESS_KEY }}
+          MINIO_SECRET_KEY: ${{ secrets.MINIO_SECRET_KEY }}
+          MINIO_BUCKET: ${{ secrets.MINIO_BUCKET }}
+          MINIO_PREFIX: ${{ secrets.MINIO_PREFIX }}
+
+      - name: 🏗️ Build Vite app
+        run: pnpm build
+
+      - name: 🚀 Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          cname: false
