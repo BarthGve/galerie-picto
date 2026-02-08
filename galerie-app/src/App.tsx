@@ -3,10 +3,26 @@ import { Palette } from "lucide-react";
 import { usePictograms } from "@/hooks/usePictograms";
 import { PictoGrid } from "@/components/PictoGrid";
 import { SearchBar } from "@/components/SearchBar";
+import { LoginButton } from "@/components/LoginButton";
+import { UploadDialog } from "@/components/UploadDialog";
+import { toast } from "sonner";
 
 function App() {
   const { pictograms, loading, error, lastUpdated } = usePictograms();
   const [searchQuery, setSearchQuery] = useState("");
+
+  const handleUploadSuccess = () => {
+    // Attendre que le workflow GitHub se termine (environ 30-60s)
+    toast.info("Mise à jour de la galerie en cours...", {
+      description: "La page va se recharger automatiquement",
+      duration: 30000,
+    });
+
+    // Recharger après 30 secondes
+    setTimeout(() => {
+      window.location.reload();
+    }, 30000);
+  };
 
   const filteredPictograms = useMemo(() => {
     if (!searchQuery) return pictograms;
@@ -49,9 +65,15 @@ function App() {
       {/* Header */}
       <header className="border-b">
         <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center gap-3 mb-2">
-            <Palette className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-bold">Galerie Pictogrammes</h1>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-3">
+              <Palette className="h-8 w-8 text-primary" />
+              <h1 className="text-3xl font-bold">Galerie Pictogrammes</h1>
+            </div>
+            <div className="flex items-center gap-2">
+              <UploadDialog onUploadSuccess={handleUploadSuccess} />
+              <LoginButton />
+            </div>
           </div>
           {lastUpdated && (
             <p className="text-sm text-muted-foreground">
