@@ -7,6 +7,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Separator } from "@/components/ui/separator";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import type { GitHubUser } from "@/lib/github-auth";
 
 interface NavbarProps {
@@ -26,12 +28,19 @@ export function Navbar({
 }: NavbarProps) {
   return (
     <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
-      <div className="container mx-auto px-4 h-14 flex items-center justify-between">
+      <div className="h-14 px-4 flex items-center gap-2">
+        {/* Sidebar trigger + separator */}
+        <SidebarTrigger />
+        <Separator orientation="vertical" className="h-6" />
+
         {/* Logo */}
         <div className="flex items-center gap-2">
           <Palette className="h-6 w-6 text-primary" />
           <span className="text-lg font-semibold">Galerie Pictogrammes</span>
         </div>
+
+        {/* Spacer */}
+        <div className="flex-1" />
 
         {/* Right side */}
         <div className="flex items-center gap-2">

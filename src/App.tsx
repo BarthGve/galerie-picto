@@ -4,9 +4,11 @@ import { useGalleries } from "@/hooks/useGalleries";
 import { PictoGrid } from "@/components/PictoGrid";
 import { SearchBar } from "@/components/SearchBar";
 import { Navbar } from "@/components/Navbar";
-import { Sidebar } from "@/components/Sidebar";
+import { AppSidebar } from "@/components/Sidebar";
 import { GalleryDialog } from "@/components/GalleryDialog";
 import { UploadDialog } from "@/components/UploadDialog";
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import {
   initiateGitHubLogin,
@@ -144,17 +146,9 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <Navbar
-        user={user}
-        isAuthenticated={!!user}
-        onLogin={initiateGitHubLogin}
-        onLogout={logout}
-        onUploadClick={() => setUploadDialogOpen(true)}
-      />
-
-      <div className="flex flex-1">
-        <Sidebar
+    <TooltipProvider>
+      <SidebarProvider>
+        <AppSidebar
           galleries={galleries}
           selectedGalleryId={selectedGalleryId}
           onSelectGallery={setSelectedGalleryId}
@@ -163,45 +157,58 @@ function App() {
           onCreateGallery={handleCreateGallery}
         />
 
-        <main className="flex-1 container mx-auto px-4 py-8">
-          {lastUpdated && (
-            <p className="text-sm text-muted-foreground mb-4">
-              Derniere mise a jour :{" "}
-              {new Date(lastUpdated).toLocaleString("fr-FR")}
-            </p>
-          )}
-
-          <SearchBar
-            onSearch={setSearchQuery}
-            totalCount={pictograms.length}
-            filteredCount={filteredPictograms.length}
+        <SidebarInset>
+          <Navbar
+            user={user}
+            isAuthenticated={!!user}
+            onLogin={initiateGitHubLogin}
+            onLogout={logout}
+            onUploadClick={() => setUploadDialogOpen(true)}
           />
 
-          <PictoGrid pictograms={filteredPictograms} />
-        </main>
-      </div>
+          <div className="flex-1 px-6 py-6">
+            {lastUpdated && (
+              <p className="text-sm text-muted-foreground mb-4">
+                Derniere mise a jour :{" "}
+                {new Date(lastUpdated).toLocaleString("fr-FR")}
+              </p>
+            )}
 
-      <UploadDialog
-        onUploadSuccess={handleUploadSuccess}
-        open={uploadDialogOpen}
-        onOpenChange={setUploadDialogOpen}
-      />
+            <div className="mb-6">
+              <SearchBar
+                onSearch={setSearchQuery}
+                totalCount={pictograms.length}
+                filteredCount={filteredPictograms.length}
+              />
+            </div>
 
-      <GalleryDialog
-        open={galleryDialogOpen}
-        onOpenChange={setGalleryDialogOpen}
-        gallery={editingGallery}
-        onSave={handleSaveGallery}
-      />
+            <PictoGrid pictograms={filteredPictograms} />
+          </div>
 
-      <footer className="border-t mt-16">
-        <div className="container mx-auto px-4 py-6 text-center text-sm text-muted-foreground">
-          <p>
-            Galerie de pictogrammes - {pictograms.length} elements disponibles
-          </p>
-        </div>
-      </footer>
-    </div>
+          <footer className="border-t">
+            <div className="px-6 py-6 text-center text-sm text-muted-foreground">
+              <p>
+                Galerie de pictogrammes - {pictograms.length} elements
+                disponibles
+              </p>
+            </div>
+          </footer>
+        </SidebarInset>
+
+        <UploadDialog
+          onUploadSuccess={handleUploadSuccess}
+          open={uploadDialogOpen}
+          onOpenChange={setUploadDialogOpen}
+        />
+
+        <GalleryDialog
+          open={galleryDialogOpen}
+          onOpenChange={setGalleryDialogOpen}
+          gallery={editingGallery}
+          onSave={handleSaveGallery}
+        />
+      </SidebarProvider>
+    </TooltipProvider>
   );
 }
 

@@ -22,8 +22,8 @@ export function SearchBar({
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto mb-8">
-      <div className="relative">
+    <div className="flex items-center gap-4 w-full">
+      <div className="relative flex-1">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           type="text"
@@ -33,9 +33,9 @@ export function SearchBar({
           className="pl-10"
         />
       </div>
-      <p className="text-sm text-muted-foreground mt-2 text-center">
-        {filteredCount} / {totalCount} pictogrammes
-        {query && filteredCount === 0 && " - Aucun résultat"}
+      <p className="text-sm text-muted-foreground whitespace-nowrap">
+        {filteredCount} / {totalCount}
+        {query && filteredCount === 0 && " - Aucun resultat"}
       </p>
     </div>
   );

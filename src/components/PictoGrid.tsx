@@ -17,7 +17,7 @@ export function PictoGrid({ pictograms }: PictoGridProps) {
   }
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+    <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-4">
       {pictograms.map((pictogram) => (
         <PictoCard key={pictogram.id} pictogram={pictogram} />
       ))}
