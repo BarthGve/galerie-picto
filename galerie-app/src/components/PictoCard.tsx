@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { Download, Copy, Check } from "lucide-react";
+import { Copy, Check } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { Pictogram } from "@/lib/types";
-import { downloadSvg, downloadSvgAsPng, copySvgCode } from "@/lib/svg-to-png";
+import { copySvgCode } from "@/lib/svg-to-png";
 import { PictoModal } from "./PictoModal";
 
 interface PictoCardProps {

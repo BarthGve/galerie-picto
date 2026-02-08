@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Download, Copy, Check, X } from "lucide-react";
+import { Download, Copy, Check } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -7,8 +7,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Select } from "@/components/ui/select";
 import type { Pictogram } from "@/lib/types";
 import { downloadSvg, downloadSvgAsPng, copySvgCode } from "@/lib/svg-to-png";
 
