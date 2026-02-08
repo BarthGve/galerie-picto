@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import type { Pictogram } from "@/lib/types";
 import { copySvgCode } from "@/lib/svg-to-png";
 import { PictoModal } from "./PictoModal";
+import { toast } from "sonner";
 
 interface PictoCardProps {
   pictogram: Pictogram;
@@ -20,8 +21,10 @@ export function PictoCard({ pictogram }: PictoCardProps) {
     try {
       await copySvgCode(pictogram.url);
       setCopied(true);
+      toast.success("Code SVG copie");
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
+      toast.error("Impossible de copier le code SVG");
       console.error("Failed to copy SVG code:", error);
     }
   };

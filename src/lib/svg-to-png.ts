@@ -1,3 +1,18 @@
+import { API_URL } from "@/lib/config";
+
+/**
+ * Fetch le contenu SVG en passant par le proxy backend
+ * pour contourner le double header CORS du CDN
+ */
+async function fetchSvgText(svgUrl: string): Promise<string> {
+  const proxyUrl = `${API_URL}/api/proxy/svg?url=${encodeURIComponent(svgUrl)}`;
+  const response = await fetch(proxyUrl);
+  if (!response.ok) {
+    throw new Error(`Fetch failed: ${response.status}`);
+  }
+  return response.text();
+}
+
 /**
  * Convertit un SVG en PNG et déclenche le téléchargement
  */
@@ -7,9 +22,8 @@ export async function downloadSvgAsPng(
   size: number = 512,
 ): Promise<void> {
   try {
-    // Fetch le SVG
-    const response = await fetch(svgUrl);
-    const svgText = await response.text();
+    // Fetch le SVG via proxy
+    const svgText = await fetchSvgText(svgUrl);
 
     // Créer un blob SVG
     const svgBlob = new Blob([svgText], {
@@ -72,8 +86,7 @@ export async function downloadSvg(
   filename: string,
 ): Promise<void> {
   try {
-    const response = await fetch(svgUrl);
-    const svgText = await response.text();
+    const svgText = await fetchSvgText(svgUrl);
 
     const blob = new Blob([svgText], { type: "image/svg+xml;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -93,15 +106,43 @@ export async function downloadSvg(
 }
 
 /**
+ * Copie du texte dans le clipboard via un textarea caché (fallback universel)
+ */
+function fallbackCopy(text: string): boolean {
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.style.position = "fixed";
+  textarea.style.left = "-9999px";
+  document.body.appendChild(textarea);
+  textarea.select();
+  let success = false;
+  try {
+    success = document.execCommand("copy");
+  } catch {
+    success = false;
+  }
+  document.body.removeChild(textarea);
+  return success;
+}
+
+/**
  * Copie le code SVG dans le clipboard
  */
 export async function copySvgCode(svgUrl: string): Promise<void> {
-  try {
-    const response = await fetch(svgUrl);
-    const svgText = await response.text();
-    await navigator.clipboard.writeText(svgText);
-  } catch (error) {
-    console.error("Error copying SVG code:", error);
-    throw error;
+  const svgText = await fetchSvgText(svgUrl);
+
+  // Essayer l'API Clipboard moderne
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(svgText);
+      return;
+    } catch {
+      // Le navigateur a bloqué - fallback ci-dessous
+    }
+  }
+
+  // Fallback execCommand
+  if (!fallbackCopy(svgText)) {
+    throw new Error("Impossible de copier dans le presse-papier");
   }
 }
