@@ -4,7 +4,7 @@ import { API_URL } from "@/lib/config";
  * Fetch le contenu SVG en passant par le proxy backend
  * pour contourner le double header CORS du CDN
  */
-async function fetchSvgText(svgUrl: string): Promise<string> {
+export async function fetchSvgText(svgUrl: string): Promise<string> {
   const proxyUrl = `${API_URL}/api/proxy/svg?url=${encodeURIComponent(svgUrl)}`;
   const response = await fetch(proxyUrl);
   if (!response.ok) {
@@ -126,23 +126,9 @@ function fallbackCopy(text: string): boolean {
 }
 
 /**
- * Copie le code SVG dans le clipboard
+ * Copie du texte dans le clipboard (synchrone, doit etre appele dans un user gesture)
  */
-export async function copySvgCode(svgUrl: string): Promise<void> {
-  const svgText = await fetchSvgText(svgUrl);
-
-  // Essayer l'API Clipboard moderne
-  if (navigator.clipboard?.writeText) {
-    try {
-      await navigator.clipboard.writeText(svgText);
-      return;
-    } catch {
-      // Le navigateur a bloqué - fallback ci-dessous
-    }
-  }
-
-  // Fallback execCommand
-  if (!fallbackCopy(svgText)) {
-    throw new Error("Impossible de copier dans le presse-papier");
-  }
+export function copyTextToClipboard(text: string): boolean {
+  // Fallback execCommand (synchrone, fonctionne dans le user gesture)
+  return fallbackCopy(text);
 }

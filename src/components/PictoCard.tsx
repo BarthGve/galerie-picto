@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Copy, Check } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { Pictogram } from "@/lib/types";
-import { copySvgCode } from "@/lib/svg-to-png";
+import { fetchSvgText, copyTextToClipboard } from "@/lib/svg-to-png";
 import { PictoModal } from "./PictoModal";
 import { toast } from "sonner";
 
@@ -15,17 +15,29 @@ interface PictoCardProps {
 export function PictoCard({ pictogram }: PictoCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const svgCacheRef = useRef<string | null>(null);
 
-  const handleCopy = async (e: React.MouseEvent) => {
+  const prefetchSvg = () => {
+    if (!svgCacheRef.current) {
+      fetchSvgText(pictogram.url).then((text) => {
+        svgCacheRef.current = text;
+      });
+    }
+  };
+
+  const handleCopy = (e: React.MouseEvent) => {
     e.stopPropagation();
-    try {
-      await copySvgCode(pictogram.url);
+    if (!svgCacheRef.current) {
+      toast.error("SVG en cours de chargement, reessayez");
+      return;
+    }
+    const success = copyTextToClipboard(svgCacheRef.current);
+    if (success) {
       setCopied(true);
       toast.success("Code SVG copie");
       setTimeout(() => setCopied(false), 2000);
-    } catch (error) {
+    } else {
       toast.error("Impossible de copier le code SVG");
-      console.error("Failed to copy SVG code:", error);
     }
   };
 
@@ -40,6 +52,7 @@ export function PictoCard({ pictogram }: PictoCardProps) {
       <Card
         className="group relative overflow-hidden transition-all hover:shadow-lg cursor-pointer"
         onClick={() => setIsModalOpen(true)}
+        onMouseEnter={prefetchSvg}
       >
         <div className="aspect-square p-6 flex items-center justify-center bg-muted/30">
           <img

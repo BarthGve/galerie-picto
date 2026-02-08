@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Download, Copy, Check } from "lucide-react";
 import {
   Dialog,
@@ -8,7 +8,13 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import type { Pictogram } from "@/lib/types";
-import { downloadSvg, downloadSvgAsPng, copySvgCode } from "@/lib/svg-to-png";
+import {
+  downloadSvg,
+  downloadSvgAsPng,
+  fetchSvgText,
+  copyTextToClipboard,
+} from "@/lib/svg-to-png";
+import { toast } from "sonner";
 
 interface PictoModalProps {
   pictogram: Pictogram;
@@ -19,14 +25,29 @@ interface PictoModalProps {
 export function PictoModal({ pictogram, isOpen, onClose }: PictoModalProps) {
   const [copied, setCopied] = useState(false);
   const [pngSize, setPngSize] = useState(512);
+  const svgCacheRef = useRef<string | null>(null);
 
-  const handleCopy = async () => {
-    try {
-      await copySvgCode(pictogram.url);
+  useEffect(() => {
+    if (isOpen) {
+      svgCacheRef.current = null;
+      fetchSvgText(pictogram.url).then((text) => {
+        svgCacheRef.current = text;
+      });
+    }
+  }, [isOpen, pictogram.url]);
+
+  const handleCopy = () => {
+    if (!svgCacheRef.current) {
+      toast.error("SVG en cours de chargement, reessayez");
+      return;
+    }
+    const success = copyTextToClipboard(svgCacheRef.current);
+    if (success) {
       setCopied(true);
+      toast.success("Code SVG copie");
       setTimeout(() => setCopied(false), 2000);
-    } catch (error) {
-      console.error("Failed to copy SVG code:", error);
+    } else {
+      toast.error("Impossible de copier le code SVG");
     }
   };
 
