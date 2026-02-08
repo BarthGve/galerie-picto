@@ -1,3 +1,5 @@
+import { API_URL } from "@/lib/config";
+
 const GITHUB_CLIENT_ID = import.meta.env.VITE_GITHUB_CLIENT_ID;
 const REDIRECT_URI = `${window.location.origin}${import.meta.env.BASE_URL}`;
 
@@ -39,7 +41,7 @@ export async function handleGitHubCallback(): Promise<string | null> {
 
   try {
     // Échanger le code contre un token via notre API
-    const response = await fetch("/api/auth/github", {
+    const response = await fetch(`${API_URL}/api/auth/github`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ code, redirect_uri: REDIRECT_URI }),
@@ -96,7 +98,7 @@ export async function getGitHubUser(token: string): Promise<GitHubUser | null> {
  */
 export async function verifyUploadPermission(token: string): Promise<boolean> {
   try {
-    const response = await fetch("/api/auth/verify", {
+    const response = await fetch(`${API_URL}/api/auth/verify`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },

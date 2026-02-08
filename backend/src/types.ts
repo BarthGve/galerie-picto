@@ -1,5 +1,3 @@
-// Types pour la galerie de pictogrammes
-
 export interface Pictogram {
   id: string;
   name: string;
@@ -32,9 +30,4 @@ export interface Gallery {
 export interface GalleriesFile {
   galleries: Gallery[];
   lastUpdated: string;
-}
-
-export interface DownloadOptions {
-  format: "svg" | "png";
-  size?: number; // Pour PNG uniquement
 }

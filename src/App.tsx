@@ -1,42 +1,125 @@
-import { useMemo, useState } from "react";
-import { Palette } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { usePictograms } from "@/hooks/usePictograms";
+import { useGalleries } from "@/hooks/useGalleries";
 import { PictoGrid } from "@/components/PictoGrid";
 import { SearchBar } from "@/components/SearchBar";
-import { LoginButton } from "@/components/LoginButton";
+import { Navbar } from "@/components/Navbar";
+import { Sidebar } from "@/components/Sidebar";
+import { GalleryDialog } from "@/components/GalleryDialog";
 import { UploadDialog } from "@/components/UploadDialog";
 import { toast } from "sonner";
+import {
+  initiateGitHubLogin,
+  handleGitHubCallback,
+  getGitHubUser,
+  logout,
+  getStoredToken,
+  type GitHubUser,
+} from "@/lib/github-auth";
 
 function App() {
   const { pictograms, loading, error, lastUpdated } = usePictograms();
+  const {
+    galleries,
+    loading: galleriesLoading,
+    createGallery,
+    updateGallery,
+  } = useGalleries();
   const [searchQuery, setSearchQuery] = useState("");
+  const [user, setUser] = useState<GitHubUser | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [selectedGalleryId, setSelectedGalleryId] = useState<string | null>(
+    null,
+  );
+  const [galleryDialogOpen, setGalleryDialogOpen] = useState(false);
+  const [editingGallery, setEditingGallery] = useState<
+    (typeof galleries)[number] | null
+  >(null);
+
+  useEffect(() => {
+    async function initAuth() {
+      const params = new URLSearchParams(window.location.search);
+      if (params.has("code")) {
+        const token = await handleGitHubCallback();
+        if (token) {
+          const userInfo = await getGitHubUser(token);
+          setUser(userInfo);
+        }
+      } else {
+        const token = getStoredToken();
+        if (token) {
+          const userInfo = await getGitHubUser(token);
+          setUser(userInfo);
+        }
+      }
+      setAuthLoading(false);
+    }
+
+    initAuth();
+  }, []);
 
   const handleUploadSuccess = () => {
-    // Attendre que le workflow GitHub se termine (environ 30-60s)
-    toast.info("Mise à jour de la galerie en cours...", {
+    setUploadDialogOpen(false);
+    toast.info("Mise a jour de la galerie en cours...", {
       description: "La page va se recharger automatiquement",
       duration: 30000,
     });
 
-    // Recharger après 30 secondes
     setTimeout(() => {
       window.location.reload();
     }, 30000);
   };
 
+  const handleCreateGallery = () => {
+    setEditingGallery(null);
+    setGalleryDialogOpen(true);
+  };
+
+  const handleSaveGallery = async (data: {
+    name: string;
+    description?: string;
+    color?: string;
+  }) => {
+    if (editingGallery) {
+      await updateGallery(editingGallery.id, data);
+    } else {
+      await createGallery(data);
+    }
+  };
+
   const filteredPictograms = useMemo(() => {
-    if (!searchQuery) return pictograms;
+    let result = pictograms;
 
-    const query = searchQuery.toLowerCase();
-    return pictograms.filter(
-      (picto) =>
-        picto.name.toLowerCase().includes(query) ||
-        picto.id.toLowerCase().includes(query) ||
-        picto.filename.toLowerCase().includes(query),
-    );
-  }, [pictograms, searchQuery]);
+    // Filter by selected gallery
+    if (selectedGalleryId) {
+      const gallery = galleries.find((g) => g.id === selectedGalleryId);
+      if (gallery) {
+        const pictoIdsInGallery = new Set(gallery.pictogramIds);
+        result = result.filter(
+          (picto) =>
+            pictoIdsInGallery.has(picto.id) ||
+            picto.galleryIds?.includes(selectedGalleryId),
+        );
+      }
+    }
 
-  if (loading) {
+    // Filter by search query (also searches in tags)
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(
+        (picto) =>
+          picto.name.toLowerCase().includes(query) ||
+          picto.id.toLowerCase().includes(query) ||
+          picto.filename.toLowerCase().includes(query) ||
+          picto.tags?.some((tag) => tag.toLowerCase().includes(query)),
+      );
+    }
+
+    return result;
+  }, [pictograms, searchQuery, selectedGalleryId, galleries]);
+
+  if (loading || authLoading || galleriesLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -61,45 +144,60 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-3">
-              <Palette className="h-8 w-8 text-primary" />
-              <h1 className="text-3xl font-bold">Galerie Pictogrammes</h1>
-            </div>
-            <div className="flex items-center gap-2">
-              <UploadDialog onUploadSuccess={handleUploadSuccess} />
-              <LoginButton />
-            </div>
-          </div>
+    <div className="min-h-screen bg-background flex flex-col">
+      <Navbar
+        user={user}
+        isAuthenticated={!!user}
+        onLogin={initiateGitHubLogin}
+        onLogout={logout}
+        onUploadClick={() => setUploadDialogOpen(true)}
+      />
+
+      <div className="flex flex-1">
+        <Sidebar
+          galleries={galleries}
+          selectedGalleryId={selectedGalleryId}
+          onSelectGallery={setSelectedGalleryId}
+          totalPictogramCount={pictograms.length}
+          isAuthenticated={!!user}
+          onCreateGallery={handleCreateGallery}
+        />
+
+        <main className="flex-1 container mx-auto px-4 py-8">
           {lastUpdated && (
-            <p className="text-sm text-muted-foreground">
-              Dernière mise à jour :{" "}
+            <p className="text-sm text-muted-foreground mb-4">
+              Derniere mise a jour :{" "}
               {new Date(lastUpdated).toLocaleString("fr-FR")}
             </p>
           )}
-        </div>
-      </header>
 
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
-        <SearchBar
-          onSearch={setSearchQuery}
-          totalCount={pictograms.length}
-          filteredCount={filteredPictograms.length}
-        />
+          <SearchBar
+            onSearch={setSearchQuery}
+            totalCount={pictograms.length}
+            filteredCount={filteredPictograms.length}
+          />
 
-        <PictoGrid pictograms={filteredPictograms} />
-      </main>
+          <PictoGrid pictograms={filteredPictograms} />
+        </main>
+      </div>
 
-      {/* Footer */}
+      <UploadDialog
+        onUploadSuccess={handleUploadSuccess}
+        open={uploadDialogOpen}
+        onOpenChange={setUploadDialogOpen}
+      />
+
+      <GalleryDialog
+        open={galleryDialogOpen}
+        onOpenChange={setGalleryDialogOpen}
+        gallery={editingGallery}
+        onSave={handleSaveGallery}
+      />
+
       <footer className="border-t mt-16">
         <div className="container mx-auto px-4 py-6 text-center text-sm text-muted-foreground">
           <p>
-            Galerie de pictogrammes - {pictograms.length} éléments disponibles
+            Galerie de pictogrammes - {pictograms.length} elements disponibles
           </p>
         </div>
       </footer>

@@ -1,10 +1,13 @@
 import type { SvgMetadata } from "./svg-metadata";
 import { enrichSvgWithMetadata } from "./svg-metadata";
+import { API_URL } from "./config";
 
 export interface UploadOptions {
   file: File;
   metadata: SvgMetadata;
   token: string;
+  tags?: string[];
+  galleryIds?: string[];
   onProgress?: (progress: number) => void;
 }
 
@@ -14,7 +17,14 @@ export interface UploadOptions {
 export async function uploadPictogram(
   options: UploadOptions,
 ): Promise<{ success: boolean; url?: string; error?: string }> {
-  const { file, metadata, token, onProgress } = options;
+  const {
+    file,
+    metadata,
+    token,
+    tags = [],
+    galleryIds = [],
+    onProgress,
+  } = options;
 
   try {
     // 1. Lire le fichier SVG
@@ -26,7 +36,7 @@ export async function uploadPictogram(
     // 3. Demander une presigned URL à l'API
     onProgress?.(10);
 
-    const urlResponse = await fetch("/api/upload/presigned-url", {
+    const urlResponse = await fetch(`${API_URL}/api/upload/presigned-url`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -64,13 +74,19 @@ export async function uploadPictogram(
 
     onProgress?.(70);
 
-    // 5. Déclencher le workflow GitHub pour régénérer la galerie
+    // 5. Notifier le backend pour mettre à jour le manifest
     try {
-      await triggerGalleryUpdate(token);
+      await notifyUploadComplete(token, {
+        filename: file.name,
+        name: metadata.title || file.name.replace(/\.svg$/i, ""),
+        category: metadata.category,
+        tags,
+        galleryIds,
+      });
       onProgress?.(100);
-    } catch (workflowError) {
-      // Ne pas bloquer si le workflow ne se déclenche pas
-      console.warn("Failed to trigger gallery update:", workflowError);
+    } catch (completeError) {
+      // Ne pas bloquer si la notification échoue
+      console.warn("Failed to notify upload complete:", completeError);
       onProgress?.(100);
     }
 
@@ -88,18 +104,29 @@ export async function uploadPictogram(
 }
 
 /**
- * Déclenche le workflow GitHub pour mettre à jour la galerie
+ * Notifie le backend qu'un upload est terminé pour mettre à jour le manifest
  */
-async function triggerGalleryUpdate(token: string): Promise<void> {
-  const response = await fetch("/api/trigger-update", {
+async function notifyUploadComplete(
+  token: string,
+  data: {
+    filename: string;
+    name: string;
+    category?: string;
+    tags: string[];
+    galleryIds: string[];
+  },
+): Promise<void> {
+  const response = await fetch(`${API_URL}/api/upload/complete`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
     },
+    body: JSON.stringify(data),
   });
 
   if (!response.ok) {
-    throw new Error("Failed to trigger gallery update");
+    throw new Error("Failed to notify upload complete");
   }
 }
 
