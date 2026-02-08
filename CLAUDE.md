@@ -19,7 +19,17 @@ galerie/
 ├── _bmad-output/             # Generated artifacts from BMAD workflows
 │   ├── planning-artifacts/   # Planning documents
 │   └── implementation-artifacts/  # Implementation outputs
-└── .claude/                  # Claude Code configuration
+├── .claude/                  # Claude Code configuration
+├── src/                      # Application source code
+│   ├── components/           # React components
+│   ├── lib/                  # Utility libraries
+│   └── types/                # TypeScript type definitions
+├── api/                      # Vercel serverless functions
+│   ├── auth/                 # Authentication endpoints
+│   └── upload/               # Upload management
+├── public/                   # Static assets
+├── dist/                     # Production build output
+└── package.json              # Project dependencies and scripts
 ```
 
 ## BMAD Framework Integration
@@ -38,15 +48,33 @@ This project uses the BMAD framework for structured development workflows. The f
 
 ## Development Status
 
-⚠️ **This project is currently empty** - no application code has been written yet.
+✅ **Application active** - Galerie de pictogrammes avec upload et authentification GitHub
 
-When code is added to this project, update this CLAUDE.md with:
-- Build commands (npm/pnpm scripts, build tools)
-- Test commands and framework details
-- Application architecture and patterns
-- Key directories and their purposes
-- Environment variables and configuration
-- Deployment process
+### Technology Stack
+- **Frontend**: React + TypeScript + Vite
+- **UI**: Tailwind CSS + shadcn/ui components
+- **Backend**: Vercel Serverless Functions
+- **Storage**: AWS S3 (upload via presigned URLs)
+- **Authentification**: GitHub OAuth
+
+### Build Commands
+```bash
+pnpm install          # Installer les dépendances
+pnpm dev              # Démarrer le serveur de développement
+pnpm build            # Construire pour la production
+pnpm preview          # Prévisualiser le build de production
+```
+
+### Environment Variables
+Voir `.env.example` pour la configuration requise :
+- `VITE_GITHUB_CLIENT_ID` - ID client OAuth GitHub
+- `GITHUB_CLIENT_SECRET` - Secret client GitHub
+- `AWS_*` - Credentials AWS S3
+
+### Deployment
+- Hébergé sur Vercel
+- Voir `VERCEL_DEPLOY.md` pour les instructions de déploiement
+- Voir `UPLOAD_SETUP.md` pour la configuration du système d'upload
 
 ## Working with BMAD
 

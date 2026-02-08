@@ -16,10 +16,6 @@ jobs:
   update-and-deploy:
     runs-on: ubuntu-latest
 
-    defaults:
-      run:
-        working-directory: galerie-app
-
     permissions:
       contents: write
       pages: write
@@ -39,7 +35,6 @@ jobs:
         with:
           node-version: '20'
           cache: 'pnpm'
-          cache-dependency-path: 'galerie-app/pnpm-lock.yaml'
 
       - name: 📚 Install dependencies
         run: pnpm install
@@ -60,5 +55,5 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: galerie-app/dist
+          publish_dir: ./dist
           cname: false
