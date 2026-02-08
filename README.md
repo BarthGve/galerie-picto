@@ -1,6 +1,6 @@
 # 🎨 Galerie Pictogrammes
 
-Galerie de pictogrammes SVG hébergée sur Vercel (frontend + backend) avec auto-update 2 fois par jour depuis un CDN Minio.
+Galerie de pictogrammes SVG hébergée sur Railway (frontend + backend) avec auto-update 2 fois par jour depuis un CDN Minio.
 
 ## ✨ Fonctionnalités
 
@@ -18,12 +18,12 @@ Galerie de pictogrammes SVG hébergée sur Vercel (frontend + backend) avec auto
 ## 🚀 Stack Technique
 
 - **Frontend** : Vite + React + TypeScript
-- **Backend** : Vercel Serverless Functions
+- **Backend** : Railway Serverless Functions
 - **UI** : ShadCN UI (style Mira, thème Cyan)
 - **Icônes** : Lucide React
 - **CDN** : Minio (S3-compatible)
-- **Hébergement** : Vercel (frontend + backend)
-- **CI/CD** : Vercel (auto-deploy) + GitHub Actions (sync pictos)
+- **Hébergement** : Railway (frontend + backend)
+- **CI/CD** : Railway (auto-deploy) + GitHub Actions (sync pictos)
 
 ## 🛠️ Installation
 
@@ -44,24 +44,17 @@ pnpm build
 
 ## 🔧 Configuration & Déploiement
 
-### Déploiement sur Vercel
+### Déploiement sur Railway
 
-📘 **Guide complet**: Voir [VERCEL_DEPLOY.md](./VERCEL_DEPLOY.md)
+📘 **Guide complet**: Voir [UPLOAD_SETUP.md](./UPLOAD_SETUP.md)
 
 **En bref:**
-```bash
-# 1. Installer Vercel CLI
-npm i -g vercel
+1. Connecter votre repo GitHub à Railway via le dashboard
+2. Railway détectera automatiquement la configuration Vite
+3. Configurer les variables d'environnement dans Railway
+4. Mettre à jour l'OAuth App GitHub avec l'URL Railway
 
-# 2. Déployer
-cd galerie-app
-vercel
-
-# 3. Configurer les env vars sur Vercel dashboard
-# 4. Mettre à jour l'OAuth App GitHub avec l'URL Vercel
-```
-
-L'URL sera : `https://galerie-picto.vercel.app` (ou ton custom domain)
+L'URL sera : `https://galerie-picto.railway.app` (ou ton custom domain)
 
 ### GitHub Secrets (pour le workflow de sync)
 
@@ -92,7 +85,7 @@ Tu peux aussi déclencher manuellement via Actions → "Update Pictograms Galler
 5. **Upload** - le fichier est envoyé sur le CDN et le workflow se déclenche automatiquement
 6. **Attends 30 secondes** - la page se recharge et ton picto apparaît! 🎉
 
-📘 Voir [VERCEL_DEPLOY.md](./VERCEL_DEPLOY.md) pour la configuration complète
+📘 Voir [UPLOAD_SETUP.md](./UPLOAD_SETUP.md) pour la configuration complète
 
 ### Option 2: Upload manuel sur le CDN
 
@@ -124,10 +117,10 @@ galerie-app/
 │   └── App.tsx
 ├── api/
 │   ├── auth/
-│   │   ├── github.ts           # Vercel: OAuth token exchange
-│   │   └── verify.ts           # Vercel: Permission check
+│   │   ├── github.ts           # Railway: OAuth token exchange
+│   │   └── verify.ts           # Railway: Permission check
 │   └── upload/
-│       └── presigned-url.ts    # Vercel: Presigned URL Minio
+│       └── presigned-url.ts    # Railway: Presigned URL Minio
 ├── scripts/
 │   └── fetch-pictograms.js     # Script Minio (GitHub Action)
 ├── .github/workflows/

@@ -8,8 +8,8 @@ Guide rapide pour activer la fonctionnalité d'upload de pictogrammes.
 2. Cliquer sur "New OAuth App"
 3. Remplir:
    - **Application name**: Galerie Pictogrammes
-   - **Homepage URL**: `https://votre-app.vercel.app`
-   - **Authorization callback URL**: `https://votre-app.vercel.app/`
+   - **Homepage URL**: `https://votre-app.railway.app`
+   - **Authorization callback URL**: `https://votre-app.railway.app/`
 4. Copier le **Client ID** et générer un **Client Secret**
 
 ## 2. Configurer les variables d'environnement
@@ -22,9 +22,9 @@ Créer un fichier `.env` dans `galerie-app/`:
 VITE_GITHUB_CLIENT_ID=ghp_your_client_id
 ```
 
-### Backend (Vercel Project Settings)
+### Backend (Railway Project Settings)
 
-Dans Vercel Project Settings > Environment Variables, ajouter:
+Dans Railway Project Settings > Environment Variables, ajouter:
 
 | Variable | Value | Environment |
 |----------|-------|-------------|
@@ -39,27 +39,21 @@ Dans Vercel Project Settings > Environment Variables, ajouter:
 | `MINIO_BUCKET` | `media` | Production, Preview, Development |
 | `MINIO_PREFIX` | `artwork/pictograms` | Production, Preview, Development |
 
-## 3. Déployer sur Vercel
+## 3. Déployer sur Railway
 
 ```bash
-# Installer Vercel CLI si nécessaire
-npm i -g vercel
-
-# Se connecter
-vercel login
-
-# Déployer
-cd galerie-app
-vercel
+# Déployer sur Railway
+# Connecter votre repo GitHub à Railway via le dashboard
+# Railway détectera automatiquement la configuration
 ```
 
-Suivre les instructions et sélectionner votre projet.
+Railway déploiera automatiquement à chaque push sur la branche principale.
 
 ## 4. Mettre à jour l'OAuth App
 
 Une fois déployé, retourner dans les GitHub OAuth App settings et mettre à jour:
-- **Homepage URL**: `https://votre-app-reelle.vercel.app`
-- **Authorization callback URL**: `https://votre-app-reelle.vercel.app/`
+- **Homepage URL**: `https://votre-app.railway.app`
+- **Authorization callback URL**: `https://votre-app.railway.app/`
 
 ## 5. Tester
 
@@ -75,7 +69,7 @@ Une fois déployé, retourner dans les GitHub OAuth App settings et mettre à jo
 Frontend (React)
   ↓ GitHub OAuth
   ↓
-Vercel Functions (API Routes)
+Railway Functions (API Routes)
   ├─ /api/auth/github → Échange code vs token
   ├─ /api/auth/verify → Vérifie permission
   ├─ /api/upload/presigned-url → Génère URL Minio
