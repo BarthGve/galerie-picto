@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { Pictogram } from "@/lib/types";
-import { fetchSvgText, copyTextToClipboard } from "@/lib/svg-to-png";
+import { fetchSvgText } from "@/lib/svg-to-png";
 import { PictoModal } from "./PictoModal";
 import { toast } from "sonner";
 
@@ -25,19 +25,19 @@ export function PictoCard({ pictogram }: PictoCardProps) {
     }
   };
 
-  const handleCopy = (e: React.MouseEvent) => {
+  const handleCopy = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!svgCacheRef.current) {
       toast.error("SVG en cours de chargement, reessayez");
       return;
     }
-    const success = copyTextToClipboard(svgCacheRef.current);
-    if (success) {
+    try {
+      await navigator.clipboard.writeText(svgCacheRef.current);
       setCopied(true);
       toast.success("Code SVG copie");
       setTimeout(() => setCopied(false), 2000);
-    } else {
-      toast.error("Impossible de copier le code SVG");
+    } catch {
+      toast.error("Impossible de copier");
     }
   };
 

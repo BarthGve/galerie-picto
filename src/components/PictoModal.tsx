@@ -8,12 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import type { Pictogram } from "@/lib/types";
-import {
-  downloadSvg,
-  downloadSvgAsPng,
-  fetchSvgText,
-  copyTextToClipboard,
-} from "@/lib/svg-to-png";
+import { downloadSvg, downloadSvgAsPng, fetchSvgText } from "@/lib/svg-to-png";
 import { toast } from "sonner";
 
 interface PictoModalProps {
@@ -36,17 +31,17 @@ export function PictoModal({ pictogram, isOpen, onClose }: PictoModalProps) {
     }
   }, [isOpen, pictogram.url]);
 
-  const handleCopy = () => {
+  const handleCopy = async () => {
     if (!svgCacheRef.current) {
       toast.error("SVG en cours de chargement, reessayez");
       return;
     }
-    const success = copyTextToClipboard(svgCacheRef.current);
-    if (success) {
+    try {
+      await navigator.clipboard.writeText(svgCacheRef.current);
       setCopied(true);
       toast.success("Code SVG copie");
       setTimeout(() => setCopied(false), 2000);
-    } else {
+    } catch {
       toast.error("Impossible de copier le code SVG");
     }
   };
