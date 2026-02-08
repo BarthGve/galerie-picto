@@ -1,14 +1,190 @@
 {
   "pictograms": [
     {
+      "id": "document-search",
+      "name": "Document Search",
+      "filename": "document-search.svg",
+      "url": "https://cdn.kerjean.net/media/artwork/pictograms/document-search.svg",
+      "size": 3976,
+      "lastModified": "2025-11-28T23:55:06.197Z"
+    },
+    {
+      "id": "document-search_dark",
+      "name": "Document Search Dark",
+      "filename": "document-search_dark.svg",
+      "url": "https://cdn.kerjean.net/media/artwork/pictograms/document-search_dark.svg",
+      "size": 3976,
+      "lastModified": "2025-11-28T23:55:06.237Z"
+    },
+    {
+      "id": "ecosystem",
+      "name": "Ecosystem",
+      "filename": "ecosystem.svg",
+      "url": "https://cdn.kerjean.net/media/artwork/pictograms/ecosystem.svg",
+      "size": 10464,
+      "lastModified": "2025-11-28T23:55:06.257Z"
+    },
+    {
+      "id": "ecosystem_dark",
+      "name": "Ecosystem Dark",
+      "filename": "ecosystem_dark.svg",
+      "url": "https://cdn.kerjean.net/media/artwork/pictograms/ecosystem_dark.svg",
+      "size": 10464,
+      "lastModified": "2025-11-28T23:55:06.225Z"
+    },
+    {
       "id": "gendarmerie",
       "name": "Gendarmerie",
       "filename": "gendarmerie.svg",
       "url": "https://cdn.kerjean.net/media/artwork/pictograms/gendarmerie.svg",
-      "size": 1234,
-      "lastModified": "2026-02-08T14:00:00.000Z"
+      "size": 6383,
+      "lastModified": "2025-11-28T23:55:06.260Z"
+    },
+    {
+      "id": "gendarmerie_dark",
+      "name": "Gendarmerie Dark",
+      "filename": "gendarmerie_dark.svg",
+      "url": "https://cdn.kerjean.net/media/artwork/pictograms/gendarmerie_dark.svg",
+      "size": 6383,
+      "lastModified": "2025-11-28T23:55:06.197Z"
+    },
+    {
+      "id": "information",
+      "name": "Information",
+      "filename": "information.svg",
+      "url": "https://cdn.kerjean.net/media/artwork/pictograms/information.svg",
+      "size": 4008,
+      "lastModified": "2025-11-28T23:55:06.199Z"
+    },
+    {
+      "id": "information_dark",
+      "name": "Information Dark",
+      "filename": "information_dark.svg",
+      "url": "https://cdn.kerjean.net/media/artwork/pictograms/information_dark.svg",
+      "size": 4008,
+      "lastModified": "2025-11-28T23:55:06.264Z"
+    },
+    {
+      "id": "innovation",
+      "name": "Innovation",
+      "filename": "innovation.svg",
+      "url": "https://cdn.kerjean.net/media/artwork/pictograms/innovation.svg",
+      "size": 9205,
+      "lastModified": "2025-11-28T23:55:06.262Z"
+    },
+    {
+      "id": "innovation_dark",
+      "name": "Innovation Dark",
+      "filename": "innovation_dark.svg",
+      "url": "https://cdn.kerjean.net/media/artwork/pictograms/innovation_dark.svg",
+      "size": 9205,
+      "lastModified": "2025-11-28T23:55:06.234Z"
+    },
+    {
+      "id": "justice",
+      "name": "Justice",
+      "filename": "justice.svg",
+      "url": "https://cdn.kerjean.net/media/artwork/pictograms/justice.svg",
+      "size": 3747,
+      "lastModified": "2025-11-28T23:55:06.236Z"
+    },
+    {
+      "id": "justice_dark",
+      "name": "Justice Dark",
+      "filename": "justice_dark.svg",
+      "url": "https://cdn.kerjean.net/media/artwork/pictograms/justice_dark.svg",
+      "size": 3747,
+      "lastModified": "2025-11-28T23:55:06.193Z"
+    },
+    {
+      "id": "moon",
+      "name": "Moon",
+      "filename": "moon.svg",
+      "url": "https://cdn.kerjean.net/media/artwork/pictograms/environment/moon.svg",
+      "size": 2937,
+      "lastModified": "2025-11-28T23:55:06.236Z"
+    },
+    {
+      "id": "padlock",
+      "name": "Padlock",
+      "filename": "padlock.svg",
+      "url": "https://cdn.kerjean.net/media/artwork/pictograms/padlock.svg",
+      "size": 4310,
+      "lastModified": "2025-11-28T23:55:06.230Z"
+    },
+    {
+      "id": "padlock_dark",
+      "name": "Padlock Dark",
+      "filename": "padlock_dark.svg",
+      "url": "https://cdn.kerjean.net/media/artwork/pictograms/padlock_dark.svg",
+      "size": 4310,
+      "lastModified": "2025-11-28T23:55:06.200Z"
+    },
+    {
+      "id": "PICTO_To-do-list",
+      "name": "PICTO To Do List",
+      "filename": "PICTO_To-do-list.svg",
+      "url": "https://cdn.kerjean.net/media/artwork/pictograms/PICTO_To-do-list.svg",
+      "size": 2525,
+      "lastModified": "2026-02-08T14:18:57.744Z"
+    },
+    {
+      "id": "search",
+      "name": "Search",
+      "filename": "search.svg",
+      "url": "https://cdn.kerjean.net/media/artwork/pictograms/search.svg",
+      "size": 3811,
+      "lastModified": "2025-11-28T23:55:06.189Z"
+    },
+    {
+      "id": "search_dark",
+      "name": "Search Dark",
+      "filename": "search_dark.svg",
+      "url": "https://cdn.kerjean.net/media/artwork/pictograms/search_dark.svg",
+      "size": 3811,
+      "lastModified": "2025-11-28T23:55:06.197Z"
+    },
+    {
+      "id": "self-training",
+      "name": "Self Training",
+      "filename": "self-training.svg",
+      "url": "https://cdn.kerjean.net/media/artwork/pictograms/self-training.svg",
+      "size": 6288,
+      "lastModified": "2025-11-28T23:55:06.263Z"
+    },
+    {
+      "id": "self-training_dark",
+      "name": "Self Training Dark",
+      "filename": "self-training_dark.svg",
+      "url": "https://cdn.kerjean.net/media/artwork/pictograms/self-training_dark.svg",
+      "size": 6288,
+      "lastModified": "2025-11-28T23:55:06.198Z"
+    },
+    {
+      "id": "sun",
+      "name": "Sun",
+      "filename": "sun.svg",
+      "url": "https://cdn.kerjean.net/media/artwork/pictograms/environment/sun.svg",
+      "size": 3683,
+      "lastModified": "2025-11-28T23:55:06.237Z"
+    },
+    {
+      "id": "system",
+      "name": "System",
+      "filename": "system.svg",
+      "url": "https://cdn.kerjean.net/media/artwork/pictograms/system/system.svg",
+      "size": 15285,
+      "lastModified": "2025-11-28T23:55:06.233Z"
+    },
+    {
+      "id": "Transmis Justice",
+      "name": "Transmis Justice",
+      "filename": "Transmis Justice.svg",
+      "url": "https://cdn.kerjean.net/media/artwork/pictograms/Transmis Justice.svg",
+      "size": 3746,
+      "lastModified": "2025-11-28T23:55:06.247Z"
     }
   ],
-  "lastUpdated": "2026-02-08T14:00:00.000Z",
-  "totalCount": 1
+  "lastUpdated": "2026-02-08T15:20:05.925Z",
+  "totalCount": 23
 }

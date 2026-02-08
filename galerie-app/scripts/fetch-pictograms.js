@@ -43,7 +43,7 @@ async function fetchPictograms() {
           id,
           name,
           filename,
-          url: `https://cdn.kerjean.net/${obj.Key}`,
+          url: `https://cdn.kerjean.net/${process.env.MINIO_BUCKET || 'media'}/${obj.Key}`,
           size: obj.Size,
           lastModified: obj.LastModified.toISOString()
         }
