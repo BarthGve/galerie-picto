@@ -10,7 +10,9 @@ export function usePictograms() {
   useEffect(() => {
     async function fetchManifest() {
       try {
-        const response = await fetch("/pictograms-manifest.json");
+        const response = await fetch(
+          `${import.meta.env.BASE_URL}pictograms-manifest.json`,
+        );
         if (!response.ok) {
           throw new Error("Failed to fetch pictograms manifest");
         }
