@@ -2,9 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { usePictograms } from "@/hooks/usePictograms";
 import { useGalleries } from "@/hooks/useGalleries";
 import { PictoGrid } from "@/components/PictoGrid";
-import { SearchBar } from "@/components/SearchBar";
-import { Navbar } from "@/components/Navbar";
 import { AppSidebar } from "@/components/Sidebar";
+import { SiteHeader } from "@/components/site-header";
 import { GalleryDialog } from "@/components/GalleryDialog";
 import { UploadDialog } from "@/components/UploadDialog";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
@@ -78,6 +77,11 @@ function App() {
     setGalleryDialogOpen(true);
   };
 
+  const handleEditGallery = (gallery: (typeof galleries)[number]) => {
+    setEditingGallery(gallery);
+    setGalleryDialogOpen(true);
+  };
+
   const handleSaveGallery = async (data: {
     name: string;
     description?: string;
@@ -93,7 +97,6 @@ function App() {
   const filteredPictograms = useMemo(() => {
     let result = pictograms;
 
-    // Filter by selected gallery
     if (selectedGalleryId) {
       const gallery = galleries.find((g) => g.id === selectedGalleryId);
       if (gallery) {
@@ -106,7 +109,6 @@ function App() {
       }
     }
 
-    // Filter by search query (also searches in tags)
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       result = result.filter(
@@ -147,52 +149,49 @@ function App() {
 
   return (
     <TooltipProvider>
-      <SidebarProvider>
+      <SidebarProvider
+        style={
+          {
+            "--sidebar-width": "calc(var(--spacing) * 72)",
+            "--header-height": "calc(var(--spacing) * 12)",
+          } as React.CSSProperties
+        }
+      >
         <AppSidebar
+          variant="inset"
           galleries={galleries}
           selectedGalleryId={selectedGalleryId}
           onSelectGallery={setSelectedGalleryId}
           totalPictogramCount={pictograms.length}
-          isAuthenticated={!!user}
+          user={user}
+          onLogin={initiateGitHubLogin}
+          onLogout={logout}
+          onUploadClick={() => setUploadDialogOpen(true)}
           onCreateGallery={handleCreateGallery}
+          onEditGallery={handleEditGallery}
         />
 
         <SidebarInset>
-          <Navbar
-            user={user}
-            isAuthenticated={!!user}
-            onLogin={initiateGitHubLogin}
-            onLogout={logout}
-            onUploadClick={() => setUploadDialogOpen(true)}
+          <SiteHeader
+            onSearch={setSearchQuery}
+            totalCount={pictograms.length}
+            filteredCount={filteredPictograms.length}
           />
-
-          <div className="flex-1 px-6 py-6">
-            {lastUpdated && (
-              <p className="text-sm text-muted-foreground mb-4">
-                Derniere mise a jour :{" "}
-                {new Date(lastUpdated).toLocaleString("fr-FR")}
-              </p>
-            )}
-
-            <div className="mb-6">
-              <SearchBar
-                onSearch={setSearchQuery}
-                totalCount={pictograms.length}
-                filteredCount={filteredPictograms.length}
-              />
+          <div className="flex flex-1 flex-col">
+            <div className="@container/main flex flex-1 flex-col gap-2">
+              <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+                <div className="px-4 lg:px-6">
+                  {lastUpdated && (
+                    <p className="text-xs text-muted-foreground mb-4">
+                      Derniere mise a jour :{" "}
+                      {new Date(lastUpdated).toLocaleString("fr-FR")}
+                    </p>
+                  )}
+                  <PictoGrid pictograms={filteredPictograms} />
+                </div>
+              </div>
             </div>
-
-            <PictoGrid pictograms={filteredPictograms} />
           </div>
-
-          <footer className="border-t">
-            <div className="px-6 py-6 text-center text-sm text-muted-foreground">
-              <p>
-                Galerie de pictogrammes - {pictograms.length} elements
-                disponibles
-              </p>
-            </div>
-          </footer>
         </SidebarInset>
 
         <UploadDialog
