@@ -1,3 +1,11 @@
+# Ignore all hidden directories (starting with .)
+.*/
+# Except important ones
+!.github/
+
+# Ignore all directories starting with _
+_*/
+
 # Logs
 logs
 *.log
@@ -13,13 +21,9 @@ dist-ssr
 *.local
 
 # Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
 .DS_Store
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
-.vercel
