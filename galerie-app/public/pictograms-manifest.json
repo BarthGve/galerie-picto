@@ -1,0 +1,14 @@
+{
+  "pictograms": [
+    {
+      "id": "gendarmerie",
+      "name": "Gendarmerie",
+      "filename": "gendarmerie.svg",
+      "url": "https://cdn.kerjean.net/media/artwork/pictograms/gendarmerie.svg",
+      "size": 1234,
+      "lastModified": "2026-02-08T14:00:00.000Z"
+    }
+  ],
+  "lastUpdated": "2026-02-08T14:00:00.000Z",
+  "totalCount": 1
+}
