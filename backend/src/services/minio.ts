@@ -33,17 +33,21 @@ export async function getPresignedUploadUrl(
 
 export async function readJsonFile<T>(key: string): Promise<T | null> {
   try {
+    // Use a presigned URL to bypass CDN caching (unique query params each time)
     const command = new GetObjectCommand({
       Bucket: config.minio.bucket,
       Key: key,
     });
-    const response = await s3Client.send(command);
-    const body = await response.Body?.transformToString();
-    if (!body) return null;
-    return JSON.parse(body) as T;
+    const url = await getSignedUrl(s3Client, command, { expiresIn: 60 });
+    const response = await fetch(url);
+    if (!response.ok) {
+      if (response.status === 404) return null;
+      throw new Error(`Failed to read ${key}: ${response.status}`);
+    }
+    return (await response.json()) as T;
   } catch (err: unknown) {
-    const s3Err = err as { name?: string };
-    if (s3Err.name === "NoSuchKey") {
+    const s3Err = err as { name?: string; code?: string };
+    if (s3Err.name === "NoSuchKey" || s3Err.code === "NoSuchKey") {
       return null;
     }
     throw err;
@@ -56,6 +60,7 @@ export async function writeJsonFile(key: string, data: unknown): Promise<void> {
     Key: key,
     Body: JSON.stringify(data, null, 2),
     ContentType: "application/json",
+    CacheControl: "no-cache, no-store, must-revalidate",
   });
   await s3Client.send(command);
 }

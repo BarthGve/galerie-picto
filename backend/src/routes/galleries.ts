@@ -82,9 +82,11 @@ router.post(
       data.galleries.push(gallery);
       data.lastUpdated = now;
       await writeJsonFile(GALLERIES_KEY, data);
+      console.log(`Gallery created: ${gallery.id} (${gallery.name})`);
 
       res.status(201).json(gallery);
-    } catch {
+    } catch (err) {
+      console.error("Failed to create gallery:", err);
       res.status(500).json({ error: "Failed to create gallery" });
     }
   },
@@ -200,6 +202,7 @@ router.post(
       gallery.updatedAt = new Date().toISOString();
       data.lastUpdated = gallery.updatedAt;
       await writeJsonFile(GALLERIES_KEY, data);
+      console.log(`Added ${newIds.length} pictogram(s) to gallery ${id}`);
 
       // Update pictograms-manifest.json
       const manifest = await getManifest();

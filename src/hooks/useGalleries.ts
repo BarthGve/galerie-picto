@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { API_URL } from "@/lib/config";
 import type { Gallery } from "@/lib/types";
+import { toast } from "sonner";
 
 export function useGalleries() {
   const [galleries, setGalleries] = useState<Gallery[]>([]);
@@ -10,7 +11,9 @@ export function useGalleries() {
   const fetchGalleries = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_URL}/api/galleries`);
+      const response = await fetch(`${API_URL}/api/galleries`, {
+        cache: "no-store",
+      });
       if (!response.ok) {
         throw new Error("Erreur lors du chargement des galeries");
       }
@@ -48,13 +51,18 @@ export function useGalleries() {
         body: JSON.stringify(data),
       });
       if (!response.ok) {
-        throw new Error("Erreur lors de la creation de la galerie");
+        const err = await response.json().catch(() => ({}));
+        throw new Error(
+          err.error || "Erreur lors de la creation de la galerie",
+        );
       }
       const gallery: Gallery = await response.json();
       setGalleries((prev) => [...prev, gallery]);
       return gallery;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur inconnue");
+      const msg = err instanceof Error ? err.message : "Erreur inconnue";
+      setError(msg);
+      toast.error(msg);
       return null;
     }
   }
@@ -70,13 +78,18 @@ export function useGalleries() {
         body: JSON.stringify(data),
       });
       if (!response.ok) {
-        throw new Error("Erreur lors de la mise a jour de la galerie");
+        const err = await response.json().catch(() => ({}));
+        throw new Error(
+          err.error || "Erreur lors de la mise a jour de la galerie",
+        );
       }
       const gallery: Gallery = await response.json();
       setGalleries((prev) => prev.map((g) => (g.id === id ? gallery : g)));
       return gallery;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur inconnue");
+      const msg = err instanceof Error ? err.message : "Erreur inconnue";
+      setError(msg);
+      toast.error(msg);
       return null;
     }
   }
@@ -88,12 +101,17 @@ export function useGalleries() {
         headers: getAuthHeaders(),
       });
       if (!response.ok) {
-        throw new Error("Erreur lors de la suppression de la galerie");
+        const err = await response.json().catch(() => ({}));
+        throw new Error(
+          err.error || "Erreur lors de la suppression de la galerie",
+        );
       }
       setGalleries((prev) => prev.filter((g) => g.id !== id));
       return true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur inconnue");
+      const msg = err instanceof Error ? err.message : "Erreur inconnue";
+      setError(msg);
+      toast.error(msg);
       return false;
     }
   }
@@ -118,7 +136,8 @@ export function useGalleries() {
         },
       );
       if (!response.ok) {
-        throw new Error("Erreur lors de l'ajout du pictogramme");
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.error || "Erreur lors de l'ajout du pictogramme");
       }
       setGalleries((prev) =>
         prev.map((g) =>
@@ -129,7 +148,9 @@ export function useGalleries() {
       );
       return true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur inconnue");
+      const msg = err instanceof Error ? err.message : "Erreur inconnue";
+      setError(msg);
+      toast.error(msg);
       return false;
     }
   }
@@ -147,7 +168,8 @@ export function useGalleries() {
         },
       );
       if (!response.ok) {
-        throw new Error("Erreur lors du retrait du pictogramme");
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.error || "Erreur lors du retrait du pictogramme");
       }
       setGalleries((prev) =>
         prev.map((g) =>
@@ -161,7 +183,9 @@ export function useGalleries() {
       );
       return true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur inconnue");
+      const msg = err instanceof Error ? err.message : "Erreur inconnue";
+      setError(msg);
+      toast.error(msg);
       return false;
     }
   }
