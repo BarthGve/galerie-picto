@@ -103,6 +103,12 @@ export function useGalleries() {
     pictogramId: string,
   ): Promise<boolean> {
     try {
+      // Guard: skip if already in gallery
+      const gallery = galleries.find((g) => g.id === galleryId);
+      if (gallery?.pictogramIds.includes(pictogramId)) {
+        return true;
+      }
+
       const response = await fetch(
         `${API_URL}/api/galleries/${galleryId}/pictograms`,
         {
@@ -116,7 +122,7 @@ export function useGalleries() {
       }
       setGalleries((prev) =>
         prev.map((g) =>
-          g.id === galleryId
+          g.id === galleryId && !g.pictogramIds.includes(pictogramId)
             ? { ...g, pictogramIds: [...g.pictogramIds, pictogramId] }
             : g,
         ),

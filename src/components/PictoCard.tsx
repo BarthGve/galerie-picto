@@ -18,6 +18,7 @@ interface PictoCardProps {
     pictogramId: string,
   ) => Promise<boolean>;
   isAuthenticated?: boolean;
+  selectedGalleryId?: string | null;
 }
 
 export function PictoCard({
@@ -26,6 +27,7 @@ export function PictoCard({
   onAddToGallery,
   onRemoveFromGallery,
   isAuthenticated,
+  selectedGalleryId,
 }: PictoCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -67,6 +69,9 @@ export function PictoCard({
     galleries.length > 0 &&
     onAddToGallery &&
     onRemoveFromGallery;
+
+  const pictoGalleries =
+    galleries?.filter((g) => g.pictogramIds.includes(pictogram.id)) ?? [];
 
   return (
     <>
@@ -118,6 +123,25 @@ export function PictoCard({
             </Badge>
             <span>SVG</span>
           </div>
+          {!selectedGalleryId && pictoGalleries.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-2">
+              {pictoGalleries.map((g) => (
+                <span
+                  key={g.id}
+                  className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] bg-muted text-muted-foreground"
+                >
+                  <span
+                    className="size-2 shrink-0 rounded-full"
+                    style={{
+                      backgroundColor: g.color || "var(--muted-foreground)",
+                      opacity: g.color ? 1 : 0.3,
+                    }}
+                  />
+                  {g.name}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       </Card>
 

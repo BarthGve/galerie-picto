@@ -195,6 +195,7 @@ function App() {
                     onAddToGallery={addPictogramToGallery}
                     onRemoveFromGallery={removePictogramFromGallery}
                     isAuthenticated={!!user}
+                    selectedGalleryId={selectedGalleryId}
                   />
                 </div>
               </div>
