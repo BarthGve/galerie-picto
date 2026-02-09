@@ -7,17 +7,33 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import type { Pictogram } from "@/lib/types";
+import type { Pictogram, Gallery } from "@/lib/types";
 import { downloadSvg, downloadSvgAsPng, fetchSvgText } from "@/lib/svg-to-png";
+import { GallerySelector } from "./GallerySelector";
 import { toast } from "sonner";
 
 interface PictoModalProps {
   pictogram: Pictogram;
   isOpen: boolean;
   onClose: () => void;
+  galleries?: Gallery[];
+  onAddToGallery?: (galleryId: string, pictogramId: string) => Promise<boolean>;
+  onRemoveFromGallery?: (
+    galleryId: string,
+    pictogramId: string,
+  ) => Promise<boolean>;
+  isAuthenticated?: boolean;
 }
 
-export function PictoModal({ pictogram, isOpen, onClose }: PictoModalProps) {
+export function PictoModal({
+  pictogram,
+  isOpen,
+  onClose,
+  galleries,
+  onAddToGallery,
+  onRemoveFromGallery,
+  isAuthenticated,
+}: PictoModalProps) {
   const [copied, setCopied] = useState(false);
   const [pngSize, setPngSize] = useState(512);
   const svgCacheRef = useRef<string | null>(null);
@@ -79,6 +95,13 @@ export function PictoModal({ pictogram, isOpen, onClose }: PictoModalProps) {
     });
   };
 
+  const showGallerySelector =
+    isAuthenticated &&
+    galleries &&
+    galleries.length > 0 &&
+    onAddToGallery &&
+    onRemoveFromGallery;
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl">
@@ -115,6 +138,17 @@ export function PictoModal({ pictogram, isOpen, onClose }: PictoModalProps) {
               </p>
             </div>
           </div>
+
+          {/* Gallery selector */}
+          {showGallerySelector && (
+            <GallerySelector
+              galleries={galleries}
+              pictogramId={pictogram.id}
+              onAdd={onAddToGallery}
+              onRemove={onRemoveFromGallery}
+              variant="full"
+            />
+          )}
 
           {/* Actions */}
           <div className="space-y-3">

@@ -25,6 +25,8 @@ function App() {
     loading: galleriesLoading,
     createGallery,
     updateGallery,
+    addPictogramToGallery,
+    removePictogramFromGallery,
   } = useGalleries();
   const [searchQuery, setSearchQuery] = useState("");
   const [user, setUser] = useState<GitHubUser | null>(null);
@@ -187,7 +189,13 @@ function App() {
                       {new Date(lastUpdated).toLocaleString("fr-FR")}
                     </p>
                   )}
-                  <PictoGrid pictograms={filteredPictograms} />
+                  <PictoGrid
+                    pictograms={filteredPictograms}
+                    galleries={galleries}
+                    onAddToGallery={addPictogramToGallery}
+                    onRemoveFromGallery={removePictogramFromGallery}
+                    isAuthenticated={!!user}
+                  />
                 </div>
               </div>
             </div>

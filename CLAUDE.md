@@ -51,30 +51,38 @@ This project uses the BMAD framework for structured development workflows. The f
 ✅ **Application active** - Galerie de pictogrammes avec upload et authentification GitHub
 
 ### Technology Stack
-- **Frontend**: React + TypeScript + Vite
-- **UI**: Tailwind CSS + shadcn/ui components
-- **Backend**: Vercel Serverless Functions
-- **Storage**: AWS S3 (upload via presigned URLs)
+- **Frontend**: React 19 + TypeScript 5.9 + Vite 7
+- **UI**: Tailwind CSS 4 + shadcn/ui components
+- **Backend**: Express.js (dossier `backend/`)
+- **Storage**: Minio S3-compatible (cdn.kerjean.net)
 - **Authentification**: GitHub OAuth
+- **Deploiement**: Railway (frontend + backend)
 
 ### Build Commands
 ```bash
-pnpm install          # Installer les dépendances
-pnpm dev              # Démarrer le serveur de développement
-pnpm build            # Construire pour la production
-pnpm preview          # Prévisualiser le build de production
+pnpm install          # Installer les dependances (racine)
+cd backend && pnpm install  # Installer les dependances backend
+pnpm dev              # Lancer backend (:3004) + frontend (:5175)
+pnpm dev:backend      # Lancer uniquement le backend
+pnpm dev:frontend     # Lancer uniquement le frontend
+pnpm build            # Construire le frontend pour la production
 ```
 
+### Ports de developpement
+- **Frontend**: http://localhost:5175
+- **Backend**: http://localhost:3004
+
 ### Environment Variables
-Voir `.env.example` pour la configuration requise :
-- `VITE_GITHUB_CLIENT_ID` - ID client OAuth GitHub
-- `GITHUB_CLIENT_SECRET` - Secret client GitHub
-- `AWS_*` - Credentials AWS S3
+- Frontend : `VITE_API_URL` (en prod, pointe vers le backend Railway)
+- Backend : voir `backend/.env` (non commite) avec :
+  - `PORT`, `CORS_ORIGIN`
+  - `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `GITHUB_ALLOWED_USERNAME`
+  - `MINIO_ENDPOINT`, `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY`, `MINIO_BUCKET`, `MINIO_PREFIX`
 
 ### Deployment
-- Hébergé sur Vercel
-- Voir `VERCEL_DEPLOY.md` pour les instructions de déploiement
-- Voir `UPLOAD_SETUP.md` pour la configuration du système d'upload
+- Heberge sur Railway
+- Frontend : service `galerie-picto` (RAILPACK/Vite)
+- Backend : service `galerie-backend` (Dockerfile, root directory = `backend/`)
 
 ## Working with BMAD
 

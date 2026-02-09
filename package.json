@@ -4,7 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "pnpm dev:backend & sleep 2 && curl -sf http://localhost:3004/health > /dev/null && echo '✓ Backend ready on :3004' && pnpm dev:frontend",
+    "dev:backend": "cd backend && pnpm dev",
+    "dev:frontend": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"

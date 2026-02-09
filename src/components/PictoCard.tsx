@@ -3,16 +3,30 @@ import { Copy, Check } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import type { Pictogram } from "@/lib/types";
+import type { Pictogram, Gallery } from "@/lib/types";
 import { fetchSvgText } from "@/lib/svg-to-png";
 import { PictoModal } from "./PictoModal";
+import { GallerySelector } from "./GallerySelector";
 import { toast } from "sonner";
 
 interface PictoCardProps {
   pictogram: Pictogram;
+  galleries?: Gallery[];
+  onAddToGallery?: (galleryId: string, pictogramId: string) => Promise<boolean>;
+  onRemoveFromGallery?: (
+    galleryId: string,
+    pictogramId: string,
+  ) => Promise<boolean>;
+  isAuthenticated?: boolean;
 }
 
-export function PictoCard({ pictogram }: PictoCardProps) {
+export function PictoCard({
+  pictogram,
+  galleries,
+  onAddToGallery,
+  onRemoveFromGallery,
+  isAuthenticated,
+}: PictoCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const svgCacheRef = useRef<string | null>(null);
@@ -47,6 +61,13 @@ export function PictoCard({ pictogram }: PictoCardProps) {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
+  const showGallerySelector =
+    isAuthenticated &&
+    galleries &&
+    galleries.length > 0 &&
+    onAddToGallery &&
+    onRemoveFromGallery;
+
   return (
     <>
       <Card
@@ -64,6 +85,15 @@ export function PictoCard({ pictogram }: PictoCardProps) {
 
         {/* Quick actions overlay */}
         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+          {showGallerySelector && (
+            <GallerySelector
+              galleries={galleries}
+              pictogramId={pictogram.id}
+              onAdd={onAddToGallery}
+              onRemove={onRemoveFromGallery}
+              variant="compact"
+            />
+          )}
           <Button
             size="sm"
             variant="secondary"
@@ -95,6 +125,10 @@ export function PictoCard({ pictogram }: PictoCardProps) {
         pictogram={pictogram}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        galleries={galleries}
+        onAddToGallery={onAddToGallery}
+        onRemoveFromGallery={onRemoveFromGallery}
+        isAuthenticated={isAuthenticated}
       />
     </>
   );

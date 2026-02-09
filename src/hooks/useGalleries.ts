@@ -108,7 +108,7 @@ export function useGalleries() {
         {
           method: "POST",
           headers: getAuthHeaders(),
-          body: JSON.stringify({ pictogramId }),
+          body: JSON.stringify({ pictogramIds: [pictogramId] }),
         },
       );
       if (!response.ok) {
