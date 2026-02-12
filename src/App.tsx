@@ -202,6 +202,7 @@ function App() {
           onCreateGallery={handleCreateGallery}
           onEditGallery={handleEditGallery}
           onDeleteGallery={handleDeleteGallery}
+          onAddToGallery={addPictogramToGallery}
         />
 
         <SidebarInset>

@@ -47,6 +47,7 @@ export function AppSidebar({
   onCreateGallery,
   onEditGallery,
   onDeleteGallery,
+  onAddToGallery,
   ...props
 }: React.ComponentProps<typeof Sidebar> & {
   galleries: Gallery[];
@@ -60,6 +61,7 @@ export function AppSidebar({
   onCreateGallery: () => void;
   onEditGallery?: (gallery: Gallery) => void;
   onDeleteGallery?: (gallery: Gallery) => void;
+  onAddToGallery?: (galleryId: string, pictogramId: string) => Promise<boolean>;
 }) {
   return (
     <Sidebar collapsible="offcanvas" {...props}>
@@ -92,6 +94,7 @@ export function AppSidebar({
           onSelectGallery={onSelectGallery}
           onEditGallery={user ? onEditGallery : undefined}
           onDeleteGallery={user ? onDeleteGallery : undefined}
+          onAddToGallery={user ? onAddToGallery : undefined}
         />
         <SidebarGroup className="mt-auto">
           <SidebarGroupContent>

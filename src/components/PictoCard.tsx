@@ -81,6 +81,11 @@ export function PictoCard({
     <>
       <Card
         className="group relative overflow-hidden transition-all hover:shadow-lg cursor-pointer"
+        draggable
+        onDragStart={(e) => {
+          e.dataTransfer.setData("application/pictogram-id", pictogram.id);
+          e.dataTransfer.effectAllowed = "copy";
+        }}
         onClick={() => setIsModalOpen(true)}
         onMouseEnter={prefetchSvg}
       >
