@@ -3,6 +3,7 @@ import {
   GetObjectCommand,
   PutObjectCommand,
   DeleteObjectCommand,
+  PutBucketCorsCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { config } from "../config.js";
@@ -18,6 +19,26 @@ const s3Client = new S3Client({
   },
   forcePathStyle: true,
 });
+
+export async function configureBucketCors(
+  allowedOrigins: string[],
+): Promise<void> {
+  const command = new PutBucketCorsCommand({
+    Bucket: config.minio.bucket,
+    CORSConfiguration: {
+      CORSRules: [
+        {
+          AllowedOrigins: allowedOrigins,
+          AllowedMethods: ["GET", "PUT", "HEAD"],
+          AllowedHeaders: ["*"],
+          ExposeHeaders: ["ETag"],
+          MaxAgeSeconds: 3600,
+        },
+      ],
+    },
+  });
+  await s3Client.send(command);
+}
 
 export async function getPresignedUploadUrl(
   filename: string,

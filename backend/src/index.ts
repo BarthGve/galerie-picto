@@ -7,6 +7,7 @@ import uploadRoutes from "./routes/upload.js";
 import galleriesRoutes from "./routes/galleries.js";
 import pictogramsRoutes from "./routes/pictograms.js";
 import proxyRoutes from "./routes/proxy.js";
+import { configureBucketCors } from "./services/minio.js";
 
 const app = express();
 
@@ -37,6 +38,14 @@ app.use("/api/galleries", galleriesRoutes);
 app.use("/api/pictograms", pictogramsRoutes);
 app.use("/api/proxy", proxyRoutes);
 
-app.listen(config.port, () => {
+app.listen(config.port, async () => {
   console.log(`Server running on port ${config.port}`);
+
+  try {
+    const origins = config.corsOrigin.split(",").map((o) => o.trim());
+    await configureBucketCors(origins);
+    console.log("Minio bucket CORS configured for:", origins);
+  } catch (err) {
+    console.warn("Failed to configure Minio bucket CORS:", err);
+  }
 });
