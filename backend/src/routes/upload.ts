@@ -5,8 +5,11 @@ import { authMiddleware, AuthenticatedRequest } from "../middleware/auth.js";
 import {
   getPresignedUploadUrl,
   readJsonFile,
+  readFileAsText,
+  writeSvgFile,
   writeJsonFile,
 } from "../services/minio.js";
+import { normalizeToDsfr, generateDarkVariant } from "../services/dsfr-dark.js";
 import type { PictogramManifest, Pictogram } from "../types.js";
 
 const router = Router();
@@ -87,6 +90,46 @@ router.post(
       };
 
       manifest.pictograms.push(newPictogram);
+
+      // Auto-génération de la variante dark DSFR
+      if (filename.endsWith(".svg") && !filename.endsWith("_dark.svg")) {
+        try {
+          const urlPath = new URL(url).pathname;
+          const lightKey = urlPath.replace(`/${config.minio.bucket}/`, "");
+          const svgText = await readFileAsText(lightKey);
+
+          if (svgText) {
+            const normalizedSvg = normalizeToDsfr(svgText);
+
+            // Re-upload le SVG normalisé si des couleurs ont été corrigées
+            if (normalizedSvg !== svgText) {
+              await writeSvgFile(lightKey, normalizedSvg);
+              newPictogram.size = Buffer.byteLength(normalizedSvg, "utf-8");
+            }
+
+            // Générer et uploader la variante dark
+            const darkSvg = generateDarkVariant(svgText);
+            const darkKey = lightKey.replace(/\.svg$/i, "_dark.svg");
+            await writeSvgFile(darkKey, darkSvg);
+
+            const darkFilename = filename.replace(/\.svg$/i, "_dark.svg");
+            manifest.pictograms.push({
+              id: crypto.randomUUID(),
+              name: `${name} (dark)`,
+              filename: darkFilename,
+              url: `${config.minio.endpoint}/${config.minio.bucket}/${darkKey}`,
+              size: Buffer.byteLength(darkSvg, "utf-8"),
+              lastModified: new Date().toISOString(),
+              category,
+              tags,
+            });
+          }
+        } catch (err) {
+          console.error("Failed to generate dark variant:", err);
+          // Non-bloquant : le picto light est quand même ajouté
+        }
+      }
+
       manifest.totalCount = manifest.pictograms.length;
       manifest.lastUpdated = new Date().toISOString();
 

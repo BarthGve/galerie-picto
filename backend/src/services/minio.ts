@@ -54,6 +54,42 @@ export async function readJsonFile<T>(key: string): Promise<T | null> {
   }
 }
 
+export async function readFileAsText(key: string): Promise<string | null> {
+  try {
+    const command = new GetObjectCommand({
+      Bucket: config.minio.bucket,
+      Key: key,
+    });
+    const url = await getSignedUrl(s3Client, command, { expiresIn: 60 });
+    const response = await fetch(url);
+    if (!response.ok) {
+      if (response.status === 404) return null;
+      throw new Error(`Failed to read ${key}: ${response.status}`);
+    }
+    return response.text();
+  } catch (err: unknown) {
+    const s3Err = err as { name?: string; code?: string };
+    if (s3Err.name === "NoSuchKey" || s3Err.code === "NoSuchKey") {
+      return null;
+    }
+    throw err;
+  }
+}
+
+export async function writeSvgFile(
+  key: string,
+  svgContent: string,
+): Promise<void> {
+  const command = new PutObjectCommand({
+    Bucket: config.minio.bucket,
+    Key: key,
+    Body: svgContent,
+    ContentType: "image/svg+xml",
+    CacheControl: "public, max-age=31536000",
+  });
+  await s3Client.send(command);
+}
+
 export async function writeJsonFile(key: string, data: unknown): Promise<void> {
   const command = new PutObjectCommand({
     Bucket: config.minio.bucket,
