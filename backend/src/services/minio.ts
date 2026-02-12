@@ -5,7 +5,6 @@ import {
   DeleteObjectCommand,
   PutBucketCorsCommand,
 } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { config } from "../config.js";
 
 const endpoint = config.minio.endpoint;
@@ -40,33 +39,16 @@ export async function configureBucketCors(
   await s3Client.send(command);
 }
 
-export async function getPresignedUploadUrl(
-  filename: string,
-  contentType: string,
-): Promise<string> {
-  const key = `${config.minio.prefix}${filename}`;
-  const command = new PutObjectCommand({
-    Bucket: config.minio.bucket,
-    Key: key,
-    ContentType: contentType,
-  });
-  return getSignedUrl(s3Client, command, { expiresIn: 300 });
-}
-
 export async function readJsonFile<T>(key: string): Promise<T | null> {
   try {
-    // Use a presigned URL to bypass CDN caching (unique query params each time)
     const command = new GetObjectCommand({
       Bucket: config.minio.bucket,
       Key: key,
     });
-    const url = await getSignedUrl(s3Client, command, { expiresIn: 60 });
-    const response = await fetch(url);
-    if (!response.ok) {
-      if (response.status === 404) return null;
-      throw new Error(`Failed to read ${key}: ${response.status}`);
-    }
-    return (await response.json()) as T;
+    const result = await s3Client.send(command);
+    const text = await result.Body?.transformToString();
+    if (!text) return null;
+    return JSON.parse(text) as T;
   } catch (err: unknown) {
     const s3Err = err as { name?: string; code?: string };
     if (s3Err.name === "NoSuchKey" || s3Err.code === "NoSuchKey") {
@@ -82,13 +64,8 @@ export async function readFileAsText(key: string): Promise<string | null> {
       Bucket: config.minio.bucket,
       Key: key,
     });
-    const url = await getSignedUrl(s3Client, command, { expiresIn: 60 });
-    const response = await fetch(url);
-    if (!response.ok) {
-      if (response.status === 404) return null;
-      throw new Error(`Failed to read ${key}: ${response.status}`);
-    }
-    return response.text();
+    const result = await s3Client.send(command);
+    return (await result.Body?.transformToString()) ?? null;
   } catch (err: unknown) {
     const s3Err = err as { name?: string; code?: string };
     if (s3Err.name === "NoSuchKey" || s3Err.code === "NoSuchKey") {

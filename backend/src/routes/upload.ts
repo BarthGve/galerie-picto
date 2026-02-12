@@ -3,7 +3,6 @@ import { v4 as uuidv4 } from "uuid";
 import { config } from "../config.js";
 import { authMiddleware, AuthenticatedRequest } from "../middleware/auth.js";
 import {
-  getPresignedUploadUrl,
   readJsonFile,
   readFileAsText,
   writeSvgFile,
@@ -16,29 +15,27 @@ const router = Router();
 
 const MANIFEST_KEY = `${config.minio.prefix}pictograms-manifest.json`;
 
-// POST /api/upload/presigned-url - Generate presigned upload URL
+// POST /api/upload/file - Upload SVG directly through backend (avoids CDN CORS issues)
 router.post(
-  "/presigned-url",
+  "/file",
   authMiddleware,
   async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-    const { filename, contentType } = req.body;
+    const { filename, content } = req.body;
 
-    if (!filename || !contentType) {
-      res.status(400).json({ error: "Missing filename or contentType" });
+    if (!filename || !content) {
+      res.status(400).json({ error: "Missing filename or content" });
       return;
     }
 
     try {
       const uniqueFilename = `${uuidv4()}-${filename}`;
-      const uploadUrl = await getPresignedUploadUrl(
-        uniqueFilename,
-        contentType,
-      );
-      const publicUrl = `${config.minio.endpoint}/${config.minio.bucket}/${config.minio.prefix}${uniqueFilename}`;
+      const key = `${config.minio.prefix}${uniqueFilename}`;
+      await writeSvgFile(key, content);
+      const publicUrl = `${config.minio.endpoint}/${config.minio.bucket}/${key}`;
 
-      res.json({ uploadUrl, publicUrl });
+      res.json({ publicUrl });
     } catch {
-      res.status(500).json({ error: "Failed to generate presigned URL" });
+      res.status(500).json({ error: "Failed to upload file" });
     }
   },
 );

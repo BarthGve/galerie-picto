@@ -35,10 +35,10 @@ export async function uploadPictogram(
     // 2. Enrichir avec métadonnées
     const enrichedSvg = enrichSvgWithMetadata(svgContent, metadata);
 
-    // 3. Demander une presigned URL à l'API
+    // 3. Upload le SVG enrichi via le backend (évite les problèmes CORS du CDN)
     onProgress?.(10);
 
-    const urlResponse = await fetch(`${API_URL}/api/upload/presigned-url`, {
+    const uploadResponse = await fetch(`${API_URL}/api/upload/file`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -46,33 +46,16 @@ export async function uploadPictogram(
       },
       body: JSON.stringify({
         filename: file.name,
-        contentType: "image/svg+xml",
+        content: enrichedSvg,
       }),
     });
 
-    if (!urlResponse.ok) {
-      const error = await urlResponse.json();
-      throw new Error(error.error || "Failed to get upload URL");
-    }
-
-    const { uploadUrl, publicUrl } = await urlResponse.json();
-
-    onProgress?.(30);
-
-    // 4. Upload le SVG enrichi vers Minio
-    const blob = new Blob([enrichedSvg], { type: "image/svg+xml" });
-
-    const uploadResponse = await fetch(uploadUrl, {
-      method: "PUT",
-      body: blob,
-      headers: {
-        "Content-Type": "image/svg+xml",
-      },
-    });
-
     if (!uploadResponse.ok) {
-      throw new Error("Failed to upload file");
+      const error = await uploadResponse.json();
+      throw new Error(error.error || "Failed to upload file");
     }
+
+    const { publicUrl } = await uploadResponse.json();
 
     onProgress?.(70);
 

@@ -17,7 +17,7 @@ app.use(
     credentials: true,
   }),
 );
-app.use(express.json());
+app.use(express.json({ limit: "10mb" }));
 
 // No-cache for API responses
 app.use("/api", (_req, res, next) => {
