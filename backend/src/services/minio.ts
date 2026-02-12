@@ -29,7 +29,7 @@ export async function configureBucketCors(
       CORSRules: [
         {
           AllowedOrigins: allowedOrigins,
-          AllowedMethods: ["GET", "PUT", "HEAD"],
+          AllowedMethods: ["GET", "PUT", "POST", "DELETE", "HEAD"],
           AllowedHeaders: ["*"],
           ExposeHeaders: ["ETag"],
           MaxAgeSeconds: 3600,
