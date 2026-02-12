@@ -10,7 +10,7 @@ import {
   writeJsonFile,
 } from "../services/minio.js";
 import { normalizeToDsfr, generateDarkVariant } from "../services/dsfr-dark.js";
-import type { PictogramManifest, Pictogram } from "../types.js";
+import type { PictogramManifest, Pictogram, GalleriesFile } from "../types.js";
 
 const router = Router();
 
@@ -134,6 +134,35 @@ router.post(
       manifest.lastUpdated = new Date().toISOString();
 
       await writeJsonFile(MANIFEST_KEY, manifest);
+
+      // Sync galleries.json with selected galleryIds
+      if (galleryIds && Array.isArray(galleryIds) && galleryIds.length > 0) {
+        try {
+          const GALLERIES_KEY = `${config.minio.prefix}galleries.json`;
+          const galleriesFile = (await readJsonFile<GalleriesFile>(
+            GALLERIES_KEY,
+          )) || {
+            galleries: [],
+            lastUpdated: new Date().toISOString(),
+          };
+          let changed = false;
+          for (const gid of galleryIds) {
+            const gallery = galleriesFile.galleries.find((g) => g.id === gid);
+            if (gallery && !gallery.pictogramIds.includes(id)) {
+              gallery.pictogramIds.push(id);
+              gallery.updatedAt = new Date().toISOString();
+              changed = true;
+            }
+          }
+          if (changed) {
+            galleriesFile.lastUpdated = new Date().toISOString();
+            await writeJsonFile(GALLERIES_KEY, galleriesFile);
+          }
+        } catch (err) {
+          console.error("Failed to sync galleries.json after upload:", err);
+          // Non-bloquant : le picto est quand même créé
+        }
+      }
 
       res.json({ success: true, pictogram: newPictogram });
     } catch {

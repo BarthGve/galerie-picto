@@ -3,6 +3,7 @@ export interface Contributor {
   githubAvatarUrl: string;
 }
 
+// darkUrl n'est pas stocké dans le manifest : il est calculé côté client par pairDarkVariants()
 export interface Pictogram {
   id: string;
   name: string;
@@ -27,7 +28,6 @@ export interface Gallery {
   name: string;
   description?: string;
   color?: string;
-  icon?: string;
   pictogramIds: string[];
   createdAt: string;
   updatedAt: string;

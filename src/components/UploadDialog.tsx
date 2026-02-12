@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Upload, X, Plus, Loader2 } from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { Upload, X, Plus, Loader2, FileUp } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -80,41 +80,71 @@ export function UploadDialog({
       }
     } catch (error) {
       console.error("Failed to fetch galleries:", error);
+      toast.error("Impossible de charger les galeries");
     } finally {
       setLoadingGalleries(false);
     }
   };
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [dragActive, setDragActive] = useState(false);
+
+  const processFile = useCallback(
+    async (selectedFile: File) => {
+      const isValid = await validateSvgFile(selectedFile);
+      if (!isValid) {
+        toast.error("Le fichier doit être un SVG valide");
+        return;
+      }
+
+      setFile(selectedFile);
+
+      const url = URL.createObjectURL(selectedFile);
+      setPreviewUrl(url);
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const content = e.target?.result as string;
+        const existing = extractSvgMetadata(content);
+        setMetadata(existing);
+        if (existing.tags && existing.tags.length > 0) {
+          setTags(existing.tags);
+        }
+      };
+      reader.readAsText(selectedFile);
+    },
+    [setFile, setPreviewUrl, setMetadata, setTags],
+  );
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (!selectedFile) return;
-
-    // Valider le fichier
-    const isValid = await validateSvgFile(selectedFile);
-    if (!isValid) {
-      toast.error("Le fichier doit être un SVG valide");
-      return;
-    }
-
-    setFile(selectedFile);
-
-    // Créer preview URL sécurisée
-    const url = URL.createObjectURL(selectedFile);
-    setPreviewUrl(url);
-
-    // Extraire métadonnées existantes
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const content = e.target?.result as string;
-      const existing = extractSvgMetadata(content);
-      setMetadata(existing);
-      // Pre-fill tags from existing SVG metadata
-      if (existing.tags && existing.tags.length > 0) {
-        setTags(existing.tags);
-      }
-    };
-    reader.readAsText(selectedFile);
+    await processFile(selectedFile);
   };
+
+  const handleDrop = useCallback(
+    async (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setDragActive(false);
+
+      const droppedFile = e.dataTransfer.files[0];
+      if (droppedFile) {
+        await processFile(droppedFile);
+      }
+    },
+    [processFile],
+  );
+
+  const handleDrag = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  }, []);
 
   const handleAddTag = () => {
     const trimmed = tagInput.trim();
@@ -297,37 +327,61 @@ export function UploadDialog({
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* File picker */}
-          <div>
-            <label className="block text-sm font-medium mb-2">
-              Fichier SVG
-            </label>
-            <Input
+          {/* Drop zone */}
+          <div
+            onDragEnter={handleDrag}
+            onDragOver={handleDrag}
+            onDragLeave={handleDrag}
+            onDrop={handleDrop}
+            onClick={() => !uploading && fileInputRef.current?.click()}
+            className={`relative border-2 border-dashed rounded-lg transition-colors cursor-pointer ${
+              dragActive
+                ? "border-primary bg-primary/5"
+                : file
+                  ? "border-muted-foreground/20 bg-muted/30"
+                  : "border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/20"
+            }`}
+          >
+            <input
+              ref={fileInputRef}
               type="file"
               accept=".svg,image/svg+xml"
               onChange={handleFileChange}
               disabled={uploading}
+              className="hidden"
             />
-            {file && (
-              <Badge variant="secondary" className="mt-2">
-                {file.name} ({(file.size / 1024).toFixed(1)} KB)
-              </Badge>
+
+            {previewUrl ? (
+              <div className="flex items-center gap-4 p-4">
+                <div className="w-24 h-24 shrink-0 flex items-center justify-center bg-background rounded-md border">
+                  <img
+                    src={previewUrl}
+                    alt="SVG preview"
+                    className="w-16 h-16 object-contain"
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{file?.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {file ? `${(file.size / 1024).toFixed(1)} KB` : ""} — SVG
+                  </p>
+                  <p className="text-xs text-primary mt-1">
+                    Cliquer ou glisser pour remplacer
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-10 px-4">
+                <FileUp className="h-10 w-10 text-muted-foreground/50 mb-3" />
+                <p className="text-sm font-medium">
+                  Glisser-déposer un fichier SVG
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  ou cliquer pour parcourir
+                </p>
+              </div>
             )}
           </div>
-
-          {/* Preview */}
-          {previewUrl && (
-            <div>
-              <label className="block text-sm font-medium mb-2">Preview</label>
-              <div className="border rounded-lg p-4 bg-muted/30 flex items-center justify-center h-48">
-                <img
-                  src={previewUrl}
-                  alt="SVG preview"
-                  className="max-w-full max-h-full object-contain"
-                />
-              </div>
-            </div>
-          )}
 
           {/* Métadonnées */}
           {file && (

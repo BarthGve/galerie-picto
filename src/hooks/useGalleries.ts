@@ -58,6 +58,7 @@ export function useGalleries() {
       }
       const gallery: Gallery = await response.json();
       setGalleries((prev) => [...prev, gallery]);
+      toast.success(`Collection « ${gallery.name} » créée`);
       return gallery;
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Erreur inconnue";
@@ -85,6 +86,7 @@ export function useGalleries() {
       }
       const gallery: Gallery = await response.json();
       setGalleries((prev) => prev.map((g) => (g.id === id ? gallery : g)));
+      toast.success(`Collection « ${gallery.name} » mise à jour`);
       return gallery;
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Erreur inconnue";

@@ -49,7 +49,7 @@ router.post(
   "/",
   authMiddleware,
   async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-    const { name, description, color, icon } = req.body;
+    const { name, description, color } = req.body;
 
     if (!name) {
       res.status(400).json({ error: "Missing required field: name" });
@@ -73,7 +73,6 @@ router.post(
         name,
         description,
         color,
-        icon,
         pictogramIds: [],
         createdAt: now,
         updatedAt: now,
@@ -98,7 +97,7 @@ router.put(
   authMiddleware,
   async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     const id = req.params.id as string;
-    const { name, description, color, icon } = req.body;
+    const { name, description, color } = req.body;
 
     try {
       const data = await getGalleriesFile();
@@ -114,7 +113,6 @@ router.put(
       if (name !== undefined) gallery.name = name;
       if (description !== undefined) gallery.description = description;
       if (color !== undefined) gallery.color = color;
-      if (icon !== undefined) gallery.icon = icon;
       gallery.updatedAt = now;
 
       data.lastUpdated = now;

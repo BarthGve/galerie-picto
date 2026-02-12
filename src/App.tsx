@@ -31,8 +31,10 @@ function App() {
     loading: galleriesLoading,
     createGallery,
     updateGallery,
+    deleteGallery,
     addPictogramToGallery,
     removePictogramFromGallery,
+    refetch: refetchGalleries,
   } = useGalleries();
   const [searchQuery, setSearchQuery] = useState("");
   const [user, setUser] = useState<GitHubUser | null>(null);
@@ -48,21 +50,27 @@ function App() {
 
   useEffect(() => {
     async function initAuth() {
-      const params = new URLSearchParams(window.location.search);
-      if (params.has("code")) {
-        const token = await handleGitHubCallback();
-        if (token) {
-          const userInfo = await getGitHubUser(token);
-          setUser(userInfo);
+      try {
+        const params = new URLSearchParams(window.location.search);
+        if (params.has("code")) {
+          const token = await handleGitHubCallback();
+          if (token) {
+            const userInfo = await getGitHubUser(token);
+            setUser(userInfo);
+          }
+        } else {
+          const token = getStoredToken();
+          if (token) {
+            const userInfo = await getGitHubUser(token);
+            setUser(userInfo);
+          }
         }
-      } else {
-        const token = getStoredToken();
-        if (token) {
-          const userInfo = await getGitHubUser(token);
-          setUser(userInfo);
-        }
+      } catch (err) {
+        console.error("Auth init failed:", err);
+        toast.error("Erreur d'authentification");
+      } finally {
+        setAuthLoading(false);
       }
-      setAuthLoading(false);
     }
 
     initAuth();
@@ -71,7 +79,21 @@ function App() {
   const handleUploadSuccess = async () => {
     setUploadDialogOpen(false);
     toast.success("Pictogramme uploadé avec succès !");
-    await refetchPictograms();
+    await Promise.all([refetchPictograms(), refetchGalleries()]);
+  };
+
+  const handleDeleteGallery = async (gallery: (typeof galleries)[number]) => {
+    const confirmed = window.confirm(
+      `Supprimer la collection « ${gallery.name} » ? Les pictogrammes ne seront pas supprimés.`,
+    );
+    if (!confirmed) return;
+    const success = await deleteGallery(gallery.id);
+    if (success) {
+      toast.success(`Collection « ${gallery.name} » supprimée`);
+      if (selectedGalleryId === gallery.id) {
+        setSelectedGalleryId(null);
+      }
+    }
   };
 
   const handleCreateGallery = () => {
@@ -179,6 +201,7 @@ function App() {
           onUploadClick={() => setUploadDialogOpen(true)}
           onCreateGallery={handleCreateGallery}
           onEditGallery={handleEditGallery}
+          onDeleteGallery={handleDeleteGallery}
         />
 
         <SidebarInset>
