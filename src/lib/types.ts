@@ -1,15 +1,22 @@
 // Types pour la galerie de pictogrammes
 
+export interface Contributor {
+  githubUsername: string;
+  githubAvatarUrl: string;
+}
+
 export interface Pictogram {
   id: string;
   name: string;
   filename: string;
   url: string;
+  darkUrl?: string;
   size: number;
   lastModified: string;
   category?: string;
   tags?: string[];
   galleryIds?: string[];
+  contributor?: Contributor;
 }
 
 export interface PictogramManifest {

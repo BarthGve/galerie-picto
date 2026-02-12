@@ -50,6 +50,13 @@ export function UploadDialog({
   const [selectedGalleryIds, setSelectedGalleryIds] = useState<string[]>([]);
   const [loadingGalleries, setLoadingGalleries] = useState(false);
 
+  // Contributor state
+  const [contributorUsername, setContributorUsername] = useState("");
+  const [contributorAvatar, setContributorAvatar] = useState<string | null>(
+    null,
+  );
+  const [contributorLoading, setContributorLoading] = useState(false);
+
   // Inline gallery creation
   const [showNewGallery, setShowNewGallery] = useState(false);
   const [newGalleryName, setNewGalleryName] = useState("");
@@ -128,6 +135,27 @@ export function UploadDialog({
     setTags(tags.filter((t) => t !== tagToRemove));
   };
 
+  const handleLookupContributor = async () => {
+    const username = contributorUsername.trim();
+    if (!username) return;
+    setContributorLoading(true);
+    setContributorAvatar(null);
+    try {
+      const res = await fetch(`https://api.github.com/users/${username}`);
+      if (res.ok) {
+        const data = await res.json();
+        setContributorAvatar(data.avatar_url);
+      } else {
+        toast.error("Utilisateur GitHub introuvable");
+        setContributorAvatar(null);
+      }
+    } catch {
+      toast.error("Erreur lors de la recherche GitHub");
+    } finally {
+      setContributorLoading(false);
+    }
+  };
+
   const handleToggleGallery = (galleryId: string) => {
     setSelectedGalleryIds((prev) =>
       prev.includes(galleryId)
@@ -200,6 +228,12 @@ export function UploadDialog({
         token,
         tags,
         galleryIds: selectedGalleryIds,
+        contributor: contributorAvatar
+          ? {
+              githubUsername: contributorUsername.trim(),
+              githubAvatarUrl: contributorAvatar,
+            }
+          : undefined,
         onProgress: setProgress,
       });
 
@@ -239,6 +273,8 @@ export function UploadDialog({
     setShowNewGallery(false);
     setNewGalleryName("");
     setNewGalleryColor("#6366f1");
+    setContributorUsername("");
+    setContributorAvatar(null);
   };
 
   if (!isAuthenticated()) {
@@ -338,6 +374,46 @@ export function UploadDialog({
                   }
                   disabled={uploading}
                 />
+              </div>
+
+              {/* Contributeur GitHub */}
+              <div>
+                <label className="block text-xs text-muted-foreground mb-1">
+                  Contributeur GitHub (optionnel)
+                </label>
+                <div className="flex gap-2 items-center">
+                  <Input
+                    placeholder="Nom d'utilisateur GitHub"
+                    value={contributorUsername}
+                    onChange={(e) => setContributorUsername(e.target.value)}
+                    disabled={uploading}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleLookupContributor}
+                    disabled={
+                      uploading ||
+                      contributorLoading ||
+                      !contributorUsername.trim()
+                    }
+                    className="shrink-0"
+                  >
+                    {contributorLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      "Vérifier"
+                    )}
+                  </Button>
+                  {contributorAvatar && (
+                    <img
+                      src={contributorAvatar}
+                      alt={contributorUsername}
+                      className="w-8 h-8 rounded-full shrink-0"
+                    />
+                  )}
+                </div>
               </div>
 
               {/* Tags - chips UI */}

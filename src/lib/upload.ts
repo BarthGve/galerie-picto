@@ -8,6 +8,7 @@ export interface UploadOptions {
   token: string;
   tags?: string[];
   galleryIds?: string[];
+  contributor?: { githubUsername: string; githubAvatarUrl: string };
   onProgress?: (progress: number) => void;
 }
 
@@ -23,6 +24,7 @@ export async function uploadPictogram(
     token,
     tags = [],
     galleryIds = [],
+    contributor,
     onProgress,
   } = options;
 
@@ -77,11 +79,15 @@ export async function uploadPictogram(
     // 5. Notifier le backend pour mettre à jour le manifest
     try {
       await notifyUploadComplete(token, {
+        id: crypto.randomUUID(),
         filename: file.name,
         name: metadata.title || file.name.replace(/\.svg$/i, ""),
+        url: publicUrl,
+        size: file.size,
         category: metadata.category,
         tags,
         galleryIds,
+        contributor,
       });
       onProgress?.(100);
     } catch (completeError) {
@@ -109,11 +115,15 @@ export async function uploadPictogram(
 async function notifyUploadComplete(
   token: string,
   data: {
+    id: string;
     filename: string;
     name: string;
+    url: string;
+    size: number;
     category?: string;
     tags: string[];
     galleryIds: string[];
+    contributor?: { githubUsername: string; githubAvatarUrl: string };
   },
 ): Promise<void> {
   const response = await fetch(`${API_URL}/api/upload/complete`, {

@@ -19,7 +19,13 @@ import {
 } from "@/lib/github-auth";
 
 function App() {
-  const { pictograms, loading, error, lastUpdated } = usePictograms();
+  const {
+    pictograms,
+    loading,
+    error,
+    lastUpdated,
+    refetch: refetchPictograms,
+  } = usePictograms();
   const {
     galleries,
     loading: galleriesLoading,
@@ -62,16 +68,10 @@ function App() {
     initAuth();
   }, []);
 
-  const handleUploadSuccess = () => {
+  const handleUploadSuccess = async () => {
     setUploadDialogOpen(false);
-    toast.info("Mise a jour de la galerie en cours...", {
-      description: "La page va se recharger automatiquement",
-      duration: 30000,
-    });
-
-    setTimeout(() => {
-      window.location.reload();
-    }, 30000);
+    toast.success("Pictogramme uploadé avec succès !");
+    await refetchPictograms();
   };
 
   const handleCreateGallery = () => {
@@ -112,13 +112,21 @@ function App() {
     }
 
     if (searchQuery) {
-      const query = searchQuery.toLowerCase();
+      const normalize = (s: string) =>
+        s
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "");
+      const query = normalize(searchQuery);
       result = result.filter(
         (picto) =>
-          picto.name.toLowerCase().includes(query) ||
-          picto.id.toLowerCase().includes(query) ||
-          picto.filename.toLowerCase().includes(query) ||
-          picto.tags?.some((tag) => tag.toLowerCase().includes(query)),
+          normalize(picto.name).includes(query) ||
+          normalize(picto.id).includes(query) ||
+          normalize(picto.filename).includes(query) ||
+          (picto.category && normalize(picto.category).includes(query)) ||
+          picto.tags?.some((tag) => normalize(tag).includes(query)) ||
+          (picto.contributor &&
+            normalize(picto.contributor.githubUsername).includes(query)),
       );
     }
 
@@ -196,6 +204,7 @@ function App() {
                     onRemoveFromGallery={removePictogramFromGallery}
                     isAuthenticated={!!user}
                     selectedGalleryId={selectedGalleryId}
+                    onPictogramUpdated={refetchPictograms}
                   />
                 </div>
               </div>

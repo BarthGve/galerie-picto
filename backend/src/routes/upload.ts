@@ -45,8 +45,17 @@ router.post(
   "/complete",
   authMiddleware,
   async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-    const { id, name, filename, url, size, category, tags, galleryIds } =
-      req.body;
+    const {
+      id,
+      name,
+      filename,
+      url,
+      size,
+      category,
+      tags,
+      galleryIds,
+      contributor,
+    } = req.body;
 
     if (!id || !name || !filename || !url) {
       res
@@ -74,6 +83,7 @@ router.post(
         category,
         tags,
         galleryIds,
+        contributor,
       };
 
       manifest.pictograms.push(newPictogram);

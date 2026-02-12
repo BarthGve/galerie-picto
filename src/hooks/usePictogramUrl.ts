@@ -1,0 +1,63 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { Pictogram } from "@/lib/types";
+import { useTheme } from "@/hooks/use-theme";
+import { fetchSvgText } from "@/lib/svg-to-png";
+import { replaceSvgColors } from "@/lib/svg-color-parser";
+
+/**
+ * Mapping couleurs DSFR light → dark pour les pictogrammes artwork.
+ * Source : systeme-de-design.gouv.fr/fondamentaux/pictogramme
+ */
+const DSFR_LIGHT_TO_DARK: Record<string, string> = {
+  "#000091": "#8585f6", // blue-france-113 → blue-france-625 (artwork-major)
+  "#e1000f": "#f95c5e", // red-marianne-425 → red-marianne-625 (artwork-minor)
+  "#ececff": "#21213f", // blue-france-950 → blue-france-100 (artwork-decorative)
+};
+
+/**
+ * Retourne l'URL du pictogramme adaptée au thème courant.
+ * - Si une variante _dark existe → utilise darkUrl
+ * - Sinon, en dark mode → fetch le SVG et applique les couleurs DSFR dark
+ * - En light mode → URL d'origine
+ */
+export function usePictogramUrl(pictogram: Pictogram): string {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
+  const needsRemap = isDark && !pictogram.darkUrl;
+
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const activeUrlRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!needsRemap) {
+      // Cleanup only, no setState needed — blobUrl is ignored when needsRemap is false
+      return;
+    }
+
+    // Skip if already generated for this URL
+    if (activeUrlRef.current === pictogram.url && blobUrl) return;
+    activeUrlRef.current = pictogram.url;
+
+    let cancelled = false;
+    let objectUrl: string | null = null;
+
+    fetchSvgText(pictogram.url).then((svgText) => {
+      if (cancelled) return;
+      const darkSvg = replaceSvgColors(svgText, DSFR_LIGHT_TO_DARK);
+      const blob = new Blob([darkSvg], { type: "image/svg+xml" });
+      objectUrl = URL.createObjectURL(blob);
+      setBlobUrl(objectUrl);
+    });
+
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [needsRemap, pictogram.url]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return useMemo(() => {
+    if (isDark && pictogram.darkUrl) return pictogram.darkUrl;
+    if (needsRemap && blobUrl) return blobUrl;
+    return pictogram.url;
+  }, [isDark, pictogram.darkUrl, pictogram.url, needsRemap, blobUrl]);
+}

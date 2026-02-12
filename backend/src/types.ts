@@ -1,3 +1,8 @@
+export interface Contributor {
+  githubUsername: string;
+  githubAvatarUrl: string;
+}
+
 export interface Pictogram {
   id: string;
   name: string;
@@ -8,6 +13,7 @@ export interface Pictogram {
   category?: string;
   tags?: string[];
   galleryIds?: string[];
+  contributor?: Contributor;
 }
 
 export interface PictogramManifest {

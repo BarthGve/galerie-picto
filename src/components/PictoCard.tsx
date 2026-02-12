@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { Pictogram, Gallery } from "@/lib/types";
 import { fetchSvgText } from "@/lib/svg-to-png";
+import { usePictogramUrl } from "@/hooks/usePictogramUrl";
 import { PictoModal } from "./PictoModal";
 import { GallerySelector } from "./GallerySelector";
 import { toast } from "sonner";
@@ -19,6 +20,7 @@ interface PictoCardProps {
   ) => Promise<boolean>;
   isAuthenticated?: boolean;
   selectedGalleryId?: string | null;
+  onPictogramUpdated?: () => void;
 }
 
 export function PictoCard({
@@ -28,10 +30,12 @@ export function PictoCard({
   onRemoveFromGallery,
   isAuthenticated,
   selectedGalleryId,
+  onPictogramUpdated,
 }: PictoCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const svgCacheRef = useRef<string | null>(null);
+  const displayUrl = usePictogramUrl(pictogram);
 
   const prefetchSvg = () => {
     if (!svgCacheRef.current) {
@@ -80,11 +84,11 @@ export function PictoCard({
         onClick={() => setIsModalOpen(true)}
         onMouseEnter={prefetchSvg}
       >
-        <div className="aspect-square p-6 flex items-center justify-center bg-muted/30">
+        <div className="aspect-square flex items-center justify-center bg-muted/30">
           <img
-            src={pictogram.url}
+            src={displayUrl}
             alt={pictogram.name}
-            className="max-w-full max-h-full object-contain transition-transform group-hover:scale-110"
+            className="w-24 h-24 object-contain transition-transform group-hover:scale-110"
           />
         </div>
 
@@ -121,7 +125,17 @@ export function PictoCard({
             <Badge variant="secondary" className="text-xs">
               {formatFileSize(pictogram.size)}
             </Badge>
-            <span>SVG</span>
+            <div className="flex items-center gap-1">
+              {pictogram.contributor && (
+                <img
+                  src={pictogram.contributor.githubAvatarUrl}
+                  alt={pictogram.contributor.githubUsername}
+                  className="w-4 h-4 rounded-full"
+                  title={pictogram.contributor.githubUsername}
+                />
+              )}
+              <span>SVG</span>
+            </div>
           </div>
           {!selectedGalleryId && pictoGalleries.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-2">
@@ -153,6 +167,7 @@ export function PictoCard({
         onAddToGallery={onAddToGallery}
         onRemoveFromGallery={onRemoveFromGallery}
         isAuthenticated={isAuthenticated}
+        onPictogramUpdated={onPictogramUpdated}
       />
     </>
   );

@@ -11,6 +11,7 @@ interface PictoGridProps {
   ) => Promise<boolean>;
   isAuthenticated?: boolean;
   selectedGalleryId?: string | null;
+  onPictogramUpdated?: () => void;
 }
 
 export function PictoGrid({
@@ -20,6 +21,7 @@ export function PictoGrid({
   onRemoveFromGallery,
   isAuthenticated,
   selectedGalleryId,
+  onPictogramUpdated,
 }: PictoGridProps) {
   if (pictograms.length === 0) {
     return (
@@ -42,6 +44,7 @@ export function PictoGrid({
           onRemoveFromGallery={onRemoveFromGallery}
           isAuthenticated={isAuthenticated}
           selectedGalleryId={selectedGalleryId}
+          onPictogramUpdated={onPictogramUpdated}
         />
       ))}
     </div>
