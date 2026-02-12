@@ -26,34 +26,41 @@ export function usePictogramUrl(pictogram: Pictogram): string {
   const needsRemap = isDark && !pictogram.darkUrl;
 
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
-  const activeUrlRef = useRef<string | null>(null);
+  const blobUrlRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!needsRemap) {
-      // Cleanup only, no setState needed — blobUrl is ignored when needsRemap is false
+      // Switched back to light: revoke previous blob via ref only (no setState needed,
+      // useMemo ignores blobUrl when needsRemap is false)
+      if (blobUrlRef.current) {
+        URL.revokeObjectURL(blobUrlRef.current);
+        blobUrlRef.current = null;
+      }
       return;
     }
 
     // Skip if already generated for this URL
-    if (activeUrlRef.current === pictogram.url && blobUrl) return;
-    activeUrlRef.current = pictogram.url;
+    if (blobUrlRef.current) return;
 
     let cancelled = false;
-    let objectUrl: string | null = null;
 
     fetchSvgText(pictogram.url).then((svgText) => {
       if (cancelled) return;
       const darkSvg = replaceSvgColors(svgText, DSFR_LIGHT_TO_DARK);
       const blob = new Blob([darkSvg], { type: "image/svg+xml" });
-      objectUrl = URL.createObjectURL(blob);
+      const objectUrl = URL.createObjectURL(blob);
+      blobUrlRef.current = objectUrl;
       setBlobUrl(objectUrl);
     });
 
     return () => {
       cancelled = true;
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      if (blobUrlRef.current) {
+        URL.revokeObjectURL(blobUrlRef.current);
+        blobUrlRef.current = null;
+      }
     };
-  }, [needsRemap, pictogram.url]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [needsRemap, pictogram.url]);  
 
   return useMemo(() => {
     if (isDark && pictogram.darkUrl) return pictogram.darkUrl;

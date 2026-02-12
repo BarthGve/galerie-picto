@@ -1,6 +1,21 @@
-import { useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 
 type Theme = "light" | "dark" | "system";
+
+interface ThemeContextValue {
+  theme: Theme;
+  setTheme: (t: Theme) => void;
+  resolvedTheme: "light" | "dark";
+}
+
+const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 function getSystemTheme(): "light" | "dark" {
   return window.matchMedia("(prefers-color-scheme: dark)").matches
@@ -13,7 +28,7 @@ function applyTheme(theme: Theme) {
   document.documentElement.classList.toggle("dark", resolved === "dark");
 }
 
-export function useTheme() {
+export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(() => {
     return (localStorage.getItem("theme") as Theme) || "dark";
   });
@@ -50,5 +65,16 @@ export function useTheme() {
     setThemeState(t);
   };
 
-  return { theme, setTheme, resolvedTheme };
+  const value = useMemo(
+    () => ({ theme, setTheme, resolvedTheme }),
+    [theme, resolvedTheme],
+  );
+
+  return <ThemeContext value={value}>{children}</ThemeContext>;
+}
+
+export function useTheme(): ThemeContextValue {
+  const ctx = useContext(ThemeContext);
+  if (!ctx) throw new Error("useTheme must be used within ThemeProvider");
+  return ctx;
 }

@@ -249,7 +249,29 @@ export function PictoModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{pictogram.name}</DialogTitle>
+          <div className="flex items-center gap-2">
+            <DialogTitle className="flex-1">{pictogram.name}</DialogTitle>
+            {isAuthenticated && onDeletePictogram && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                onClick={async () => {
+                  const confirmed = window.confirm(
+                    "Supprimer ce pictogramme ? Cette action est irréversible.",
+                  );
+                  if (!confirmed) return;
+                  const success = await onDeletePictogram(pictogram.id);
+                  if (success) {
+                    toast.success("Pictogramme supprimé");
+                    onClose();
+                  }
+                }}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </DialogHeader>
 
         <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr] gap-6">
@@ -432,29 +454,6 @@ export function PictoModal({
                 onRemove={onRemoveFromGallery}
                 variant="full"
               />
-            )}
-
-            {/* Delete action */}
-            {isAuthenticated && onDeletePictogram && (
-              <Button
-                variant="destructive"
-                size="sm"
-                className="w-full"
-                onClick={async () => {
-                  const confirmed = window.confirm(
-                    "Supprimer ce pictogramme ? Cette action est irréversible.",
-                  );
-                  if (!confirmed) return;
-                  const success = await onDeletePictogram(pictogram.id);
-                  if (success) {
-                    toast.success("Pictogramme supprimé");
-                    onClose();
-                  }
-                }}
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Supprimer
-              </Button>
             )}
 
             {/* Download actions - footer */}
