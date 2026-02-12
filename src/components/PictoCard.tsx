@@ -21,6 +21,7 @@ interface PictoCardProps {
   isAuthenticated?: boolean;
   selectedGalleryId?: string | null;
   onPictogramUpdated?: () => void;
+  onDeletePictogram?: (id: string) => Promise<boolean>;
 }
 
 export function PictoCard({
@@ -31,6 +32,7 @@ export function PictoCard({
   isAuthenticated,
   selectedGalleryId,
   onPictogramUpdated,
+  onDeletePictogram,
 }: PictoCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -89,12 +91,32 @@ export function PictoCard({
         onClick={() => setIsModalOpen(true)}
         onMouseEnter={prefetchSvg}
       >
-        <div className="aspect-square flex items-center justify-center bg-muted/30">
+        <div className="aspect-square relative flex items-center justify-center bg-muted/30">
           <img
             src={displayUrl}
             alt={pictogram.name}
             className="w-24 h-24 object-contain transition-transform group-hover:scale-110"
           />
+          {!selectedGalleryId && pictoGalleries.length > 0 && (
+            <div className="absolute bottom-1.5 left-1.5 flex flex-wrap gap-1 max-w-[calc(100%-12px)]">
+              {pictoGalleries.map((g) => (
+                <Badge
+                  key={g.id}
+                  variant="secondary"
+                  className="text-[10px] px-1.5 py-0 h-5 gap-1"
+                >
+                  <span
+                    className="size-2 shrink-0 rounded-full"
+                    style={{
+                      backgroundColor: g.color || "var(--muted-foreground)",
+                      opacity: g.color ? 1 : 0.3,
+                    }}
+                  />
+                  {g.name}
+                </Badge>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Quick actions overlay */}
@@ -142,25 +164,6 @@ export function PictoCard({
               <span>SVG</span>
             </div>
           </div>
-          {!selectedGalleryId && pictoGalleries.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-2">
-              {pictoGalleries.map((g) => (
-                <span
-                  key={g.id}
-                  className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] bg-muted text-muted-foreground"
-                >
-                  <span
-                    className="size-2 shrink-0 rounded-full"
-                    style={{
-                      backgroundColor: g.color || "var(--muted-foreground)",
-                      opacity: g.color ? 1 : 0.3,
-                    }}
-                  />
-                  {g.name}
-                </span>
-              ))}
-            </div>
-          )}
         </div>
       </Card>
 
@@ -173,6 +176,7 @@ export function PictoCard({
         onRemoveFromGallery={onRemoveFromGallery}
         isAuthenticated={isAuthenticated}
         onPictogramUpdated={onPictogramUpdated}
+        onDeletePictogram={onDeletePictogram}
       />
     </>
   );

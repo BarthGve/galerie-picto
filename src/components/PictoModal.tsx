@@ -1,5 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Download, Copy, Check, Palette, Pencil, X, Plus } from "lucide-react";
+import {
+  Download,
+  Copy,
+  Check,
+  Palette,
+  Pencil,
+  X,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -30,6 +39,7 @@ interface PictoModalProps {
   ) => Promise<boolean>;
   isAuthenticated?: boolean;
   onPictogramUpdated?: () => void;
+  onDeletePictogram?: (id: string) => Promise<boolean>;
 }
 
 export function PictoModal({
@@ -41,6 +51,7 @@ export function PictoModal({
   onRemoveFromGallery,
   isAuthenticated,
   onPictogramUpdated,
+  onDeletePictogram,
 }: PictoModalProps) {
   const [copied, setCopied] = useState(false);
   const [pngSize, setPngSize] = useState(512);
@@ -421,6 +432,29 @@ export function PictoModal({
                 onRemove={onRemoveFromGallery}
                 variant="full"
               />
+            )}
+
+            {/* Delete action */}
+            {isAuthenticated && onDeletePictogram && (
+              <Button
+                variant="destructive"
+                size="sm"
+                className="w-full"
+                onClick={async () => {
+                  const confirmed = window.confirm(
+                    "Supprimer ce pictogramme ? Cette action est irréversible.",
+                  );
+                  if (!confirmed) return;
+                  const success = await onDeletePictogram(pictogram.id);
+                  if (success) {
+                    toast.success("Pictogramme supprimé");
+                    onClose();
+                  }
+                }}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Supprimer
+              </Button>
             )}
 
             {/* Download actions - footer */}

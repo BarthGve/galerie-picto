@@ -2,6 +2,7 @@ import {
   S3Client,
   GetObjectCommand,
   PutObjectCommand,
+  DeleteObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { config } from "../config.js";
@@ -97,6 +98,14 @@ export async function writeJsonFile(key: string, data: unknown): Promise<void> {
     Body: JSON.stringify(data, null, 2),
     ContentType: "application/json",
     CacheControl: "no-cache, no-store, must-revalidate",
+  });
+  await s3Client.send(command);
+}
+
+export async function deleteFile(key: string): Promise<void> {
+  const command = new DeleteObjectCommand({
+    Bucket: config.minio.bucket,
+    Key: key,
   });
   await s3Client.send(command);
 }

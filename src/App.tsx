@@ -25,6 +25,7 @@ function App() {
     error,
     lastUpdated,
     refetch: refetchPictograms,
+    deletePictogram,
   } = usePictograms();
   const {
     galleries,
@@ -80,6 +81,14 @@ function App() {
     setUploadDialogOpen(false);
     toast.success("Pictogramme uploadé avec succès !");
     await Promise.all([refetchPictograms(), refetchGalleries()]);
+  };
+
+  const handleDeletePictogram = async (id: string): Promise<boolean> => {
+    const success = await deletePictogram(id);
+    if (success) {
+      await refetchGalleries();
+    }
+    return success;
   };
 
   const handleDeleteGallery = async (gallery: (typeof galleries)[number]) => {
@@ -229,6 +238,7 @@ function App() {
                     isAuthenticated={!!user}
                     selectedGalleryId={selectedGalleryId}
                     onPictogramUpdated={refetchPictograms}
+                    onDeletePictogram={user ? handleDeletePictogram : undefined}
                   />
                 </div>
               </div>

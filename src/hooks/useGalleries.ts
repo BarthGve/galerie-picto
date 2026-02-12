@@ -122,13 +122,22 @@ export function useGalleries() {
     galleryId: string,
     pictogramId: string,
   ): Promise<boolean> {
-    try {
-      // Guard: skip if already in gallery
-      const gallery = galleries.find((g) => g.id === galleryId);
-      if (gallery?.pictogramIds.includes(pictogramId)) {
-        return true;
-      }
+    // Guard: skip if already in gallery
+    const gallery = galleries.find((g) => g.id === galleryId);
+    if (gallery?.pictogramIds.includes(pictogramId)) {
+      return true;
+    }
 
+    // Optimistic update
+    setGalleries((prev) =>
+      prev.map((g) =>
+        g.id === galleryId && !g.pictogramIds.includes(pictogramId)
+          ? { ...g, pictogramIds: [...g.pictogramIds, pictogramId] }
+          : g,
+      ),
+    );
+
+    try {
       const response = await fetch(
         `${API_URL}/api/galleries/${galleryId}/pictograms`,
         {
@@ -141,15 +150,19 @@ export function useGalleries() {
         const err = await response.json().catch(() => ({}));
         throw new Error(err.error || "Erreur lors de l'ajout du pictogramme");
       }
+      return true;
+    } catch (err) {
+      // Rollback
       setGalleries((prev) =>
         prev.map((g) =>
-          g.id === galleryId && !g.pictogramIds.includes(pictogramId)
-            ? { ...g, pictogramIds: [...g.pictogramIds, pictogramId] }
+          g.id === galleryId
+            ? {
+                ...g,
+                pictogramIds: g.pictogramIds.filter((id) => id !== pictogramId),
+              }
             : g,
         ),
       );
-      return true;
-    } catch (err) {
       const msg = err instanceof Error ? err.message : "Erreur inconnue";
       setError(msg);
       toast.error(msg);
@@ -161,6 +174,18 @@ export function useGalleries() {
     galleryId: string,
     pictogramId: string,
   ): Promise<boolean> {
+    // Optimistic update
+    setGalleries((prev) =>
+      prev.map((g) =>
+        g.id === galleryId
+          ? {
+              ...g,
+              pictogramIds: g.pictogramIds.filter((id) => id !== pictogramId),
+            }
+          : g,
+      ),
+    );
+
     try {
       const response = await fetch(
         `${API_URL}/api/galleries/${galleryId}/pictograms/${pictogramId}`,
@@ -173,18 +198,16 @@ export function useGalleries() {
         const err = await response.json().catch(() => ({}));
         throw new Error(err.error || "Erreur lors du retrait du pictogramme");
       }
+      return true;
+    } catch (err) {
+      // Rollback
       setGalleries((prev) =>
         prev.map((g) =>
           g.id === galleryId
-            ? {
-                ...g,
-                pictogramIds: g.pictogramIds.filter((id) => id !== pictogramId),
-              }
+            ? { ...g, pictogramIds: [...g.pictogramIds, pictogramId] }
             : g,
         ),
       );
-      return true;
-    } catch (err) {
       const msg = err instanceof Error ? err.message : "Erreur inconnue";
       setError(msg);
       toast.error(msg);
