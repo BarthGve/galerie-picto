@@ -154,12 +154,16 @@ export function PictoCard({
               {formatFileSize(pictogram.size)}
             </Badge>
             {pictogram.contributor && (
-              <img
-                src={pictogram.contributor.githubAvatarUrl}
-                alt={pictogram.contributor.githubUsername}
-                className="w-4 h-4 rounded-full"
-                title={pictogram.contributor.githubUsername}
-              />
+              <div className="flex items-center gap-1.5">
+                <img
+                  src={pictogram.contributor.githubAvatarUrl}
+                  alt={pictogram.contributor.githubUsername}
+                  className="w-4 h-4 rounded-full"
+                />
+                <span className="truncate max-w-[80px]">
+                  {pictogram.contributor.githubUsername}
+                </span>
+              </div>
             )}
           </div>
         </div>
