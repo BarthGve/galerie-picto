@@ -3,7 +3,6 @@ import {
   GetObjectCommand,
   PutObjectCommand,
   DeleteObjectCommand,
-  PutBucketCorsCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { config } from "../config.js";
@@ -23,26 +22,6 @@ const s3Client = new S3Client({
 // In-memory cache for JSON files (manifest, galleries)
 const jsonCache = new Map<string, { data: unknown; expiresAt: number }>();
 const JSON_CACHE_TTL = 30_000; // 30 seconds
-
-export async function configureBucketCors(
-  allowedOrigins: string[],
-): Promise<void> {
-  const command = new PutBucketCorsCommand({
-    Bucket: config.minio.bucket,
-    CORSConfiguration: {
-      CORSRules: [
-        {
-          AllowedOrigins: allowedOrigins,
-          AllowedMethods: ["GET", "HEAD"],
-          AllowedHeaders: ["*"],
-          ExposeHeaders: ["ETag"],
-          MaxAgeSeconds: 3600,
-        },
-      ],
-    },
-  });
-  await s3Client.send(command);
-}
 
 export async function readJsonFile<T>(key: string): Promise<T | null> {
   // Check cache first
