@@ -11,14 +11,21 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.700.0",
     "@aws-sdk/s3-request-presigner": "^3.700.0",
+    "compression": "^1.8.1",
     "cors": "^2.8.5",
+    "dompurify": "^3.3.1",
     "dotenv": "^17.2.4",
     "express": "^4.21.0",
+    "express-rate-limit": "^8.2.1",
+    "helmet": "^8.1.0",
+    "jsdom": "^28.0.0",
     "uuid": "^11.0.0"
   },
   "devDependencies": {
+    "@types/compression": "^1.8.1",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
+    "@types/jsdom": "^27.0.0",
     "@types/uuid": "^10.0.0",
     "tsx": "^4.19.0",
     "typescript": "^5.7.0"

@@ -8,6 +8,11 @@ import {
   writeSvgFile,
   writeJsonFile,
 } from "../services/minio.js";
+import {
+  sanitizeSvg,
+  isValidSvgFilename,
+  isValidSvgContent,
+} from "../services/svg-sanitizer.js";
 import { normalizeToDsfr, generateDarkVariant } from "../services/dsfr-dark.js";
 import type { PictogramManifest, Pictogram, GalleriesFile } from "../types.js";
 
@@ -27,10 +32,21 @@ router.post(
       return;
     }
 
+    if (!isValidSvgFilename(filename)) {
+      res.status(400).json({ error: "Invalid filename" });
+      return;
+    }
+
+    if (!isValidSvgContent(content)) {
+      res.status(400).json({ error: "Invalid or oversized SVG content" });
+      return;
+    }
+
     try {
+      const sanitized = sanitizeSvg(content);
       const uniqueFilename = `${uuidv4()}-${filename}`;
       const key = `${config.minio.prefix}${uniqueFilename}`;
-      await writeSvgFile(key, content);
+      await writeSvgFile(key, sanitized);
       const publicUrl = `${config.minio.endpoint}/${config.minio.bucket}/${key}`;
 
       res.json({ publicUrl });
@@ -45,17 +61,8 @@ router.post(
   "/complete",
   authMiddleware,
   async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-    const {
-      id,
-      name,
-      filename,
-      url,
-      size,
-      category,
-      tags,
-      galleryIds,
-      contributor,
-    } = req.body;
+    const { id, name, filename, url, category, tags, galleryIds, contributor } =
+      req.body;
 
     if (!id || !name || !filename || !url) {
       res
@@ -73,12 +80,20 @@ router.post(
         totalCount: 0,
       };
 
+      // Calculate real size from stored file
+      const urlPath = new URL(url).pathname;
+      const fileKey = urlPath.replace(`/${config.minio.bucket}/`, "");
+      const storedContent = await readFileAsText(fileKey);
+      const realSize = storedContent
+        ? Buffer.byteLength(storedContent, "utf-8")
+        : 0;
+
       const newPictogram: Pictogram = {
         id,
         name,
         filename,
         url,
-        size: size || 0,
+        size: realSize,
         lastModified: new Date().toISOString(),
         category,
         tags,
@@ -91,22 +106,20 @@ router.post(
       // Auto-génération de la variante dark DSFR
       if (filename.endsWith(".svg") && !filename.endsWith("_dark.svg")) {
         try {
-          const urlPath = new URL(url).pathname;
-          const lightKey = urlPath.replace(`/${config.minio.bucket}/`, "");
-          const svgText = await readFileAsText(lightKey);
+          const svgText = storedContent || (await readFileAsText(fileKey));
 
           if (svgText) {
             const normalizedSvg = normalizeToDsfr(svgText);
 
             // Re-upload le SVG normalisé si des couleurs ont été corrigées
             if (normalizedSvg !== svgText) {
-              await writeSvgFile(lightKey, normalizedSvg);
+              await writeSvgFile(fileKey, normalizedSvg);
               newPictogram.size = Buffer.byteLength(normalizedSvg, "utf-8");
             }
 
             // Générer et uploader la variante dark
             const darkSvg = generateDarkVariant(svgText);
-            const darkKey = lightKey.replace(/\.svg$/i, "_dark.svg");
+            const darkKey = fileKey.replace(/\.svg$/i, "_dark.svg");
             await writeSvgFile(darkKey, darkSvg);
 
             const darkFilename = filename.replace(/\.svg$/i, "_dark.svg");

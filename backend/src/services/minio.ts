@@ -20,6 +20,10 @@ const s3Client = new S3Client({
   forcePathStyle: true,
 });
 
+// In-memory cache for JSON files (manifest, galleries)
+const jsonCache = new Map<string, { data: unknown; expiresAt: number }>();
+const JSON_CACHE_TTL = 30_000; // 30 seconds
+
 export async function configureBucketCors(
   allowedOrigins: string[],
 ): Promise<void> {
@@ -29,7 +33,7 @@ export async function configureBucketCors(
       CORSRules: [
         {
           AllowedOrigins: allowedOrigins,
-          AllowedMethods: ["GET", "PUT", "POST", "DELETE", "HEAD"],
+          AllowedMethods: ["GET", "HEAD"],
           AllowedHeaders: ["*"],
           ExposeHeaders: ["ETag"],
           MaxAgeSeconds: 3600,
@@ -41,6 +45,12 @@ export async function configureBucketCors(
 }
 
 export async function readJsonFile<T>(key: string): Promise<T | null> {
+  // Check cache first
+  const cached = jsonCache.get(key);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.data as T;
+  }
+
   try {
     const command = new GetObjectCommand({
       Bucket: config.minio.bucket,
@@ -52,7 +62,12 @@ export async function readJsonFile<T>(key: string): Promise<T | null> {
       if (response.status === 404) return null;
       throw new Error(`Failed to read ${key}: ${response.status}`);
     }
-    return (await response.json()) as T;
+    const data = (await response.json()) as T;
+
+    // Store in cache
+    jsonCache.set(key, { data, expiresAt: Date.now() + JSON_CACHE_TTL });
+
+    return data;
   } catch (err: unknown) {
     const s3Err = err as { name?: string; code?: string };
     if (s3Err.name === "NoSuchKey" || s3Err.code === "NoSuchKey") {
@@ -107,6 +122,9 @@ export async function writeJsonFile(key: string, data: unknown): Promise<void> {
     CacheControl: "no-cache, no-store, must-revalidate",
   });
   await s3Client.send(command);
+
+  // Invalidate cache on write
+  jsonCache.delete(key);
 }
 
 export async function deleteFile(key: string): Promise<void> {

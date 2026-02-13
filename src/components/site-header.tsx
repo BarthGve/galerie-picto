@@ -1,5 +1,5 @@
 import { Search } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -15,11 +15,13 @@ export function SiteHeader({
   filteredCount: number;
 }) {
   const [query, setQuery] = useState("");
+  const timerRef = useRef<ReturnType<typeof setTimeout>>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setQuery(value);
-    onSearch(value);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => onSearch(value), 250);
   };
 
   return (

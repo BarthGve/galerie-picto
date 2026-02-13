@@ -95,6 +95,7 @@ export function PictoCard({
           <img
             src={displayUrl}
             alt={pictogram.name}
+            loading="lazy"
             className="w-24 h-24 object-contain transition-transform group-hover:scale-110"
           />
           {!selectedGalleryId && pictoGalleries.length > 0 && (
