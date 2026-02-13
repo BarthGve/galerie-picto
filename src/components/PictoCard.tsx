@@ -153,17 +153,14 @@ export function PictoCard({
             <Badge variant="secondary" className="text-xs">
               {formatFileSize(pictogram.size)}
             </Badge>
-            <div className="flex items-center gap-1">
-              {pictogram.contributor && (
-                <img
-                  src={pictogram.contributor.githubAvatarUrl}
-                  alt={pictogram.contributor.githubUsername}
-                  className="w-4 h-4 rounded-full"
-                  title={pictogram.contributor.githubUsername}
-                />
-              )}
-              <span>SVG</span>
-            </div>
+            {pictogram.contributor && (
+              <img
+                src={pictogram.contributor.githubAvatarUrl}
+                alt={pictogram.contributor.githubUsername}
+                className="w-4 h-4 rounded-full"
+                title={pictogram.contributor.githubUsername}
+              />
+            )}
           </div>
         </div>
       </Card>
