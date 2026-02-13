@@ -83,19 +83,31 @@ let teamCache: {
 } | null = null;
 const TEAM_CACHE_TTL = 10 * 60_000;
 
-// GET /api/auth/team - List repo collaborators
+// GET /api/auth/team - List repo collaborators (always includes current user)
 router.get(
   "/team",
   authMiddleware,
   async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-    if (!config.github.repo) {
-      res.status(500).json({ error: "GITHUB_REPO not configured" });
+    const currentUser = req.user!;
+
+    // Return cached data if still valid (ensure current user is included)
+    if (teamCache && teamCache.expiresAt > Date.now()) {
+      const data = teamCache.data;
+      if (!data.some((m) => m.login === currentUser.login)) {
+        data.unshift({
+          login: currentUser.login,
+          avatar_url: currentUser.avatar_url,
+        });
+      }
+      res.json(data);
       return;
     }
 
-    // Return cached data if still valid
-    if (teamCache && teamCache.expiresAt > Date.now()) {
-      res.json(teamCache.data);
+    if (!config.github.repo) {
+      // No repo configured — return just the current user
+      res.json([
+        { login: currentUser.login, avatar_url: currentUser.avatar_url },
+      ]);
       return;
     }
 
@@ -117,9 +129,10 @@ router.get(
       );
 
       if (!response.ok) {
-        res
-          .status(response.status)
-          .json({ error: "Failed to fetch collaborators from GitHub" });
+        // API failed — fallback to current user only
+        res.json([
+          { login: currentUser.login, avatar_url: currentUser.avatar_url },
+        ]);
         return;
       }
 
@@ -132,14 +145,23 @@ router.get(
         avatar_url,
       }));
 
+      // Ensure current user is always in the list
+      if (!data.some((m) => m.login === currentUser.login)) {
+        data.unshift({
+          login: currentUser.login,
+          avatar_url: currentUser.avatar_url,
+        });
+      }
+
       // Cache the result
       teamCache = { data, expiresAt: Date.now() + TEAM_CACHE_TTL };
 
       res.json(data);
     } catch {
-      res
-        .status(500)
-        .json({ error: "Internal server error fetching collaborators" });
+      // Network error — fallback to current user only
+      res.json([
+        { login: currentUser.login, avatar_url: currentUser.avatar_url },
+      ]);
     }
   },
 );
