@@ -35,6 +35,31 @@ router.put(
     const id = req.params.id as string;
     const { tags, category, contributor } = req.body;
 
+    if (tags !== undefined) {
+      if (
+        !Array.isArray(tags) ||
+        tags.some(
+          (t: unknown) => typeof t !== "string" || (t as string).length > 50,
+        )
+      ) {
+        res
+          .status(400)
+          .json({
+            error: "Tags must be an array of strings (max 50 chars each)",
+          });
+        return;
+      }
+      if (tags.length > 30) {
+        res.status(400).json({ error: "Maximum 30 tags allowed" });
+        return;
+      }
+    }
+
+    if (category !== undefined && typeof category !== "string") {
+      res.status(400).json({ error: "Category must be a string" });
+      return;
+    }
+
     try {
       const manifest = await readJsonFile<PictogramManifest>(MANIFEST_KEY);
       if (!manifest) {

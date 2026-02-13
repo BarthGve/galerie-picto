@@ -51,8 +51,20 @@ router.post(
   async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     const { name, description, color } = req.body;
 
-    if (!name) {
+    if (!name || typeof name !== "string") {
       res.status(400).json({ error: "Missing required field: name" });
+      return;
+    }
+
+    if (name.length > 100) {
+      res.status(400).json({ error: "Name must be 100 characters or less" });
+      return;
+    }
+
+    if (color && !/^#[0-9a-fA-F]{6}$/.test(color)) {
+      res
+        .status(400)
+        .json({ error: "Invalid color format (expected #rrggbb)" });
       return;
     }
 
@@ -98,6 +110,22 @@ router.put(
   async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     const id = req.params.id as string;
     const { name, description, color } = req.body;
+
+    if (name !== undefined && (typeof name !== "string" || name.length > 100)) {
+      res.status(400).json({ error: "Invalid name" });
+      return;
+    }
+
+    if (
+      color !== undefined &&
+      color !== "" &&
+      !/^#[0-9a-fA-F]{6}$/.test(color)
+    ) {
+      res
+        .status(400)
+        .json({ error: "Invalid color format (expected #rrggbb)" });
+      return;
+    }
 
     try {
       const data = await getGalleriesFile();

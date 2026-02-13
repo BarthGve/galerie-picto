@@ -37,18 +37,37 @@ router.get("/svg", async (req, res) => {
   }
 
   try {
-    const response = await fetch(url, { redirect: "error" });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10_000);
+
+    const response = await fetch(url, {
+      redirect: "error",
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
+
     if (!response.ok) {
       res.status(response.status).json({ error: "Upstream fetch failed" });
       return;
     }
 
+    // Reject responses larger than 2 MB
+    const contentLength = response.headers.get("content-length");
+    if (contentLength && parseInt(contentLength, 10) > 2_097_152) {
+      res.status(413).json({ error: "Response too large" });
+      return;
+    }
+
     const svgText = await response.text();
+    if (svgText.length > 2_097_152) {
+      res.status(413).json({ error: "Response too large" });
+      return;
+    }
+
     res.setHeader("Content-Type", "image/svg+xml");
     res.setHeader("Cache-Control", "public, max-age=86400");
     res.send(svgText);
-  } catch (error) {
-    console.error("Proxy SVG error:", error);
+  } catch {
     res.status(500).json({ error: "Failed to fetch SVG" });
   }
 });

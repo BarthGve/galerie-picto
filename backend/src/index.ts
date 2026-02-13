@@ -14,7 +14,12 @@ import proxyRoutes from "./routes/proxy.js";
 const app = express();
 
 // Security headers
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: false, // CSP handled by frontend meta tag
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  }),
+);
 
 // Compression
 app.use(compression());

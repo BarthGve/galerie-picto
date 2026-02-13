@@ -17,3 +17,20 @@ export const config = {
     prefix: process.env.MINIO_PREFIX || "artwork/pictograms/",
   },
 };
+
+// Validate required env vars at startup
+const required = [
+  ["GITHUB_CLIENT_ID", config.github.clientId],
+  ["GITHUB_CLIENT_SECRET", config.github.clientSecret],
+  ["MINIO_ENDPOINT", config.minio.endpoint],
+  ["MINIO_ACCESS_KEY", config.minio.accessKey],
+  ["MINIO_SECRET_KEY", config.minio.secretKey],
+] as const;
+
+const missing = required.filter(([, value]) => !value).map(([name]) => name);
+if (missing.length > 0) {
+  console.error(
+    `Missing required environment variables: ${missing.join(", ")}`,
+  );
+  process.exit(1);
+}
