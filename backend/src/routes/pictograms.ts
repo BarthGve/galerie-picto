@@ -9,11 +9,11 @@ const router = Router();
 const MANIFEST_KEY = `${config.minio.prefix}pictograms-manifest.json`;
 const GALLERIES_KEY = `${config.minio.prefix}galleries.json`;
 
-// GET /api/pictograms/manifest - Get the pictograms manifest
-router.get("/manifest", async (_req: Request, res: Response): Promise<void> => {
+// GET /api/pictograms/manifest - Get the pictograms manifest (with ETag/304)
+router.get("/manifest", async (req: Request, res: Response): Promise<void> => {
   try {
-    const manifest = await readJsonFile<PictogramManifest>(MANIFEST_KEY);
-    if (!manifest) {
+    const result = await readJsonFile<PictogramManifest>(MANIFEST_KEY);
+    if (!result) {
       res.json({
         pictograms: [],
         lastUpdated: new Date().toISOString(),
@@ -21,7 +21,16 @@ router.get("/manifest", async (_req: Request, res: Response): Promise<void> => {
       });
       return;
     }
-    res.json(manifest);
+
+    // ETag/304 support
+    if (req.headers["if-none-match"] === result.etag) {
+      res.status(304).end();
+      return;
+    }
+
+    res.set("ETag", result.etag);
+    res.set("Content-Type", "application/json");
+    res.send(result.json);
   } catch {
     res.status(500).json({ error: "Failed to read manifest" });
   }
@@ -42,11 +51,9 @@ router.put(
           (t: unknown) => typeof t !== "string" || (t as string).length > 50,
         )
       ) {
-        res
-          .status(400)
-          .json({
-            error: "Tags must be an array of strings (max 50 chars each)",
-          });
+        res.status(400).json({
+          error: "Tags must be an array of strings (max 50 chars each)",
+        });
         return;
       }
       if (tags.length > 30) {
@@ -61,12 +68,13 @@ router.put(
     }
 
     try {
-      const manifest = await readJsonFile<PictogramManifest>(MANIFEST_KEY);
-      if (!manifest) {
+      const result = await readJsonFile<PictogramManifest>(MANIFEST_KEY);
+      if (!result) {
         res.status(404).json({ error: "Manifest not found" });
         return;
       }
 
+      const manifest = result.data;
       const picto = manifest.pictograms.find((p) => p.id === id);
       if (!picto) {
         res.status(404).json({ error: "Pictogram not found" });
@@ -95,12 +103,14 @@ router.delete(
     const id = req.params.id as string;
 
     try {
-      const manifest = await readJsonFile<PictogramManifest>(MANIFEST_KEY);
-      if (!manifest) {
+      const manifestResult =
+        await readJsonFile<PictogramManifest>(MANIFEST_KEY);
+      if (!manifestResult) {
         res.status(404).json({ error: "Manifest not found" });
         return;
       }
 
+      const manifest = manifestResult.data;
       const picto = manifest.pictograms.find((p) => p.id === id);
       if (!picto) {
         res.status(404).json({ error: "Pictogram not found" });
@@ -139,8 +149,9 @@ router.delete(
       await writeJsonFile(MANIFEST_KEY, manifest);
 
       // Clean up galleries
-      const galleriesFile = await readJsonFile<GalleriesFile>(GALLERIES_KEY);
-      if (galleriesFile) {
+      const galleriesResult = await readJsonFile<GalleriesFile>(GALLERIES_KEY);
+      if (galleriesResult) {
+        const galleriesFile = galleriesResult.data;
         let changed = false;
         for (const gallery of galleriesFile.galleries) {
           const idx = gallery.pictogramIds.indexOf(id);

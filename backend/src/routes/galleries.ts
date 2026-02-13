@@ -19,14 +19,16 @@ function slugify(text: string): string {
 }
 
 async function getGalleriesFile(): Promise<GalleriesFile> {
-  const file = await readJsonFile<GalleriesFile>(GALLERIES_KEY);
-  return file || { galleries: [], lastUpdated: new Date().toISOString() };
+  const result = await readJsonFile<GalleriesFile>(GALLERIES_KEY);
+  return (
+    result?.data || { galleries: [], lastUpdated: new Date().toISOString() }
+  );
 }
 
 async function getManifest(): Promise<PictogramManifest> {
-  const file = await readJsonFile<PictogramManifest>(MANIFEST_KEY);
+  const result = await readJsonFile<PictogramManifest>(MANIFEST_KEY);
   return (
-    file || {
+    result?.data || {
       pictograms: [],
       lastUpdated: new Date().toISOString(),
       totalCount: 0,
@@ -34,11 +36,24 @@ async function getManifest(): Promise<PictogramManifest> {
   );
 }
 
-// GET /api/galleries - List all galleries
-router.get("/", async (_req: Request, res: Response): Promise<void> => {
+// GET /api/galleries - List all galleries (with ETag/304)
+router.get("/", async (req: Request, res: Response): Promise<void> => {
   try {
-    const data = await getGalleriesFile();
-    res.json(data);
+    const result = await readJsonFile<GalleriesFile>(GALLERIES_KEY);
+    if (!result) {
+      res.json({ galleries: [], lastUpdated: new Date().toISOString() });
+      return;
+    }
+
+    // ETag/304 support
+    if (req.headers["if-none-match"] === result.etag) {
+      res.status(304).end();
+      return;
+    }
+
+    res.set("ETag", result.etag);
+    res.set("Content-Type", "application/json");
+    res.send(result.json);
   } catch {
     res.status(500).json({ error: "Failed to read galleries" });
   }

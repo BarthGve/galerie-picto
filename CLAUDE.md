@@ -17,19 +17,20 @@ galerie/
 │   ├── core/                 # Core BMAD workflows and tasks
 │   └── bmm/                  # BMAD Module Manager workflows
 ├── _bmad-output/             # Generated artifacts from BMAD workflows
-│   ├── planning-artifacts/   # Planning documents
-│   └── implementation-artifacts/  # Implementation outputs
 ├── .claude/                  # Claude Code configuration
-├── src/                      # Application source code
-│   ├── components/           # React components
-│   ├── lib/                  # Utility libraries
-│   └── types/                # TypeScript type definitions
-├── api/                      # Vercel serverless functions
-│   ├── auth/                 # Authentication endpoints
-│   └── upload/               # Upload management
+├── src/                      # Frontend React
+│   ├── components/           # React components (PictoGrid, PictoCard, Sidebar, etc.)
+│   ├── hooks/                # Custom hooks (usePictograms, useGalleries)
+│   └── lib/                  # Utilitaires et types
+├── backend/                  # Backend Express.js
+│   └── src/
+│       ├── routes/           # Endpoints API (auth, upload, galleries, pictograms, proxy)
+│       ├── services/         # Services (minio S3, svg-sanitizer, dsfr-dark)
+│       ├── middleware/       # Auth middleware
+│       └── config.ts         # Configuration et validation env vars
 ├── public/                   # Static assets
 ├── dist/                     # Production build output
-└── package.json              # Project dependencies and scripts
+└── package.json              # Dependencies et scripts
 ```
 
 ## BMAD Framework Integration
@@ -83,6 +84,49 @@ pnpm build            # Construire le frontend pour la production
 - Heberge sur Railway
 - Frontend : service `galerie-picto` (RAILPACK/Vite)
 - Backend : service `galerie-backend` (Dockerfile, root directory = `backend/`)
+
+## Bonnes pratiques Performance
+
+### Frontend
+- **Code splitting** : Utiliser `React.lazy()` + `Suspense` pour les composants lourds (modals, dialogs, formulaires). Ne monter les modals que quand elles sont ouvertes (`{isOpen && <Suspense><Modal/></Suspense>}`)
+- **Pagination** : La grille affiche 50 pictogrammes par page (composant `PictoGrid`). Toujours paginer les listes volumineuses cote client
+- **Images** : Ajouter `decoding="async"` et `width`/`height` explicites sur les `<img>` pour eviter le layout shift
+- **Preconnect** : Les origines CDN et API externes sont declarees en `<link rel="preconnect">` dans `index.html`
+- **Fetch** : Ne PAS utiliser `cache: "no-store"` sur les requetes GET. Laisser le navigateur gerer le cache HTTP (ETag/304)
+- **Source maps** : Desactivees en production (`build.sourcemap: false` dans `vite.config.ts`)
+- **No-cache** : Seules les reponses aux mutations (POST/PUT/DELETE) ont `Cache-Control: no-store`
+
+### Backend
+- **Lectures S3** : Utiliser le SDK S3 directement (`GetObjectCommand` + `transformToString()`). Ne JAMAIS utiliser des URLs signees + fetch HTTP pour lire des fichiers depuis le meme backend
+- **Cache en memoire** : `minio.ts` maintient un cache JSON avec TTL de 30s et JSON pre-serialise pour eviter `JSON.stringify()` a chaque requete
+- **ETag/304** : Les endpoints GET `/api/pictograms/manifest` et `/api/galleries` supportent `If-None-Match` et renvoient 304 si le contenu n'a pas change
+- **JSON compact** : `writeJsonFile` ecrit du JSON sans pretty-print pour reduire la taille ~30%
+- **Type de retour** : `readJsonFile<T>()` retourne `JsonReadResult<T> | null` avec `{ data, json, etag }`. Toujours destructurer `.data` pour acceder aux donnees
+- **Compression** : Le middleware `compression()` est actif sur toutes les reponses
+
+## Bonnes pratiques Securite
+
+### Frontend
+- **CSP** : Une meta tag Content-Security-Policy est definie dans `index.html`. La mettre a jour si de nouvelles origines sont ajoutees
+- **Pas de secrets** : Aucun secret cote client. Le token GitHub est stocke en `localStorage` et envoye via header `Authorization: Bearer`
+
+### Backend
+- **Sanitisation SVG** : Tous les SVG uploades sont sanitises via DOMPurify (`backend/src/services/svg-sanitizer.js`). Ne JAMAIS servir de SVG non sanitise
+- **Helmet** : Headers de securite configures via `helmet()` avec `crossOriginResourcePolicy: "cross-origin"`
+- **Rate limiting** : 3 niveaux configures dans `backend/src/index.ts` :
+  - API generale : 200 req/min
+  - Upload : 30 req/min
+  - Auth : 10 req/min
+- **Validation des entrees** :
+  - Noms de collections : max 100 caracteres
+  - Couleurs : format `#rrggbb` uniquement
+  - Tags : max 30 tags, 50 caracteres chacun
+  - Noms de fichiers SVG : valides via `isValidSvgFilename()`
+  - Taille SVG : validee via `isValidSvgContent()`
+- **Proxy** : Le proxy CDN (`backend/src/routes/proxy.ts`) a un timeout de 10s et une limite de 2MB
+- **Variables d'environnement** : Les variables requises sont validees au demarrage dans `backend/src/config.ts` (crash si manquantes)
+- **OAuth** : Le parametre `state` est utilise pour prevenir les attaques CSRF lors du flow GitHub OAuth
+- **Path traversal** : Les cles S3 sont construites a partir du prefix configure, pas depuis l'input utilisateur brut
 
 ## Working with BMAD
 

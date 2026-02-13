@@ -72,9 +72,9 @@ router.post(
     }
 
     try {
-      const manifest = (await readJsonFile<PictogramManifest>(
-        MANIFEST_KEY,
-      )) || {
+      const manifestResult =
+        await readJsonFile<PictogramManifest>(MANIFEST_KEY);
+      const manifest: PictogramManifest = manifestResult?.data || {
         pictograms: [],
         lastUpdated: new Date().toISOString(),
         totalCount: 0,
@@ -149,9 +149,9 @@ router.post(
       if (galleryIds && Array.isArray(galleryIds) && galleryIds.length > 0) {
         try {
           const GALLERIES_KEY = `${config.minio.prefix}galleries.json`;
-          const galleriesFile = (await readJsonFile<GalleriesFile>(
-            GALLERIES_KEY,
-          )) || {
+          const galleriesResult =
+            await readJsonFile<GalleriesFile>(GALLERIES_KEY);
+          const galleriesFile: GalleriesFile = galleriesResult?.data || {
             galleries: [],
             lastUpdated: new Date().toISOString(),
           };

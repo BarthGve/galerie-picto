@@ -4,13 +4,10 @@ import {
   PutObjectCommand,
   DeleteObjectCommand,
 } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { config } from "../config.js";
 
-const endpoint = config.minio.endpoint;
-
 const s3Client = new S3Client({
-  endpoint,
+  endpoint: config.minio.endpoint,
   region: "us-east-1",
   credentials: {
     accessKeyId: config.minio.accessKey,
@@ -20,14 +17,28 @@ const s3Client = new S3Client({
 });
 
 // In-memory cache for JSON files (manifest, galleries)
-const jsonCache = new Map<string, { data: unknown; expiresAt: number }>();
+interface CacheEntry {
+  data: unknown;
+  json: string; // pre-serialized JSON to avoid re-stringify on each request
+  etag: string;
+  expiresAt: number;
+}
+const jsonCache = new Map<string, CacheEntry>();
 const JSON_CACHE_TTL = 30_000; // 30 seconds
 
-export async function readJsonFile<T>(key: string): Promise<T | null> {
+export interface JsonReadResult<T> {
+  data: T;
+  json: string;
+  etag: string;
+}
+
+export async function readJsonFile<T>(
+  key: string,
+): Promise<JsonReadResult<T> | null> {
   // Check cache first
   const cached = jsonCache.get(key);
   if (cached && cached.expiresAt > Date.now()) {
-    return cached.data as T;
+    return { data: cached.data as T, json: cached.json, etag: cached.etag };
   }
 
   try {
@@ -35,18 +46,23 @@ export async function readJsonFile<T>(key: string): Promise<T | null> {
       Bucket: config.minio.bucket,
       Key: key,
     });
-    const url = await getSignedUrl(s3Client, command, { expiresIn: 60 });
-    const response = await fetch(url);
-    if (!response.ok) {
-      if (response.status === 404) return null;
-      throw new Error(`Failed to read ${key}: ${response.status}`);
-    }
-    const data = (await response.json()) as T;
+    const response = await s3Client.send(command);
+    const body = await response.Body?.transformToString();
+    if (!body) return null;
 
-    // Store in cache
-    jsonCache.set(key, { data, expiresAt: Date.now() + JSON_CACHE_TTL });
+    const data = JSON.parse(body) as T;
+    const etag = response.ETag || `"${Date.now()}"`;
 
-    return data;
+    // Store in cache with pre-serialized JSON (compact, no pretty-print)
+    const json = JSON.stringify(data);
+    jsonCache.set(key, {
+      data,
+      json,
+      etag,
+      expiresAt: Date.now() + JSON_CACHE_TTL,
+    });
+
+    return { data, json, etag };
   } catch (err: unknown) {
     const s3Err = err as { name?: string; code?: string };
     if (s3Err.name === "NoSuchKey" || s3Err.code === "NoSuchKey") {
@@ -62,13 +78,8 @@ export async function readFileAsText(key: string): Promise<string | null> {
       Bucket: config.minio.bucket,
       Key: key,
     });
-    const url = await getSignedUrl(s3Client, command, { expiresIn: 60 });
-    const response = await fetch(url);
-    if (!response.ok) {
-      if (response.status === 404) return null;
-      throw new Error(`Failed to read ${key}: ${response.status}`);
-    }
-    return response.text();
+    const response = await s3Client.send(command);
+    return (await response.Body?.transformToString()) ?? null;
   } catch (err: unknown) {
     const s3Err = err as { name?: string; code?: string };
     if (s3Err.name === "NoSuchKey" || s3Err.code === "NoSuchKey") {
@@ -96,7 +107,7 @@ export async function writeJsonFile(key: string, data: unknown): Promise<void> {
   const command = new PutObjectCommand({
     Bucket: config.minio.bucket,
     Key: key,
-    Body: JSON.stringify(data, null, 2),
+    Body: JSON.stringify(data),
     ContentType: "application/json",
     CacheControl: "no-cache, no-store, must-revalidate",
   });
