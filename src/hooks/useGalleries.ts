@@ -11,9 +11,7 @@ export function useGalleries() {
   const fetchGalleries = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_URL}/api/galleries`, {
-        cache: "no-store",
-      });
+      const response = await fetch(`${API_URL}/api/galleries`);
       if (!response.ok) {
         throw new Error("Erreur lors du chargement des galeries");
       }

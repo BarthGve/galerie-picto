@@ -43,9 +43,7 @@ export function usePictograms() {
   const fetchManifest = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_URL}/api/pictograms/manifest`, {
-        cache: "no-store",
-      });
+      const response = await fetch(`${API_URL}/api/pictograms/manifest`);
       if (!response.ok) {
         throw new Error("Failed to fetch pictograms manifest");
       }

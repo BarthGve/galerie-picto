@@ -1,11 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { usePictograms } from "@/hooks/usePictograms";
 import { useGalleries } from "@/hooks/useGalleries";
 import { PictoGrid } from "@/components/PictoGrid";
 import { AppSidebar } from "@/components/Sidebar";
 import { SiteHeader } from "@/components/site-header";
-import { GalleryDialog } from "@/components/GalleryDialog";
-import { UploadDialog } from "@/components/UploadDialog";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { toast } from "sonner";
@@ -17,6 +15,17 @@ import {
   getStoredToken,
   type GitHubUser,
 } from "@/lib/github-auth";
+
+const GalleryDialog = lazy(() =>
+  import("@/components/GalleryDialog").then((m) => ({
+    default: m.GalleryDialog,
+  })),
+);
+const UploadDialog = lazy(() =>
+  import("@/components/UploadDialog").then((m) => ({
+    default: m.UploadDialog,
+  })),
+);
 
 function App() {
   const {
@@ -264,18 +273,26 @@ function App() {
           </div>
         </SidebarInset>
 
-        <UploadDialog
-          onUploadSuccess={handleUploadSuccess}
-          open={uploadDialogOpen}
-          onOpenChange={setUploadDialogOpen}
-        />
+        {uploadDialogOpen && (
+          <Suspense fallback={null}>
+            <UploadDialog
+              onUploadSuccess={handleUploadSuccess}
+              open={uploadDialogOpen}
+              onOpenChange={setUploadDialogOpen}
+            />
+          </Suspense>
+        )}
 
-        <GalleryDialog
-          open={galleryDialogOpen}
-          onOpenChange={setGalleryDialogOpen}
-          gallery={editingGallery}
-          onSave={handleSaveGallery}
-        />
+        {galleryDialogOpen && (
+          <Suspense fallback={null}>
+            <GalleryDialog
+              open={galleryDialogOpen}
+              onOpenChange={setGalleryDialogOpen}
+              gallery={editingGallery}
+              onSave={handleSaveGallery}
+            />
+          </Suspense>
+        )}
       </SidebarProvider>
     </TooltipProvider>
   );

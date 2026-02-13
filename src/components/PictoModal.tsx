@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import {
   Download,
   Copy,
@@ -33,8 +40,11 @@ import type { Pictogram, Gallery } from "@/lib/types";
 import { fetchSvgText } from "@/lib/svg-to-png";
 import { usePictogramUrl } from "@/hooks/usePictogramUrl";
 import { GallerySelector } from "./GallerySelector";
-import { ColorCustomizer } from "./ColorCustomizer";
 import { toast } from "sonner";
+
+const ColorCustomizer = lazy(() =>
+  import("./ColorCustomizer").then((m) => ({ default: m.ColorCustomizer })),
+);
 import { API_URL } from "@/lib/config";
 import { getStoredToken } from "@/lib/github-auth";
 
@@ -456,10 +466,18 @@ export function PictoModal({
 
             {/* Color customizer */}
             {showColorCustomizer && svgCacheRef.current ? (
-              <ColorCustomizer
-                svgText={svgCacheRef.current}
-                onModifiedSvgChange={handleModifiedSvgChange}
-              />
+              <Suspense
+                fallback={
+                  <div className="h-20 flex items-center justify-center text-xs text-muted-foreground">
+                    Chargement...
+                  </div>
+                }
+              >
+                <ColorCustomizer
+                  svgText={svgCacheRef.current}
+                  onModifiedSvgChange={handleModifiedSvgChange}
+                />
+              </Suspense>
             ) : (
               <Button
                 variant="outline"

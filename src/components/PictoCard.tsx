@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { lazy, Suspense, useRef, useState } from "react";
 import { Copy, Check } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,9 +6,12 @@ import { Badge } from "@/components/ui/badge";
 import type { Pictogram, Gallery } from "@/lib/types";
 import { fetchSvgText } from "@/lib/svg-to-png";
 import { usePictogramUrl } from "@/hooks/usePictogramUrl";
-import { PictoModal } from "./PictoModal";
 import { GallerySelector } from "./GallerySelector";
 import { toast } from "sonner";
+
+const PictoModal = lazy(() =>
+  import("./PictoModal").then((m) => ({ default: m.PictoModal })),
+);
 
 interface PictoCardProps {
   pictogram: Pictogram;
@@ -96,6 +99,9 @@ export function PictoCard({
             src={displayUrl}
             alt={pictogram.name}
             loading="lazy"
+            decoding="async"
+            width={96}
+            height={96}
             className="w-24 h-24 object-contain transition-transform group-hover:scale-110"
           />
           {!selectedGalleryId && pictoGalleries.length > 0 && (
@@ -164,17 +170,21 @@ export function PictoCard({
         </div>
       </Card>
 
-      <PictoModal
-        pictogram={pictogram}
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        galleries={galleries}
-        onAddToGallery={onAddToGallery}
-        onRemoveFromGallery={onRemoveFromGallery}
-        isAuthenticated={isAuthenticated}
-        onPictogramUpdated={onPictogramUpdated}
-        onDeletePictogram={onDeletePictogram}
-      />
+      {isModalOpen && (
+        <Suspense fallback={null}>
+          <PictoModal
+            pictogram={pictogram}
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            galleries={galleries}
+            onAddToGallery={onAddToGallery}
+            onRemoveFromGallery={onRemoveFromGallery}
+            isAuthenticated={isAuthenticated}
+            onPictogramUpdated={onPictogramUpdated}
+            onDeletePictogram={onDeletePictogram}
+          />
+        </Suspense>
+      )}
     </>
   );
 }
