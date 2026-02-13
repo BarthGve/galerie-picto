@@ -98,7 +98,9 @@ export function NavGalleries({
               />
               <span>{gallery.name}</span>
             </SidebarMenuButton>
-            <SidebarMenuBadge>{gallery.pictogramIds.length}</SidebarMenuBadge>
+            <SidebarMenuBadge className="group-hover/menu-item:opacity-0 transition-opacity">
+              {gallery.pictogramIds.length}
+            </SidebarMenuBadge>
             {(onEditGallery || onDeleteGallery) && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
