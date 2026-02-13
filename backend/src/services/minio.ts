@@ -1,6 +1,5 @@
 import {
   S3Client,
-  GetObjectCommand,
   PutObjectCommand,
   DeleteObjectCommand,
 } from "@aws-sdk/client-s3";
@@ -32,6 +31,11 @@ export interface JsonReadResult<T> {
   etag: string;
 }
 
+// Build public URL for a given S3 key
+function buildUrl(key: string): string {
+  return `${config.minio.endpoint}/${config.minio.bucket}/${key}`;
+}
+
 export async function readJsonFile<T>(
   key: string,
 ): Promise<JsonReadResult<T> | null> {
@@ -42,16 +46,15 @@ export async function readJsonFile<T>(
   }
 
   try {
-    const command = new GetObjectCommand({
-      Bucket: config.minio.bucket,
-      Key: key,
-    });
-    const response = await s3Client.send(command);
-    const body = await response.Body?.transformToString();
+    const response = await fetch(buildUrl(key));
+    if (response.status === 404) return null;
+    if (!response.ok) throw new Error(`S3 read failed: ${response.status}`);
+
+    const body = await response.text();
     if (!body) return null;
 
     const data = JSON.parse(body) as T;
-    const etag = response.ETag || `"${Date.now()}"`;
+    const etag = response.headers.get("etag") || `"${Date.now()}"`;
 
     // Store in cache with pre-serialized JSON (compact, no pretty-print)
     const json = JSON.stringify(data);
@@ -64,28 +67,19 @@ export async function readJsonFile<T>(
 
     return { data, json, etag };
   } catch (err: unknown) {
-    const s3Err = err as { name?: string; code?: string };
-    if (s3Err.name === "NoSuchKey" || s3Err.code === "NoSuchKey") {
-      return null;
-    }
+    if (err instanceof Error && err.message.includes("404")) return null;
     throw err;
   }
 }
 
 export async function readFileAsText(key: string): Promise<string | null> {
   try {
-    const command = new GetObjectCommand({
-      Bucket: config.minio.bucket,
-      Key: key,
-    });
-    const response = await s3Client.send(command);
-    return (await response.Body?.transformToString()) ?? null;
-  } catch (err: unknown) {
-    const s3Err = err as { name?: string; code?: string };
-    if (s3Err.name === "NoSuchKey" || s3Err.code === "NoSuchKey") {
-      return null;
-    }
-    throw err;
+    const response = await fetch(buildUrl(key));
+    if (response.status === 404) return null;
+    if (!response.ok) return null;
+    return await response.text();
+  } catch {
+    return null;
   }
 }
 
