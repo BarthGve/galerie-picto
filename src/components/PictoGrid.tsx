@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useMemo } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Pictogram, Gallery } from "@/lib/types";
 import { PictoCard } from "./PictoCard";
 import { Button } from "@/components/ui/button";
 
-const PAGE_SIZE = 60;
+const PAGE_SIZE = 50;
 
 interface PictoGridProps {
   pictograms: Pictogram[];
@@ -17,6 +18,8 @@ interface PictoGridProps {
   selectedGalleryId?: string | null;
   onPictogramUpdated?: () => void;
   onDeletePictogram?: (id: string) => Promise<boolean>;
+  page: number;
+  onPageChange: (page: number) => void;
 }
 
 export function PictoGrid({
@@ -28,8 +31,21 @@ export function PictoGrid({
   selectedGalleryId,
   onPictogramUpdated,
   onDeletePictogram,
+  page,
+  onPageChange,
 }: PictoGridProps) {
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const totalPages = Math.max(1, Math.ceil(pictograms.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+
+  const visiblePictograms = useMemo(
+    () => pictograms.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE),
+    [pictograms, safePage],
+  );
+
+  const handlePageChange = (newPage: number) => {
+    onPageChange(newPage);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   if (pictograms.length === 0) {
     return (
@@ -41,8 +57,15 @@ export function PictoGrid({
     );
   }
 
-  const visiblePictograms = pictograms.slice(0, visibleCount);
-  const remaining = pictograms.length - visibleCount;
+  // Build page numbers to display (max 5 visible)
+  const pageNumbers: number[] = [];
+  const maxVisible = 5;
+  let start = Math.max(1, safePage - Math.floor(maxVisible / 2));
+  const end = Math.min(totalPages, start + maxVisible - 1);
+  start = Math.max(1, end - maxVisible + 1);
+  for (let i = start; i <= end; i++) {
+    pageNumbers.push(i);
+  }
 
   return (
     <div className="space-y-6">
@@ -61,14 +84,78 @@ export function PictoGrid({
           />
         ))}
       </div>
-      {remaining > 0 && (
-        <div className="flex justify-center">
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-1">
           <Button
             variant="outline"
-            onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
+            size="icon"
+            className="h-8 w-8"
+            disabled={safePage <= 1}
+            onClick={() => handlePageChange(safePage - 1)}
           >
-            Afficher plus ({remaining} restants)
+            <ChevronLeft className="h-4 w-4" />
           </Button>
+
+          {start > 1 && (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={() => handlePageChange(1)}
+              >
+                1
+              </Button>
+              {start > 2 && (
+                <span className="px-1 text-muted-foreground text-sm">...</span>
+              )}
+            </>
+          )}
+
+          {pageNumbers.map((p) => (
+            <Button
+              key={p}
+              variant={p === safePage ? "default" : "outline"}
+              size="sm"
+              className="h-8 w-8 p-0"
+              onClick={() => handlePageChange(p)}
+            >
+              {p}
+            </Button>
+          ))}
+
+          {end < totalPages && (
+            <>
+              {end < totalPages - 1 && (
+                <span className="px-1 text-muted-foreground text-sm">...</span>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={() => handlePageChange(totalPages)}
+              >
+                {totalPages}
+              </Button>
+            </>
+          )}
+
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-8 w-8"
+            disabled={safePage >= totalPages}
+            onClick={() => handlePageChange(safePage + 1)}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+
+          <span className="ml-2 text-xs text-muted-foreground tabular-nums">
+            {(safePage - 1) * PAGE_SIZE + 1}-
+            {Math.min(safePage * PAGE_SIZE, pictograms.length)} sur{" "}
+            {pictograms.length}
+          </span>
         </div>
       )}
     </div>

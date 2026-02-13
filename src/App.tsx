@@ -47,6 +47,7 @@ function App() {
     refetch: refetchGalleries,
   } = useGalleries();
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const [user, setUser] = useState<GitHubUser | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
@@ -56,6 +57,21 @@ function App() {
   const [selectedContributor, setSelectedContributor] = useState<string | null>(
     null,
   );
+
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+    setCurrentPage(1);
+  };
+
+  const handleSelectGallery = (id: string | null) => {
+    setSelectedGalleryId(id);
+    setCurrentPage(1);
+  };
+
+  const handleSelectContributor = (contributor: string | null) => {
+    setSelectedContributor(contributor);
+    setCurrentPage(1);
+  };
   const [galleryDialogOpen, setGalleryDialogOpen] = useState(false);
   const [editingGallery, setEditingGallery] = useState<
     (typeof galleries)[number] | null
@@ -228,8 +244,8 @@ function App() {
           pictograms={pictograms}
           selectedGalleryId={selectedGalleryId}
           selectedContributor={selectedContributor}
-          onSelectGallery={setSelectedGalleryId}
-          onSelectContributor={setSelectedContributor}
+          onSelectGallery={handleSelectGallery}
+          onSelectContributor={handleSelectContributor}
           totalPictogramCount={pictograms.length}
           user={user}
           onLogin={initiateGitHubLogin}
@@ -243,7 +259,7 @@ function App() {
 
         <SidebarInset>
           <SiteHeader
-            onSearch={setSearchQuery}
+            onSearch={handleSearchChange}
             totalCount={pictograms.length}
             filteredCount={filteredPictograms.length}
           />
@@ -266,6 +282,8 @@ function App() {
                     selectedGalleryId={selectedGalleryId}
                     onPictogramUpdated={refetchPictograms}
                     onDeletePictogram={user ? handleDeletePictogram : undefined}
+                    page={currentPage}
+                    onPageChange={setCurrentPage}
                   />
                 </div>
               </div>
