@@ -261,7 +261,7 @@ export function PictoModal({
       <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-2">
-            <DialogTitle className="flex-1">{pictogram.name}</DialogTitle>
+            <DialogTitle>{pictogram.name}</DialogTitle>
             {isAuthenticated && onDeletePictogram && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
