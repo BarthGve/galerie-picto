@@ -1,7 +1,7 @@
 {
   "name": "galerie-app",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "pnpm dev:backend & sleep 2 && curl -sf http://localhost:3004/health > /dev/null && echo '✓ Backend ready on :3004' && pnpm dev:frontend",
@@ -9,7 +9,10 @@
     "dev:frontend": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "bump:patch": "npm version patch --no-git-tag-version && cd backend && npm version patch --no-git-tag-version",
+    "bump:minor": "npm version minor --no-git-tag-version && cd backend && npm version minor --no-git-tag-version",
+    "bump:major": "npm version major --no-git-tag-version && cd backend && npm version major --no-git-tag-version"
   },
   "dependencies": {
     "@base-ui/react": "^1.1.0",

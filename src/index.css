@@ -127,3 +127,13 @@
     @apply font-sans;
     }
 }
+
+@keyframes mosaic-scroll-up {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-50%); }
+}
+
+@keyframes mosaic-scroll-down {
+  0% { transform: translateY(-50%); }
+  100% { transform: translateY(0); }
+}

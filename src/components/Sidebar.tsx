@@ -52,6 +52,7 @@ export function AppSidebar({
   onEditGallery,
   onDeleteGallery,
   onAddToGallery,
+  onGoHome,
   ...props
 }: React.ComponentProps<typeof Sidebar> & {
   galleries: Gallery[];
@@ -69,6 +70,7 @@ export function AppSidebar({
   onEditGallery?: (gallery: Gallery) => void;
   onDeleteGallery?: (gallery: Gallery) => void;
   onAddToGallery?: (galleryId: string, pictogramId: string) => Promise<boolean>;
+  onGoHome?: () => void;
 }) {
   return (
     <Sidebar collapsible="offcanvas" {...props}>
@@ -79,9 +81,20 @@ export function AppSidebar({
               asChild
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
-              <a href="#">
-                <Palette className="!size-5" />
+              <a
+                href="/"
+                onClick={(e) => {
+                  if (onGoHome) {
+                    e.preventDefault();
+                    onGoHome();
+                  }
+                }}
+              >
+                <Palette className="!size-5 text-primary" />
                 <span className="text-base font-semibold">Galerie Picto</span>
+                <span className="text-muted-foreground ml-auto text-[10px]">
+                  v{__APP_VERSION__}
+                </span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>

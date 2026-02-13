@@ -26,8 +26,23 @@ const UploadDialog = lazy(() =>
     default: m.UploadDialog,
   })),
 );
+const HomePage = lazy(() =>
+  import("@/components/HomePage").then((m) => ({
+    default: m.HomePage,
+  })),
+);
+
+function getInitialPage(): "home" | "gallery" {
+  const path = window.location.pathname;
+  if (path === "/gallery") return "gallery";
+  // OAuth callback → go straight to gallery
+  if (new URLSearchParams(window.location.search).has("code")) return "gallery";
+  return "home";
+}
 
 function App() {
+  const [page, setPage] = useState<"home" | "gallery">(getInitialPage);
+
   const {
     pictograms,
     loading,
@@ -57,6 +72,21 @@ function App() {
   const [selectedContributor, setSelectedContributor] = useState<string | null>(
     null,
   );
+
+  // Handle browser back/forward
+  useEffect(() => {
+    const onPopState = () => {
+      setPage(window.location.pathname === "/gallery" ? "gallery" : "home");
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
+
+  const navigateTo = (target: "home" | "gallery") => {
+    const path = target === "gallery" ? "/gallery" : "/";
+    window.history.pushState(null, "", path);
+    setPage(target);
+  };
 
   const handleSearchChange = (query: string) => {
     setSearchQuery(query);
@@ -204,6 +234,22 @@ function App() {
     galleries,
   ]);
 
+  // Home page — rendered before gallery data is needed
+  if (page === "home") {
+    return (
+      <Suspense
+        fallback={
+          <div className="min-h-screen flex items-center justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
+          </div>
+        }
+      >
+        <HomePage onEnterGallery={() => navigateTo("gallery")} />
+      </Suspense>
+    );
+  }
+
+  // Gallery page
   if (loading || authLoading || galleriesLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -255,6 +301,7 @@ function App() {
           onEditGallery={handleEditGallery}
           onDeleteGallery={handleDeleteGallery}
           onAddToGallery={addPictogramToGallery}
+          onGoHome={() => navigateTo("home")}
         />
 
         <SidebarInset>

@@ -5,6 +5,11 @@ import helmet from "helmet";
 import compression from "compression";
 import rateLimit from "express-rate-limit";
 import { config } from "./config.js";
+import { readFileSync } from "fs";
+
+const pkg = JSON.parse(
+  readFileSync(new URL("../package.json", import.meta.url), "utf-8"),
+);
 import authRoutes from "./routes/auth.js";
 import uploadRoutes from "./routes/upload.js";
 import galleriesRoutes from "./routes/galleries.js";
@@ -72,7 +77,11 @@ app.use("/api", (req, _res, next) => {
 
 // Health check
 app.get("/health", (_req, res) => {
-  res.json({ status: "ok", timestamp: new Date().toISOString() });
+  res.json({
+    status: "ok",
+    version: pkg.version,
+    timestamp: new Date().toISOString(),
+  });
 });
 
 // Routes
