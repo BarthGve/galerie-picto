@@ -15,6 +15,7 @@ interface PictoGridProps {
     pictogramId: string,
   ) => Promise<boolean>;
   isAuthenticated?: boolean;
+  user?: { login: string; avatar_url: string } | null;
   selectedGalleryId?: string | null;
   onPictogramUpdated?: () => void;
   onDeletePictogram?: (id: string) => Promise<boolean>;
@@ -28,6 +29,7 @@ export function PictoGrid({
   onAddToGallery,
   onRemoveFromGallery,
   isAuthenticated,
+  user,
   selectedGalleryId,
   onPictogramUpdated,
   onDeletePictogram,
@@ -78,6 +80,7 @@ export function PictoGrid({
             onAddToGallery={onAddToGallery}
             onRemoveFromGallery={onRemoveFromGallery}
             isAuthenticated={isAuthenticated}
+            user={user}
             selectedGalleryId={selectedGalleryId}
             onPictogramUpdated={onPictogramUpdated}
             onDeletePictogram={onDeletePictogram}

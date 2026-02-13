@@ -279,6 +279,7 @@ function App() {
                     onAddToGallery={addPictogramToGallery}
                     onRemoveFromGallery={removePictogramFromGallery}
                     isAuthenticated={!!user}
+                    user={user}
                     selectedGalleryId={selectedGalleryId}
                     onPictogramUpdated={refetchPictograms}
                     onDeletePictogram={user ? handleDeletePictogram : undefined}

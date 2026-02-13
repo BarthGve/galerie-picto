@@ -59,6 +59,7 @@ interface PictoModalProps {
     pictogramId: string,
   ) => Promise<boolean>;
   isAuthenticated?: boolean;
+  user?: { login: string; avatar_url: string } | null;
   onPictogramUpdated?: () => void;
   onDeletePictogram?: (id: string) => Promise<boolean>;
 }
@@ -71,6 +72,7 @@ export function PictoModal({
   onAddToGallery,
   onRemoveFromGallery,
   isAuthenticated,
+  user,
   onPictogramUpdated,
   onDeletePictogram,
 }: PictoModalProps) {
@@ -89,6 +91,9 @@ export function PictoModal({
   const [tags, setTags] = useState<string[]>(pictogram.tags || []);
   const [tagInput, setTagInput] = useState("");
   const [savingTags, setSavingTags] = useState(false);
+
+  // Contributor editing state
+  const [savingContributor, setSavingContributor] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -242,6 +247,43 @@ export function PictoModal({
     }
   };
 
+  const handleSetContributor = async () => {
+    if (!user) return;
+    const token = getStoredToken();
+    if (!token) return;
+
+    setSavingContributor(true);
+    try {
+      const response = await fetch(
+        `${API_URL}/api/pictograms/${pictogram.id}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            contributor: {
+              githubUsername: user.login,
+              githubAvatarUrl: user.avatar_url,
+            },
+          }),
+        },
+      );
+
+      if (response.ok) {
+        toast.success("Contributeur mis à jour");
+        onPictogramUpdated?.();
+      } else {
+        toast.error("Erreur lors de la mise à jour du contributeur");
+      }
+    } catch {
+      toast.error("Erreur réseau");
+    } finally {
+      setSavingContributor(false);
+    }
+  };
+
   const formatFileSize = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -327,21 +369,46 @@ export function PictoModal({
             </div>
 
             {/* Contributor */}
-            {pictogram.contributor && (
+            {pictogram.contributor ? (
               <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
                 <img
                   src={pictogram.contributor.githubAvatarUrl}
                   alt={pictogram.contributor.githubUsername}
                   className="w-8 h-8 rounded-full"
                 />
-                <div>
+                <div className="flex-1">
                   <p className="text-xs text-muted-foreground">Contributeur</p>
                   <p className="text-sm font-medium">
                     {pictogram.contributor.githubUsername}
                   </p>
                 </div>
+                {isAuthenticated &&
+                  user &&
+                  pictogram.contributor.githubUsername !== user.login && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-xs"
+                      disabled={savingContributor}
+                      onClick={handleSetContributor}
+                    >
+                      Me définir
+                    </Button>
+                  )}
               </div>
-            )}
+            ) : isAuthenticated && user ? (
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full"
+                disabled={savingContributor}
+                onClick={handleSetContributor}
+              >
+                {savingContributor
+                  ? "Enregistrement..."
+                  : "Me définir comme contributeur"}
+              </Button>
+            ) : null}
           </div>
 
           {/* Right column - Info & Actions */}
