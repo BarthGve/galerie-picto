@@ -13,6 +13,9 @@ import proxyRoutes from "./routes/proxy.js";
 
 const app = express();
 
+// Trust Railway reverse proxy (required for rate limiting behind proxy)
+app.set("trust proxy", 1);
+
 // Security headers
 app.use(
   helmet({
