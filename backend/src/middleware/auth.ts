@@ -16,6 +16,46 @@ export interface AuthenticatedRequest extends Request {
 const tokenCache = new Map<string, { user: GitHubUser; expiresAt: number }>();
 const TOKEN_CACHE_TTL = 5 * 60_000;
 
+// Cache repo collaborators for 10 minutes
+const collaboratorsCache = { logins: new Set<string>(), expiresAt: 0 };
+const COLLABORATORS_CACHE_TTL = 10 * 60_000;
+
+async function isRepoCollaborator(
+  login: string,
+  token: string,
+): Promise<boolean> {
+  // Check cache first
+  if (collaboratorsCache.expiresAt > Date.now()) {
+    return collaboratorsCache.logins.has(login);
+  }
+
+  if (!config.github.repo) return false;
+
+  try {
+    const response = await fetch(
+      `https://api.github.com/repos/${config.github.repo}/collaborators`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/vnd.github.v3+json",
+        },
+      },
+    );
+
+    if (response.ok) {
+      const collaborators = (await response.json()) as { login: string }[];
+      const logins = new Set(collaborators.map((c) => c.login));
+      collaboratorsCache.logins = logins;
+      collaboratorsCache.expiresAt = Date.now() + COLLABORATORS_CACHE_TTL;
+      return logins.has(login);
+    }
+  } catch {
+    // ignore — fall through to false
+  }
+
+  return false;
+}
+
 export async function authMiddleware(
   req: AuthenticatedRequest,
   res: Response,
@@ -53,10 +93,12 @@ export async function authMiddleware(
 
     const user = (await response.json()) as GitHubUser;
 
-    if (
+    // Check authorization: allowed username OR repo collaborator
+    const isAllowedUser =
       config.github.allowedUsername &&
-      user.login !== config.github.allowedUsername
-    ) {
+      user.login === config.github.allowedUsername;
+
+    if (!isAllowedUser && !(await isRepoCollaborator(user.login, token))) {
       res.status(403).json({ error: "User not authorized" });
       return;
     }
