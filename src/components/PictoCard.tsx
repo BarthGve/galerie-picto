@@ -99,22 +99,17 @@ export function PictoCard({
             className="w-24 h-24 object-contain transition-transform group-hover:scale-110"
           />
           {!selectedGalleryId && pictoGalleries.length > 0 && (
-            <div className="absolute bottom-1.5 left-1.5 flex flex-wrap gap-1 max-w-[calc(100%-12px)]">
+            <div className="absolute bottom-1.5 left-1.5 flex gap-1">
               {pictoGalleries.map((g) => (
-                <Badge
+                <span
                   key={g.id}
-                  variant="secondary"
-                  className="text-[10px] px-1.5 py-0 h-5 gap-1"
-                >
-                  <span
-                    className="size-2 shrink-0 rounded-full"
-                    style={{
-                      backgroundColor: g.color || "var(--muted-foreground)",
-                      opacity: g.color ? 1 : 0.3,
-                    }}
-                  />
-                  {g.name}
-                </Badge>
+                  title={g.name}
+                  className="size-3 shrink-0 rounded-full ring-1 ring-background"
+                  style={{
+                    backgroundColor: g.color || "var(--muted-foreground)",
+                    opacity: g.color ? 1 : 0.3,
+                  }}
+                />
               ))}
             </div>
           )}
