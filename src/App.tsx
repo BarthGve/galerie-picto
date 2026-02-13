@@ -44,6 +44,9 @@ function App() {
   const [selectedGalleryId, setSelectedGalleryId] = useState<string | null>(
     null,
   );
+  const [selectedContributor, setSelectedContributor] = useState<string | null>(
+    null,
+  );
   const [galleryDialogOpen, setGalleryDialogOpen] = useState(false);
   const [editingGallery, setEditingGallery] = useState<
     (typeof galleries)[number] | null
@@ -142,6 +145,12 @@ function App() {
       }
     }
 
+    if (selectedContributor) {
+      result = result.filter(
+        (picto) => picto.contributor?.githubUsername === selectedContributor,
+      );
+    }
+
     if (searchQuery) {
       const normalize = (s: string) =>
         s
@@ -162,7 +171,13 @@ function App() {
     }
 
     return result;
-  }, [pictograms, searchQuery, selectedGalleryId, galleries]);
+  }, [
+    pictograms,
+    searchQuery,
+    selectedGalleryId,
+    selectedContributor,
+    galleries,
+  ]);
 
   if (loading || authLoading || galleriesLoading) {
     return (
@@ -201,8 +216,11 @@ function App() {
         <AppSidebar
           variant="inset"
           galleries={galleries}
+          pictograms={pictograms}
           selectedGalleryId={selectedGalleryId}
+          selectedContributor={selectedContributor}
           onSelectGallery={setSelectedGalleryId}
+          onSelectContributor={setSelectedContributor}
           totalPictogramCount={pictograms.length}
           user={user}
           onLogin={initiateGitHubLogin}

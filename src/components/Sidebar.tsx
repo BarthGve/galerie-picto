@@ -1,6 +1,7 @@
 import { Moon, Palette, Plus, Sun } from "lucide-react";
 
 import { NavGalleries } from "@/components/nav-galleries";
+import { NavContributors } from "@/components/nav-contributors";
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
 import {
@@ -14,7 +15,7 @@ import {
   SidebarGroup,
   SidebarGroupContent,
 } from "@/components/ui/sidebar";
-import type { Gallery } from "@/lib/types";
+import type { Gallery, Pictogram } from "@/lib/types";
 import type { GitHubUser } from "@/lib/github-auth";
 import { useTheme } from "@/hooks/use-theme";
 
@@ -37,8 +38,11 @@ function ThemeToggleItem() {
 
 export function AppSidebar({
   galleries,
+  pictograms,
   selectedGalleryId,
+  selectedContributor,
   onSelectGallery,
+  onSelectContributor,
   totalPictogramCount,
   user,
   onLogin,
@@ -51,8 +55,11 @@ export function AppSidebar({
   ...props
 }: React.ComponentProps<typeof Sidebar> & {
   galleries: Gallery[];
+  pictograms: Pictogram[];
   selectedGalleryId: string | null;
+  selectedContributor: string | null;
   onSelectGallery: (galleryId: string | null) => void;
+  onSelectContributor: (login: string | null) => void;
   totalPictogramCount: number;
   user: GitHubUser | null;
   onLogin: () => void;
@@ -84,17 +91,31 @@ export function AppSidebar({
         <NavMain
           totalPictogramCount={totalPictogramCount}
           selectedGalleryId={selectedGalleryId}
-          onSelectAll={() => onSelectGallery(null)}
+          onSelectAll={() => {
+            onSelectGallery(null);
+            onSelectContributor(null);
+          }}
           isAuthenticated={!!user}
           onUploadClick={onUploadClick}
         />
         <NavGalleries
           galleries={galleries}
           selectedGalleryId={selectedGalleryId}
-          onSelectGallery={onSelectGallery}
+          onSelectGallery={(id) => {
+            onSelectGallery(id);
+            onSelectContributor(null);
+          }}
           onEditGallery={user ? onEditGallery : undefined}
           onDeleteGallery={user ? onDeleteGallery : undefined}
           onAddToGallery={user ? onAddToGallery : undefined}
+        />
+        <NavContributors
+          pictograms={pictograms}
+          selectedContributor={selectedContributor}
+          onSelectContributor={(login) => {
+            onSelectContributor(login);
+            if (login) onSelectGallery(null);
+          }}
         />
         <SidebarGroup className="mt-auto">
           <SidebarGroupContent>
