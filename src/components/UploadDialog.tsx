@@ -50,12 +50,15 @@ export function UploadDialog({
   const [selectedGalleryIds, setSelectedGalleryIds] = useState<string[]>([]);
   const [loadingGalleries, setLoadingGalleries] = useState(false);
 
-  // Contributor state
+  // Contributor state (team-based)
   const [contributorUsername, setContributorUsername] = useState("");
   const [contributorAvatar, setContributorAvatar] = useState<string | null>(
     null,
   );
-  const [contributorLoading, setContributorLoading] = useState(false);
+  const [teamMembers, setTeamMembers] = useState<
+    { login: string; avatar_url: string }[]
+  >([]);
+  const [loadingTeam, setLoadingTeam] = useState(false);
 
   // Inline gallery creation
   const [showNewGallery, setShowNewGallery] = useState(false);
@@ -63,10 +66,11 @@ export function UploadDialog({
   const [newGalleryColor, setNewGalleryColor] = useState("#6366f1");
   const [creatingGallery, setCreatingGallery] = useState(false);
 
-  // Fetch galleries when dialog opens
+  // Fetch galleries and team when dialog opens
   useEffect(() => {
     if (open) {
       fetchGalleries();
+      fetchTeam();
     }
   }, [open]);
 
@@ -83,6 +87,37 @@ export function UploadDialog({
       toast.error("Impossible de charger les galeries");
     } finally {
       setLoadingGalleries(false);
+    }
+  };
+
+  const fetchTeam = async () => {
+    const token = getStoredToken();
+    if (!token) return;
+
+    setLoadingTeam(true);
+    try {
+      const response = await fetch(`${API_URL}/api/auth/team`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setTeamMembers(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch team:", error);
+    } finally {
+      setLoadingTeam(false);
+    }
+  };
+
+  const handleSelectContributor = (login: string, avatar_url: string) => {
+    if (contributorUsername === login) {
+      // Deselect
+      setContributorUsername("");
+      setContributorAvatar(null);
+    } else {
+      setContributorUsername(login);
+      setContributorAvatar(avatar_url);
     }
   };
 
@@ -163,27 +198,6 @@ export function UploadDialog({
 
   const handleRemoveTag = (tagToRemove: string) => {
     setTags(tags.filter((t) => t !== tagToRemove));
-  };
-
-  const handleLookupContributor = async () => {
-    const username = contributorUsername.trim();
-    if (!username) return;
-    setContributorLoading(true);
-    setContributorAvatar(null);
-    try {
-      const res = await fetch(`https://api.github.com/users/${username}`);
-      if (res.ok) {
-        const data = await res.json();
-        setContributorAvatar(data.avatar_url);
-      } else {
-        toast.error("Utilisateur GitHub introuvable");
-        setContributorAvatar(null);
-      }
-    } catch {
-      toast.error("Erreur lors de la recherche GitHub");
-    } finally {
-      setContributorLoading(false);
-    }
   };
 
   const handleToggleGallery = (galleryId: string) => {
@@ -430,44 +444,63 @@ export function UploadDialog({
                 />
               </div>
 
-              {/* Contributeur GitHub */}
+              {/* Contributeur GitHub - Team avatars */}
               <div>
                 <label className="block text-xs text-muted-foreground mb-1">
-                  Contributeur GitHub (optionnel)
+                  Contributeur (optionnel)
                 </label>
-                <div className="flex gap-2 items-center">
-                  <Input
-                    placeholder="Nom d'utilisateur GitHub"
-                    value={contributorUsername}
-                    onChange={(e) => setContributorUsername(e.target.value)}
-                    disabled={uploading}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleLookupContributor}
-                    disabled={
-                      uploading ||
-                      contributorLoading ||
-                      !contributorUsername.trim()
-                    }
-                    className="shrink-0"
-                  >
-                    {contributorLoading ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      "Vérifier"
+                {loadingTeam ? (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Chargement de l'équipe...
+                  </div>
+                ) : teamMembers.length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-2">
+                    Aucun collaborateur trouvé
+                  </p>
+                ) : (
+                  <div className="flex flex-wrap items-center gap-2">
+                    {teamMembers.map((member) => (
+                      <button
+                        key={member.login}
+                        type="button"
+                        onClick={() =>
+                          handleSelectContributor(
+                            member.login,
+                            member.avatar_url,
+                          )
+                        }
+                        disabled={uploading}
+                        className={`relative rounded-full transition-all ${
+                          contributorUsername === member.login
+                            ? "ring-2 ring-primary ring-offset-2 ring-offset-background"
+                            : "hover:ring-2 hover:ring-muted-foreground/30 hover:ring-offset-1 hover:ring-offset-background"
+                        }`}
+                        title={member.login}
+                      >
+                        <img
+                          src={member.avatar_url}
+                          alt={member.login}
+                          className="w-9 h-9 rounded-full"
+                        />
+                      </button>
+                    ))}
+                    {contributorUsername && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setContributorUsername("");
+                          setContributorAvatar(null);
+                        }}
+                        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive"
+                        disabled={uploading}
+                      >
+                        <X className="h-3 w-3" />
+                        {contributorUsername}
+                      </button>
                     )}
-                  </Button>
-                  {contributorAvatar && (
-                    <img
-                      src={contributorAvatar}
-                      alt={contributorUsername}
-                      className="w-8 h-8 rounded-full shrink-0"
-                    />
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
 
               {/* Tags - chips UI */}

@@ -6,6 +6,7 @@ export const config = {
     clientId: process.env.GITHUB_CLIENT_ID || "",
     clientSecret: process.env.GITHUB_CLIENT_SECRET || "",
     allowedUsername: process.env.GITHUB_ALLOWED_USERNAME || "",
+    repo: process.env.GITHUB_REPO || "",
   },
 
   minio: {

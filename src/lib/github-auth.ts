@@ -20,7 +20,7 @@ export function initiateGitHubLogin() {
   const authUrl = new URL("https://github.com/login/oauth/authorize");
   authUrl.searchParams.set("client_id", GITHUB_CLIENT_ID);
   authUrl.searchParams.set("redirect_uri", REDIRECT_URI);
-  authUrl.searchParams.set("scope", "read:user user:email");
+  authUrl.searchParams.set("scope", "read:user user:email repo");
   authUrl.searchParams.set("state", state);
 
   window.location.href = authUrl.toString();
