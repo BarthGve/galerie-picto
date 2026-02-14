@@ -5,13 +5,21 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { PictoMosaic } from "@/components/PictoMosaic";
 import { API_URL } from "@/lib/config";
-import type { PictogramManifest } from "@/lib/types";
+import type { PictogramManifest, GalleriesFile } from "@/lib/types";
 
 interface HomePageProps {
   onEnterGallery: () => void;
 }
 
-function StatCell({ value, label }: { value: number; label: string }) {
+function StatCell({
+  value,
+  label,
+  suffix = "",
+}: {
+  value: number;
+  label: string;
+  suffix?: string;
+}) {
   const [display, setDisplay] = useState(0);
   const animated = useRef(false);
 
@@ -45,7 +53,8 @@ function StatCell({ value, label }: { value: number; label: string }) {
   return (
     <div ref={refCallback} className="text-center">
       <div className="text-3xl font-bold text-primary-foreground">
-        {display}+
+        {display}
+        {suffix}
       </div>
       <div className="text-sm text-primary-foreground/80">{label}</div>
     </div>
@@ -72,7 +81,7 @@ const FEATURES = [
     ),
     title: "Recherche rapide",
     description:
-      "Trouvez instantanement le pictogramme dont vous avez besoin par nom, tag ou categorie.",
+      "Trouvez instantanement le pictogramme dont vous avez besoin par nom, tag ou galerie.",
   },
   {
     icon: (
@@ -122,39 +131,47 @@ const FEATURES = [
 
 export function HomePage({ onEnterGallery }: HomePageProps) {
   const [pictoUrls, setPictoUrls] = useState<string[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [totalCount, setTotalCount] = useState(0);
-  const [categories, setCategories] = useState(0);
+  const [collections, setCollections] = useState(0);
   const [contributors, setContributors] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchPictos() {
+    async function fetchData() {
       try {
-        const res = await fetch(`${API_URL}/api/pictograms/manifest`);
-        if (!res.ok) return;
-        const data: PictogramManifest = await res.json();
+        const [pictoRes, galleriesRes] = await Promise.all([
+          fetch(`${API_URL}/api/pictograms/manifest`),
+          fetch(`${API_URL}/api/galleries`),
+        ]);
 
-        const nonDark = data.pictograms.filter(
-          (p) => !p.filename.endsWith("_dark.svg"),
-        );
+        if (pictoRes.ok) {
+          const data: PictogramManifest = await pictoRes.json();
+          const nonDark = data.pictograms.filter(
+            (p) => !p.filename.endsWith("_dark.svg"),
+          );
+          setPictoUrls(nonDark.slice(0, 40).map((p) => p.url));
+          const shuffled = [...nonDark].sort(() => Math.random() - 0.5);
+          setPreviewUrls(shuffled.slice(0, 12).map((p) => p.url));
+          setTotalCount(Math.floor(nonDark.length / 10) * 10);
 
-        setPictoUrls(nonDark.slice(0, 40).map((p) => p.url));
-        setTotalCount(nonDark.length);
+          const contribs = new Set(
+            nonDark.map((p) => p.contributor?.githubUsername).filter(Boolean),
+          );
+          setContributors(contribs.size);
+        }
 
-        const cats = new Set(nonDark.map((p) => p.category).filter(Boolean));
-        setCategories(cats.size);
-
-        const contribs = new Set(
-          nonDark.map((p) => p.contributor?.githubUsername).filter(Boolean),
-        );
-        setContributors(contribs.size);
+        if (galleriesRes.ok) {
+          const galData: GalleriesFile = await galleriesRes.json();
+          setCollections(galData.galleries.length);
+        }
       } catch {
         // Silently fail - mosaic just won't show
       } finally {
         setLoading(false);
       }
     }
-    fetchPictos();
+    fetchData();
   }, []);
 
   return (
@@ -202,8 +219,8 @@ export function HomePage({ onEnterGallery }: HomePageProps) {
         <section className="bg-primary py-12">
           <div className="mx-auto max-w-4xl px-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-              <StatCell value={totalCount} label="Pictogrammes" />
-              <StatCell value={categories} label="Categories" />
+              <StatCell value={totalCount} label="Pictogrammes" suffix="+" />
+              <StatCell value={collections} label="Collections" />
               <StatCell value={contributors} label="Contributeurs" />
               <StatCell value={2} label="Formats (SVG/PNG)" />
             </div>
@@ -246,7 +263,7 @@ export function HomePage({ onEnterGallery }: HomePageProps) {
       <Separator />
 
       {/* Preview grid - glassmorphism 3D */}
-      {pictoUrls.length > 0 && (
+      {previewUrls.length > 0 && (
         <section className="py-16 md:py-24 bg-muted/50">
           <div className="mx-auto max-w-5xl px-6">
             <div className="text-center mb-12">
@@ -258,7 +275,7 @@ export function HomePage({ onEnterGallery }: HomePageProps) {
               </p>
             </div>
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
-              {pictoUrls.slice(0, 12).map((url, i) => (
+              {previewUrls.map((url, i) => (
                 <div
                   key={i}
                   className="group aspect-square rounded-xl bg-white/60 dark:bg-white/5 backdrop-blur-md border border-white/30 dark:border-white/10 flex items-center justify-center p-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl cursor-pointer"
