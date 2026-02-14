@@ -244,7 +244,12 @@ function App() {
           </div>
         }
       >
-        <HomePage onEnterGallery={() => navigateTo("gallery")} />
+        <HomePage
+          onEnterGallery={() => navigateTo("gallery")}
+          user={user}
+          onLogin={initiateGitHubLogin}
+          onLogout={logout}
+        />
       </Suspense>
     );
   }

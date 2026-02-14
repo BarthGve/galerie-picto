@@ -1,14 +1,21 @@
 import { useCallback, useEffect, useState, useRef } from "react";
+import { Palette, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { PictoMosaic } from "@/components/PictoMosaic";
+import { DarkAwarePicto } from "@/components/DarkAwarePicto";
 import { API_URL } from "@/lib/config";
-import type { PictogramManifest, GalleriesFile } from "@/lib/types";
+import type { Pictogram, PictogramManifest, GalleriesFile } from "@/lib/types";
+import type { GitHubUser } from "@/lib/github-auth";
 
 interface HomePageProps {
   onEnterGallery: () => void;
+  user: GitHubUser | null;
+  onLogin: () => void;
+  onLogout: () => void;
 }
 
 function StatCell({
@@ -52,11 +59,11 @@ function StatCell({
 
   return (
     <div ref={refCallback} className="text-center">
-      <div className="text-3xl font-bold text-primary-foreground">
+      <div className="text-3xl font-bold text-primary">
         {display}
         {suffix}
       </div>
-      <div className="text-sm text-primary-foreground/80">{label}</div>
+      <div className="text-sm text-foreground/70">{label}</div>
     </div>
   );
 }
@@ -129,9 +136,31 @@ const FEATURES = [
   },
 ];
 
-export function HomePage({ onEnterGallery }: HomePageProps) {
-  const [pictoUrls, setPictoUrls] = useState<string[]>([]);
-  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+function pairDarkVariants(pictograms: Pictogram[]): Pictogram[] {
+  const darkMap = new Map<string, Pictogram>();
+  const lightList: Pictogram[] = [];
+  for (const picto of pictograms) {
+    const baseName = picto.filename.replace(/\.svg$/i, "");
+    if (baseName.endsWith("_dark")) {
+      darkMap.set(baseName.replace(/_dark$/, ""), picto);
+    } else {
+      lightList.push(picto);
+    }
+  }
+  return lightList.map((picto) => {
+    const dark = darkMap.get(picto.filename.replace(/\.svg$/i, ""));
+    return dark ? { ...picto, darkUrl: dark.url } : picto;
+  });
+}
+
+export function HomePage({
+  onEnterGallery,
+  user,
+  onLogin,
+  onLogout,
+}: HomePageProps) {
+  const [mosaicPictos, setMosaicPictos] = useState<Pictogram[]>([]);
+  const [previewPictos, setPreviewPictos] = useState<Pictogram[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [collections, setCollections] = useState(0);
   const [contributors, setContributors] = useState(0);
@@ -147,16 +176,14 @@ export function HomePage({ onEnterGallery }: HomePageProps) {
 
         if (pictoRes.ok) {
           const data: PictogramManifest = await pictoRes.json();
-          const nonDark = data.pictograms.filter(
-            (p) => !p.filename.endsWith("_dark.svg"),
-          );
-          setPictoUrls(nonDark.slice(0, 40).map((p) => p.url));
-          const shuffled = [...nonDark].sort(() => Math.random() - 0.5);
-          setPreviewUrls(shuffled.slice(0, 12).map((p) => p.url));
-          setTotalCount(Math.floor(nonDark.length / 10) * 10);
+          const paired = pairDarkVariants(data.pictograms);
+          setMosaicPictos(paired.slice(0, 40));
+          const shuffled = [...paired].sort(() => Math.random() - 0.5);
+          setPreviewPictos(shuffled.slice(0, 12));
+          setTotalCount(Math.floor(paired.length / 10) * 10);
 
           const contribs = new Set(
-            nonDark.map((p) => p.contributor?.githubUsername).filter(Boolean),
+            paired.map((p) => p.contributor?.githubUsername).filter(Boolean),
           );
           setContributors(contribs.size);
         }
@@ -176,6 +203,40 @@ export function HomePage({ onEnterGallery }: HomePageProps) {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Navbar */}
+      <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-sm">
+        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-6">
+          <div className="flex items-center gap-2">
+            <Palette className="size-5 text-primary" />
+            <span className="text-base font-semibold">Galerie Picto</span>
+          </div>
+          {user ? (
+            <div className="flex items-center gap-3">
+              <Avatar className="h-8 w-8 rounded-full">
+                <AvatarImage src={user.avatar_url} alt={user.login} />
+                <AvatarFallback className="rounded-full text-xs">
+                  {(user.name || user.login).slice(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <span className="hidden sm:inline text-sm font-medium">
+                {user.name || user.login}
+              </span>
+              <Button variant="outline" size="sm" onClick={onLogout}>
+                <LogOut className="size-4" />
+                <span className="hidden sm:inline">Deconnexion</span>
+              </Button>
+            </div>
+          ) : (
+            <Button variant="outline" size="sm" onClick={onLogin}>
+              <svg className="size-4" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z" />
+              </svg>
+              Connexion
+            </Button>
+          )}
+        </div>
+      </header>
+
       {/* Hero */}
       <section className="relative overflow-hidden">
         <div className="mx-auto max-w-7xl px-6 py-16 md:py-24">
@@ -200,13 +261,10 @@ export function HomePage({ onEnterGallery }: HomePageProps) {
                 <Button size="lg" onClick={onEnterGallery}>
                   Explorer la galerie
                 </Button>
-                <Button size="lg" variant="outline" onClick={onEnterGallery}>
-                  En savoir plus
-                </Button>
               </div>
             </div>
             <div className="hidden lg:block">
-              <PictoMosaic urls={pictoUrls} loading={loading} />
+              <PictoMosaic pictograms={mosaicPictos} loading={loading} />
             </div>
           </div>
         </div>
@@ -216,12 +274,15 @@ export function HomePage({ onEnterGallery }: HomePageProps) {
 
       {/* Stats */}
       {totalCount > 0 && (
-        <section className="bg-primary py-12">
+        <section className="py-12 bg-[#ececfe] dark:bg-[#272747]">
           <div className="mx-auto max-w-4xl px-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
               <StatCell value={totalCount} label="Pictogrammes" suffix="+" />
               <StatCell value={collections} label="Collections" />
-              <StatCell value={contributors} label="Contributeurs" />
+              <StatCell
+                value={contributors}
+                label={contributors > 1 ? "Contributeurs" : "Contributeur"}
+              />
               <StatCell value={2} label="Formats (SVG/PNG)" />
             </div>
           </div>
@@ -263,7 +324,7 @@ export function HomePage({ onEnterGallery }: HomePageProps) {
       <Separator />
 
       {/* Preview grid - glassmorphism 3D */}
-      {previewUrls.length > 0 && (
+      {previewPictos.length > 0 && (
         <section className="py-16 md:py-24 bg-muted/50">
           <div className="mx-auto max-w-5xl px-6">
             <div className="text-center mb-12">
@@ -275,9 +336,9 @@ export function HomePage({ onEnterGallery }: HomePageProps) {
               </p>
             </div>
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
-              {previewUrls.map((url, i) => (
+              {previewPictos.map((picto) => (
                 <div
-                  key={i}
+                  key={picto.id}
                   className="group aspect-square rounded-xl bg-white/60 dark:bg-white/5 backdrop-blur-md border border-white/30 dark:border-white/10 flex items-center justify-center p-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl cursor-pointer"
                   style={{
                     boxShadow:
@@ -285,12 +346,8 @@ export function HomePage({ onEnterGallery }: HomePageProps) {
                   }}
                   onClick={onEnterGallery}
                 >
-                  <img
-                    src={url}
-                    alt=""
-                    width={64}
-                    height={64}
-                    decoding="async"
+                  <DarkAwarePicto
+                    pictogram={picto}
                     className="w-full h-full object-contain drop-shadow-sm transition-transform duration-300 group-hover:scale-110"
                   />
                 </div>

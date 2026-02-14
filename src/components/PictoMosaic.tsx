@@ -1,28 +1,30 @@
 import { useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { DarkAwarePicto } from "@/components/DarkAwarePicto";
+import type { Pictogram } from "@/lib/types";
 
 interface PictoMosaicProps {
-  urls: string[];
+  pictograms: Pictogram[];
   loading?: boolean;
 }
 
 const COLUMN_COUNT = 5;
 const ITEMS_PER_COLUMN = 8;
 
-export function PictoMosaic({ urls, loading }: PictoMosaicProps) {
+export function PictoMosaic({ pictograms, loading }: PictoMosaicProps) {
   const columns = useMemo(() => {
-    if (!urls.length) return [];
-    const cols: string[][] = [];
+    if (!pictograms.length) return [];
+    const cols: Pictogram[][] = [];
     for (let c = 0; c < COLUMN_COUNT; c++) {
-      const col: string[] = [];
+      const col: Pictogram[] = [];
       for (let i = 0; i < ITEMS_PER_COLUMN; i++) {
-        col.push(urls[(c * ITEMS_PER_COLUMN + i) % urls.length]);
+        col.push(pictograms[(c * ITEMS_PER_COLUMN + i) % pictograms.length]);
       }
       // Duplicate for seamless loop
       cols.push([...col, ...col]);
     }
     return cols;
-  }, [urls]);
+  }, [pictograms]);
 
   if (loading) {
     return (
@@ -51,7 +53,7 @@ export function PictoMosaic({ urls, loading }: PictoMosaicProps) {
               animation: `mosaic-scroll-${colIdx % 2 === 0 ? "up" : "down"} ${28 + colIdx * 4}s linear infinite`,
             }}
           >
-            {col.map((url, i) => (
+            {col.map((picto, i) => (
               <div
                 key={`${colIdx}-${i}`}
                 className="w-[100px] h-[100px] shrink-0 rounded-xl bg-white/10 dark:bg-white/5 backdrop-blur-sm border border-white/20 dark:border-white/10 flex items-center justify-center p-3"
@@ -61,12 +63,8 @@ export function PictoMosaic({ urls, loading }: PictoMosaicProps) {
                     "0 4px 16px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.2)",
                 }}
               >
-                <img
-                  src={url}
-                  alt=""
-                  width={64}
-                  height={64}
-                  decoding="async"
+                <DarkAwarePicto
+                  pictogram={picto}
                   className="w-16 h-16 object-contain drop-shadow-sm"
                 />
               </div>
