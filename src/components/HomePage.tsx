@@ -274,7 +274,7 @@ export function HomePage({
 
       {/* Stats */}
       {totalCount > 0 && (
-        <section className="py-12 bg-[#ececfe] dark:bg-[#272747]">
+        <section className="py-12 bg-primary/5 dark:bg-primary/10">
           <div className="mx-auto max-w-4xl px-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
               <StatCell value={totalCount} label="Pictogrammes" suffix="+" />
@@ -339,11 +339,7 @@ export function HomePage({
               {previewPictos.map((picto) => (
                 <div
                   key={picto.id}
-                  className="group aspect-square rounded-xl bg-white/60 dark:bg-white/5 backdrop-blur-md border border-white/30 dark:border-white/10 flex items-center justify-center p-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl cursor-pointer"
-                  style={{
-                    boxShadow:
-                      "0 4px 20px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.3)",
-                  }}
+                  className="group aspect-square rounded-xl bg-card/60 dark:bg-card/30 backdrop-blur-md border border-border/50 flex items-center justify-center p-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl cursor-pointer shadow-sm"
                   onClick={onEnterGallery}
                 >
                   <DarkAwarePicto
