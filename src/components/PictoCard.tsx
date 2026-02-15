@@ -84,6 +84,11 @@ export function PictoCard({
   const pictoGalleries =
     galleries?.filter((g) => g.pictogramIds.includes(pictogram.id)) ?? [];
 
+  // Filter galleries to display: exclude current gallery if viewing a specific one
+  const displayedGalleries = selectedGalleryId
+    ? pictoGalleries.filter((g) => g.id !== selectedGalleryId)
+    : pictoGalleries;
+
   return (
     <>
       <Card
@@ -96,19 +101,19 @@ export function PictoCard({
         onClick={() => setIsModalOpen(true)}
         onMouseEnter={prefetchSvg}
       >
-        <div className="aspect-square relative flex items-center justify-center bg-muted/30">
+        <div className="aspect-[4/3] relative flex items-center justify-center bg-muted/30 p-4">
           <img
             src={displayUrl}
-            alt={pictogram.name}
+            alt={pictogram.name || pictogram.filename.replace(/\.svg$/i, "")}
             loading="lazy"
             decoding="async"
-            width={96}
-            height={96}
-            className="w-24 h-24 object-contain transition-transform group-hover:scale-110"
+            width={128}
+            height={128}
+            className="w-full h-full max-w-32 max-h-32 object-contain transition-transform group-hover:scale-110"
           />
-          {!selectedGalleryId && pictoGalleries.length > 0 && (
+          {displayedGalleries.length > 0 && (
             <div className="absolute bottom-1.5 left-1.5 flex gap-1">
-              {pictoGalleries.map((g) => (
+              {displayedGalleries.map((g) => (
                 <span
                   key={g.id}
                   title={g.name}
@@ -148,22 +153,22 @@ export function PictoCard({
           </Button>
         </div>
 
-        <div className="p-4 border-t">
-          <h3 className="font-semibold text-sm truncate mb-2">
-            {pictogram.name}
+        <div className="p-3 border-t space-y-1.5">
+          <h3 className="font-semibold text-sm truncate leading-tight">
+            {pictogram.name || pictogram.filename.replace(/\.svg$/i, "")}
           </h3>
           <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <Badge variant="secondary" className="text-xs">
+            <Badge variant="secondary" className="text-[10px] h-5 px-1.5">
               {formatFileSize(pictogram.size)}
             </Badge>
             {pictogram.contributor && (
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1">
                 <img
                   src={pictogram.contributor.githubAvatarUrl}
                   alt={pictogram.contributor.githubUsername}
-                  className="w-4 h-4 rounded-full"
+                  className="w-3.5 h-3.5 rounded-full"
                 />
-                <span className="truncate max-w-[80px]">
+                <span className="truncate max-w-[70px] text-[10px]">
                   {pictogram.contributor.githubUsername}
                 </span>
               </div>

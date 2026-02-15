@@ -92,6 +92,18 @@ export function PictoModal({
   const [tagInput, setTagInput] = useState("");
   const [savingTags, setSavingTags] = useState(false);
 
+  // Name editing state
+  const [editingName, setEditingName] = useState(false);
+  const [name, setName] = useState(
+    pictogram.name || pictogram.filename.replace(/\.svg$/i, ""),
+  );
+  const [savingName, setSavingName] = useState(false);
+
+  // Category editing state
+  const [editingCategory, setEditingCategory] = useState(false);
+  const [category, setCategory] = useState(pictogram.category || "");
+  const [savingCategory, setSavingCategory] = useState(false);
+
   // Contributor editing state
   const [savingContributor, setSavingContributor] = useState(false);
 
@@ -104,12 +116,23 @@ export function PictoModal({
       setPreviewBlobUrl(null);
       setEditingTags(false);
       setTags(pictogram.tags || []);
+      setEditingName(false);
+      setName(pictogram.name || pictogram.filename.replace(/\.svg$/i, ""));
+      setEditingCategory(false);
+      setCategory(pictogram.category || "");
       fetchSvgText(pictogram.url).then((text) => {
         svgCacheRef.current = text;
         setSvgLoaded(true);
       });
     }
-  }, [isOpen, pictogram.url, pictogram.tags]);
+  }, [
+    isOpen,
+    pictogram.url,
+    pictogram.tags,
+    pictogram.name,
+    pictogram.filename,
+    pictogram.category,
+  ]);
 
   // Update blob URL when modifiedSvg changes for safe preview via <img>
   useEffect(() => {
@@ -194,6 +217,78 @@ export function PictoModal({
   const handleModifiedSvgChange = useCallback((svg: string | null) => {
     setModifiedSvg(svg);
   }, []);
+
+  // Name editing handlers
+  const handleSaveName = async () => {
+    const token = getStoredToken();
+    if (!token) return;
+
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      toast.error("Le titre ne peut pas être vide");
+      return;
+    }
+
+    setSavingName(true);
+    try {
+      const response = await fetch(
+        `${API_URL}/api/pictograms/${pictogram.id}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ name: trimmedName }),
+        },
+      );
+
+      if (response.ok) {
+        toast.success("Titre mis à jour");
+        setEditingName(false);
+        onPictogramUpdated?.();
+      } else {
+        toast.error("Erreur lors de la mise à jour du titre");
+      }
+    } catch {
+      toast.error("Erreur réseau");
+    } finally {
+      setSavingName(false);
+    }
+  };
+
+  // Category editing handlers
+  const handleSaveCategory = async () => {
+    const token = getStoredToken();
+    if (!token) return;
+
+    setSavingCategory(true);
+    try {
+      const response = await fetch(
+        `${API_URL}/api/pictograms/${pictogram.id}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ category: category.trim() || undefined }),
+        },
+      );
+
+      if (response.ok) {
+        toast.success("Catégorie mise à jour");
+        setEditingCategory(false);
+        onPictogramUpdated?.();
+      } else {
+        toast.error("Erreur lors de la mise à jour de la catégorie");
+      }
+    } catch {
+      toast.error("Erreur réseau");
+    } finally {
+      setSavingCategory(false);
+    }
+  };
 
   // Tag editing handlers
   const handleAddTag = () => {
@@ -313,7 +408,55 @@ export function PictoModal({
       <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-2">
-            <DialogTitle>{pictogram.name}</DialogTitle>
+            {editingName ? (
+              <div className="flex items-center gap-2 flex-1">
+                <Input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  disabled={savingName}
+                  className="h-8 text-lg font-semibold"
+                  placeholder="Titre du pictogramme"
+                />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleSaveName}
+                  disabled={savingName || !name.trim()}
+                >
+                  <Check className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setEditingName(false);
+                    setName(
+                      pictogram.name ||
+                        pictogram.filename.replace(/\.svg$/i, ""),
+                    );
+                  }}
+                  disabled={savingName}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <>
+                <DialogTitle>
+                  {pictogram.name || pictogram.filename.replace(/\.svg$/i, "")}
+                </DialogTitle>
+                {isAuthenticated && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setEditingName(true)}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                )}
+              </>
+            )}
             {isAuthenticated && onDeletePictogram && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
@@ -363,7 +506,9 @@ export function PictoModal({
             <div className="flex items-center justify-center bg-muted/30 rounded-lg py-12">
               <img
                 src={previewBlobUrl || displayUrl}
-                alt={pictogram.name}
+                alt={
+                  pictogram.name || pictogram.filename.replace(/\.svg$/i, "")
+                }
                 className="w-48 h-48 object-contain"
               />
             </div>
@@ -426,12 +571,61 @@ export function PictoModal({
                     {formatFileSize(pictogram.size)}
                   </p>
                 </div>
-                {pictogram.category && (
-                  <div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
                     <span className="text-muted-foreground">Catégorie</span>
-                    <p className="font-medium">{pictogram.category}</p>
+                    {isAuthenticated && !editingCategory && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-5 w-5 p-0"
+                        onClick={() => setEditingCategory(true)}
+                      >
+                        <Pencil className="h-3 w-3" />
+                      </Button>
+                    )}
                   </div>
-                )}
+                  {editingCategory ? (
+                    <div className="flex gap-1">
+                      <Input
+                        value={category}
+                        onChange={(e) => setCategory(e.target.value)}
+                        disabled={savingCategory}
+                        className="h-7 text-sm"
+                        placeholder="Catégorie (optionnelle)"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0"
+                        onClick={handleSaveCategory}
+                        disabled={savingCategory}
+                      >
+                        <Check className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0"
+                        onClick={() => {
+                          setEditingCategory(false);
+                          setCategory(pictogram.category || "");
+                        }}
+                        disabled={savingCategory}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <p className="font-medium">
+                      {pictogram.category || (
+                        <span className="text-muted-foreground italic">
+                          Non définie
+                        </span>
+                      )}
+                    </p>
+                  )}
+                </div>
               </div>
               <div>
                 <span className="text-muted-foreground">

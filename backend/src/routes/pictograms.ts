@@ -36,13 +36,13 @@ router.get("/manifest", async (req: Request, res: Response): Promise<void> => {
   }
 });
 
-// PUT /api/pictograms/:id - Update a pictogram's metadata (tags, category, contributor)
+// PUT /api/pictograms/:id - Update a pictogram's metadata (name, tags, category, contributor)
 router.put(
   "/:id",
   authMiddleware,
   async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     const id = req.params.id as string;
-    const { tags, category, contributor } = req.body;
+    const { name, tags, category, contributor } = req.body;
 
     if (tags !== undefined) {
       if (
@@ -67,6 +67,15 @@ router.put(
       return;
     }
 
+    if (name !== undefined) {
+      if (typeof name !== "string" || name.length === 0 || name.length > 200) {
+        res.status(400).json({
+          error: "Name must be a non-empty string (max 200 chars)",
+        });
+        return;
+      }
+    }
+
     try {
       const result = await readJsonFile<PictogramManifest>(MANIFEST_KEY);
       if (!result) {
@@ -81,6 +90,7 @@ router.put(
         return;
       }
 
+      if (name !== undefined) picto.name = name;
       if (tags !== undefined) picto.tags = tags;
       if (category !== undefined) picto.category = category;
       if (contributor !== undefined) picto.contributor = contributor;
