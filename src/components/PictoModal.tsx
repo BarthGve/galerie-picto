@@ -47,6 +47,7 @@ const ColorCustomizer = lazy(() =>
 );
 import { API_URL } from "@/lib/config";
 import { getStoredToken } from "@/lib/github-auth";
+import { useDownloads } from "@/hooks/useDownloads";
 
 interface PictoModalProps {
   pictogram: Pictogram;
@@ -99,13 +100,12 @@ export function PictoModal({
   );
   const [savingName, setSavingName] = useState(false);
 
-  // Category editing state
-  const [editingCategory, setEditingCategory] = useState(false);
-  const [category, setCategory] = useState(pictogram.category || "");
-  const [savingCategory, setSavingCategory] = useState(false);
-
   // Contributor editing state
   const [savingContributor, setSavingContributor] = useState(false);
+
+  // Downloads tracking
+  const { trackDownload, getCount } = useDownloads();
+  const downloadCount = getCount(pictogram.id);
 
   useEffect(() => {
     if (isOpen) {
@@ -118,8 +118,6 @@ export function PictoModal({
       setTags(pictogram.tags || []);
       setEditingName(false);
       setName(pictogram.name || pictogram.filename.replace(/\.svg$/i, ""));
-      setEditingCategory(false);
-      setCategory(pictogram.category || "");
       fetchSvgText(pictogram.url).then((text) => {
         svgCacheRef.current = text;
         setSvgLoaded(true);
@@ -131,7 +129,6 @@ export function PictoModal({
     pictogram.tags,
     pictogram.name,
     pictogram.filename,
-    pictogram.category,
   ]);
 
   // Update blob URL when modifiedSvg changes for safe preview via <img>
@@ -174,6 +171,7 @@ export function PictoModal({
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+    trackDownload(pictogram.id);
   };
 
   const handleDownloadPng = async () => {
@@ -208,6 +206,7 @@ export function PictoModal({
         document.body.removeChild(link);
         URL.revokeObjectURL(pngUrl);
         URL.revokeObjectURL(url);
+        trackDownload(pictogram.id);
       }, "image/png");
     } catch {
       toast.error("Erreur lors de la conversion PNG");
@@ -254,39 +253,6 @@ export function PictoModal({
       toast.error("Erreur réseau");
     } finally {
       setSavingName(false);
-    }
-  };
-
-  // Category editing handlers
-  const handleSaveCategory = async () => {
-    const token = getStoredToken();
-    if (!token) return;
-
-    setSavingCategory(true);
-    try {
-      const response = await fetch(
-        `${API_URL}/api/pictograms/${pictogram.id}`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ category: category.trim() || undefined }),
-        },
-      );
-
-      if (response.ok) {
-        toast.success("Catégorie mise à jour");
-        setEditingCategory(false);
-        onPictogramUpdated?.();
-      } else {
-        toast.error("Erreur lors de la mise à jour de la catégorie");
-      }
-    } catch {
-      toast.error("Erreur réseau");
-    } finally {
-      setSavingCategory(false);
     }
   };
 
@@ -564,68 +530,11 @@ export function PictoModal({
                 <span className="text-muted-foreground">Nom du fichier</span>
                 <p className="font-medium">{pictogram.filename}</p>
               </div>
-              <div className="flex gap-6">
-                <div>
-                  <span className="text-muted-foreground">Taille</span>
-                  <p className="font-medium">
-                    {formatFileSize(pictogram.size)}
-                  </p>
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-muted-foreground">Catégorie</span>
-                    {isAuthenticated && !editingCategory && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-5 w-5 p-0"
-                        onClick={() => setEditingCategory(true)}
-                      >
-                        <Pencil className="h-3 w-3" />
-                      </Button>
-                    )}
-                  </div>
-                  {editingCategory ? (
-                    <div className="flex gap-1">
-                      <Input
-                        value={category}
-                        onChange={(e) => setCategory(e.target.value)}
-                        disabled={savingCategory}
-                        className="h-7 text-sm"
-                        placeholder="Catégorie (optionnelle)"
-                      />
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 w-7 p-0"
-                        onClick={handleSaveCategory}
-                        disabled={savingCategory}
-                      >
-                        <Check className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 w-7 p-0"
-                        onClick={() => {
-                          setEditingCategory(false);
-                          setCategory(pictogram.category || "");
-                        }}
-                        disabled={savingCategory}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <p className="font-medium">
-                      {pictogram.category || (
-                        <span className="text-muted-foreground italic">
-                          Non définie
-                        </span>
-                      )}
-                    </p>
-                  )}
-                </div>
+              <div>
+                <span className="text-muted-foreground">Taille</span>
+                <p className="font-medium">
+                  {formatFileSize(pictogram.size)}
+                </p>
               </div>
               <div>
                 <span className="text-muted-foreground">
@@ -633,6 +542,12 @@ export function PictoModal({
                 </span>
                 <p className="font-medium">
                   {formatDate(pictogram.lastModified)}
+                </p>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Téléchargements</span>
+                <p className="font-medium">
+                  {downloadCount}
                 </p>
               </div>
             </div>

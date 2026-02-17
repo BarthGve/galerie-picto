@@ -61,8 +61,7 @@ router.post(
   "/complete",
   authMiddleware,
   async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-    const { id, name, filename, url, category, tags, galleryIds, contributor } =
-      req.body;
+    const { id, name, filename, url, tags, galleryIds, contributor } = req.body;
 
     if (!id || !name || !filename || !url) {
       res
@@ -95,7 +94,6 @@ router.post(
         url,
         size: realSize,
         lastModified: new Date().toISOString(),
-        category,
         tags,
         galleryIds,
         contributor,
@@ -130,7 +128,6 @@ router.post(
               url: `${config.minio.endpoint}/${config.minio.bucket}/${darkKey}`,
               size: Buffer.byteLength(darkSvg, "utf-8"),
               lastModified: new Date().toISOString(),
-              category,
               tags,
             });
           }

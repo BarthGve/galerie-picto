@@ -84,7 +84,7 @@ export function GalleryDialog({
             <DialogDescription>
               {isEditing
                 ? "Modifiez les informations de la galerie."
-                : "Creez une nouvelle galerie pour organiser vos pictogrammes."}
+                : "Créez une nouvelle galerie pour organiser vos pictogrammes."}
             </DialogDescription>
           </DialogHeader>
 
@@ -154,7 +154,7 @@ export function GalleryDialog({
               Annuler
             </Button>
             <Button type="submit" disabled={!name.trim() || saving}>
-              {saving ? "Enregistrement..." : isEditing ? "Modifier" : "Creer"}
+              {saving ? "Enregistrement..." : isEditing ? "Modifier" : "Créer"}
             </Button>
           </DialogFooter>
         </form>

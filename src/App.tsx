@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { usePictograms } from "@/hooks/usePictograms";
 import { useGalleries } from "@/hooks/useGalleries";
+import { DownloadsContext, useDownloadsProvider } from "@/hooks/useDownloads";
 import { PictoGrid } from "@/components/PictoGrid";
 import { AppSidebar } from "@/components/Sidebar";
 import { SiteHeader } from "@/components/site-header";
@@ -31,17 +32,25 @@ const HomePage = lazy(() =>
     default: m.HomePage,
   })),
 );
+const DiscoverPage = lazy(() =>
+  import("@/components/DiscoverPage").then((m) => ({
+    default: m.DiscoverPage,
+  })),
+);
 
-function getInitialPage(): "home" | "gallery" {
+type Page = "home" | "discover" | "gallery";
+
+function getInitialPage(): Page {
   const path = window.location.pathname;
   if (path === "/gallery") return "gallery";
+  if (path === "/discover") return "discover";
   // OAuth callback → go straight to gallery
   if (new URLSearchParams(window.location.search).has("code")) return "gallery";
   return "home";
 }
 
 function App() {
-  const [page, setPage] = useState<"home" | "gallery">(getInitialPage);
+  const [page, setPage] = useState<Page>(getInitialPage);
 
   const {
     pictograms,
@@ -61,6 +70,7 @@ function App() {
     removePictogramFromGallery,
     refetch: refetchGalleries,
   } = useGalleries();
+  const downloadsValue = useDownloadsProvider();
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [user, setUser] = useState<GitHubUser | null>(null);
@@ -76,14 +86,22 @@ function App() {
   // Handle browser back/forward
   useEffect(() => {
     const onPopState = () => {
-      setPage(window.location.pathname === "/gallery" ? "gallery" : "home");
+      const path = window.location.pathname;
+      if (path === "/gallery") setPage("gallery");
+      else if (path === "/discover") setPage("discover");
+      else setPage("home");
     };
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
   }, []);
 
-  const navigateTo = (target: "home" | "gallery") => {
-    const path = target === "gallery" ? "/gallery" : "/";
+  const navigateTo = (target: Page) => {
+    const path =
+      target === "gallery"
+        ? "/gallery"
+        : target === "discover"
+          ? "/discover"
+          : "/";
     window.history.pushState(null, "", path);
     setPage(target);
   };
@@ -96,11 +114,13 @@ function App() {
   const handleSelectGallery = (id: string | null) => {
     setSelectedGalleryId(id);
     setCurrentPage(1);
+    if (page === "discover") navigateTo("gallery");
   };
 
   const handleSelectContributor = (contributor: string | null) => {
     setSelectedContributor(contributor);
     setCurrentPage(1);
+    if (page === "discover") navigateTo("gallery");
   };
   const [galleryDialogOpen, setGalleryDialogOpen] = useState(false);
   const [editingGallery, setEditingGallery] = useState<
@@ -218,7 +238,6 @@ function App() {
           normalize(picto.name).includes(query) ||
           normalize(picto.id).includes(query) ||
           normalize(picto.filename).includes(query) ||
-          (picto.category && normalize(picto.category).includes(query)) ||
           picto.tags?.some((tag) => normalize(tag).includes(query)) ||
           (picto.contributor &&
             normalize(picto.contributor.githubUsername).includes(query)),
@@ -245,7 +264,7 @@ function App() {
         }
       >
         <HomePage
-          onEnterGallery={() => navigateTo("gallery")}
+          onEnterGallery={() => navigateTo("discover")}
           user={user}
           onLogin={initiateGitHubLogin}
           onLogout={logout}
@@ -254,7 +273,7 @@ function App() {
     );
   }
 
-  // Gallery page
+  // Discover / Gallery pages (both need data loaded)
   if (loading || authLoading || galleriesLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -280,6 +299,7 @@ function App() {
   }
 
   return (
+    <DownloadsContext.Provider value={downloadsValue}>
     <TooltipProvider>
       <SidebarProvider
         style={
@@ -307,39 +327,69 @@ function App() {
           onDeleteGallery={handleDeleteGallery}
           onAddToGallery={addPictogramToGallery}
           onGoHome={() => navigateTo("home")}
+          onGoDiscover={() => navigateTo("discover")}
+          currentPage={page}
         />
 
         <SidebarInset>
           <SiteHeader
-            onSearch={handleSearchChange}
+            onSearch={(q) => {
+              handleSearchChange(q);
+              if (page === "discover") navigateTo("gallery");
+            }}
             totalCount={pictograms.length}
             filteredCount={filteredPictograms.length}
           />
           <div className="flex flex-1 flex-col">
             <div className="@container/main flex flex-1 flex-col gap-2">
-              <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-                <div className="mx-auto w-full max-w-screen-2xl px-4 sm:px-6 lg:px-8 xl:px-10">
-                  {lastUpdated && (
-                    <p className="text-xs text-muted-foreground mb-4">
-                      Derniere mise a jour :{" "}
-                      {new Date(lastUpdated).toLocaleString("fr-FR")}
-                    </p>
-                  )}
-                  <PictoGrid
-                    pictograms={filteredPictograms}
+              {page === "discover" ? (
+                <Suspense fallback={null}>
+                  <DiscoverPage
+                    pictograms={pictograms}
                     galleries={galleries}
-                    onAddToGallery={addPictogramToGallery}
-                    onRemoveFromGallery={removePictogramFromGallery}
+                    onNavigateGallery={(opts) => {
+                      if (opts?.galleryId) {
+                        handleSelectGallery(opts.galleryId);
+                      }
+                      if (opts?.search) {
+                        handleSearchChange(opts.search);
+                      }
+                      navigateTo("gallery");
+                    }}
                     isAuthenticated={!!user}
                     user={user}
-                    selectedGalleryId={selectedGalleryId}
                     onPictogramUpdated={refetchPictograms}
-                    onDeletePictogram={user ? handleDeletePictogram : undefined}
-                    page={currentPage}
-                    onPageChange={setCurrentPage}
+                    onAddToGallery={addPictogramToGallery}
+                    onRemoveFromGallery={removePictogramFromGallery}
                   />
+                </Suspense>
+              ) : (
+                <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+                  <div className="mx-auto w-full max-w-screen-2xl px-4 sm:px-6 lg:px-8 xl:px-10">
+                    {lastUpdated && (
+                      <p className="text-xs text-muted-foreground mb-4">
+                        Dernière mise à jour :{" "}
+                        {new Date(lastUpdated).toLocaleString("fr-FR")}
+                      </p>
+                    )}
+                    <PictoGrid
+                      pictograms={filteredPictograms}
+                      galleries={galleries}
+                      onAddToGallery={addPictogramToGallery}
+                      onRemoveFromGallery={removePictogramFromGallery}
+                      isAuthenticated={!!user}
+                      user={user}
+                      selectedGalleryId={selectedGalleryId}
+                      onPictogramUpdated={refetchPictograms}
+                      onDeletePictogram={
+                        user ? handleDeletePictogram : undefined
+                      }
+                      page={currentPage}
+                      onPageChange={setCurrentPage}
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </SidebarInset>
@@ -350,6 +400,7 @@ function App() {
               onUploadSuccess={handleUploadSuccess}
               open={uploadDialogOpen}
               onOpenChange={setUploadDialogOpen}
+              user={user}
             />
           </Suspense>
         )}
@@ -366,6 +417,7 @@ function App() {
         )}
       </SidebarProvider>
     </TooltipProvider>
+    </DownloadsContext.Provider>
   );
 }
 

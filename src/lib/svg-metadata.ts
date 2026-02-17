@@ -1,7 +1,6 @@
 export interface SvgMetadata {
   title?: string;
   description?: string;
-  category?: string;
   tags?: string[];
   author?: string;
 }
@@ -49,10 +48,6 @@ export function enrichSvgWithMetadata(
     }
 
     // Ajouter attributs data-* sur l'élément SVG
-    if (metadata.category) {
-      svgElement.setAttribute("data-category", metadata.category);
-    }
-
     if (metadata.tags && metadata.tags.length > 0) {
       svgElement.setAttribute("data-tags", metadata.tags.join(","));
     }
@@ -88,7 +83,6 @@ export function extractSvgMetadata(svgContent: string): SvgMetadata {
 
     const title = doc.querySelector("title")?.textContent || undefined;
     const description = doc.querySelector("desc")?.textContent || undefined;
-    const category = svgElement.getAttribute("data-category") || undefined;
     const tagsStr = svgElement.getAttribute("data-tags");
     const tags = tagsStr ? tagsStr.split(",") : undefined;
     const author = svgElement.getAttribute("data-author") || undefined;
@@ -96,7 +90,6 @@ export function extractSvgMetadata(svgContent: string): SvgMetadata {
     return {
       title,
       description,
-      category,
       tags,
       author,
     };

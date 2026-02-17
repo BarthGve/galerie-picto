@@ -51,7 +51,7 @@ export function useGalleries() {
       if (!response.ok) {
         const err = await response.json().catch(() => ({}));
         throw new Error(
-          err.error || "Erreur lors de la creation de la galerie",
+          err.error || "Erreur lors de la création de la galerie",
         );
       }
       const gallery: Gallery = await response.json();
@@ -79,7 +79,7 @@ export function useGalleries() {
       if (!response.ok) {
         const err = await response.json().catch(() => ({}));
         throw new Error(
-          err.error || "Erreur lors de la mise a jour de la galerie",
+          err.error || "Erreur lors de la mise à jour de la galerie",
         );
       }
       const gallery: Gallery = await response.json();

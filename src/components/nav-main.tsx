@@ -1,4 +1,4 @@
-import { Images, CirclePlus } from "lucide-react";
+import { Images, CirclePlus, Compass } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -16,17 +16,31 @@ export function NavMain({
   onSelectAll,
   isAuthenticated,
   onUploadClick,
+  onGoDiscover,
+  currentPage,
 }: {
   totalPictogramCount: number;
   selectedGalleryId: string | null;
   onSelectAll: () => void;
   isAuthenticated: boolean;
   onUploadClick: () => void;
+  onGoDiscover?: () => void;
+  currentPage?: string;
 }) {
   return (
     <SidebarGroup>
       <SidebarGroupContent className="flex flex-col gap-2">
         <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              isActive={currentPage === "discover"}
+              onClick={onGoDiscover}
+              tooltip="Accueil"
+            >
+              <Compass />
+              <span>Accueil</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           {isAuthenticated && (
             <SidebarMenuItem className="flex items-center gap-2">
               <SidebarMenuButton
@@ -52,7 +66,7 @@ export function NavMain({
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
-              isActive={selectedGalleryId === null}
+              isActive={currentPage === "gallery" && selectedGalleryId === null}
               onClick={onSelectAll}
               tooltip="Tous les pictogrammes"
             >

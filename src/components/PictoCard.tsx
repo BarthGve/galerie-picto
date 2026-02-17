@@ -1,5 +1,5 @@
 import { lazy, Suspense, useRef, useState } from "react";
-import { Copy, Check } from "lucide-react";
+import { Copy, Check, Download } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,7 @@ import { fetchSvgText } from "@/lib/svg-to-png";
 import { usePictogramUrl } from "@/hooks/usePictogramUrl";
 import { GallerySelector } from "./GallerySelector";
 import { toast } from "sonner";
+import { useDownloads } from "@/hooks/useDownloads";
 
 const PictoModal = lazy(() =>
   import("./PictoModal").then((m) => ({ default: m.PictoModal })),
@@ -43,6 +44,8 @@ export function PictoCard({
   const [copied, setCopied] = useState(false);
   const svgCacheRef = useRef<string | null>(null);
   const displayUrl = usePictogramUrl(pictogram);
+  const { getCount } = useDownloads();
+  const downloadCount = getCount(pictogram.id);
 
   const prefetchSvg = () => {
     if (!svgCacheRef.current) {
@@ -55,13 +58,13 @@ export function PictoCard({
   const handleCopy = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!svgCacheRef.current) {
-      toast.error("SVG en cours de chargement, reessayez");
+      toast.error("SVG en cours de chargement, réessayez");
       return;
     }
     try {
       await navigator.clipboard.writeText(svgCacheRef.current);
       setCopied(true);
-      toast.success("Code SVG copie");
+      toast.success("Code SVG copié");
       setTimeout(() => setCopied(false), 2000);
     } catch {
       toast.error("Impossible de copier");
@@ -158,9 +161,17 @@ export function PictoCard({
             {pictogram.name || pictogram.filename.replace(/\.svg$/i, "")}
           </h3>
           <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <Badge variant="secondary" className="text-[10px] h-5 px-1.5">
-              {formatFileSize(pictogram.size)}
-            </Badge>
+            <div className="flex items-center gap-1.5">
+              <Badge variant="secondary" className="text-[10px] h-5 px-1.5">
+                {formatFileSize(pictogram.size)}
+              </Badge>
+              {downloadCount > 0 && (
+                <span className="flex items-center gap-0.5 text-[10px]">
+                  <Download className="size-2.5" />
+                  {downloadCount}
+                </span>
+              )}
+            </div>
             {pictogram.contributor && (
               <div className="flex items-center gap-1">
                 <img

@@ -88,7 +88,7 @@ const FEATURES = [
     ),
     title: "Recherche rapide",
     description:
-      "Trouvez instantanement le pictogramme dont vous avez besoin par nom, tag ou galerie.",
+      "Trouvez instantanément le pictogramme dont vous avez besoin par nom, tag ou galerie.",
   },
   {
     icon: (
@@ -109,7 +109,7 @@ const FEATURES = [
     ),
     title: "Personnalisation",
     description:
-      "Changez les couleurs a la volee et telechargez en SVG ou PNG selon vos besoins.",
+      "Changez les couleurs à la volée et téléchargez en SVG ou PNG selon vos besoins.",
   },
   {
     icon: (
@@ -132,7 +132,7 @@ const FEATURES = [
     ),
     title: "Collections",
     description:
-      "Organisez vos pictogrammes en collections thematiques pour vos projets.",
+      "Organisez vos pictogrammes en collections thématiques pour vos projets.",
   },
 ];
 
@@ -223,7 +223,7 @@ export function HomePage({
               </span>
               <Button variant="outline" size="sm" onClick={onLogout}>
                 <LogOut className="size-4" />
-                <span className="hidden sm:inline">Deconnexion</span>
+                <span className="hidden sm:inline">Déconnexion</span>
               </Button>
             </div>
           ) : (
@@ -250,11 +250,11 @@ export function HomePage({
               </Badge>
               <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
                 Vos pictogrammes,{" "}
-                <span className="text-primary">prets a l'emploi</span>
+                <span className="text-primary">prêts à l'emploi</span>
               </h1>
               <p className="text-lg text-muted-foreground leading-relaxed">
-                Une bibliotheque de pictogrammes SVG libres et personnalisables.
-                Recherchez, personnalisez les couleurs et telechargez en un
+                Une bibliothèque de pictogrammes SVG libres et personnalisables.
+                Recherchez, personnalisez les couleurs et téléchargez en un
                 clic.
               </p>
               <div className="flex flex-wrap gap-3 pt-2">
@@ -295,7 +295,7 @@ export function HomePage({
       <section className="py-16 md:py-24">
         <div className="mx-auto max-w-5xl px-6">
           <div className="text-center mb-12">
-            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl text-primary">
               Tout ce qu'il vous faut
             </h2>
             <p className="mt-3 text-muted-foreground max-w-2xl mx-auto">
@@ -328,8 +328,8 @@ export function HomePage({
         <section className="py-16 md:py-24 bg-muted/50">
           <div className="mx-auto max-w-5xl px-6">
             <div className="text-center mb-12">
-              <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
-                Apercu de la collection
+              <h2 className="text-2xl font-bold tracking-tight sm:text-3xl text-primary">
+                Aperçu de la collection
               </h2>
               <p className="mt-3 text-muted-foreground">
                 Quelques pictogrammes parmi les {totalCount} disponibles.
@@ -358,11 +358,11 @@ export function HomePage({
       {/* CTA bottom */}
       <section className="py-16 md:py-24">
         <div className="mx-auto max-w-3xl px-6 text-center">
-          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
-            Pret a explorer ?
+          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl text-primary">
+            Prêt à explorer ?
           </h2>
           <p className="mt-3 text-muted-foreground max-w-xl mx-auto">
-            Accedez a l'ensemble des pictogrammes, filtrez par collection et
+            Accédez à l'ensemble des pictogrammes, filtrez par collection et
             personnalisez les couleurs.
           </p>
           <div className="mt-8">

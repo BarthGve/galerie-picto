@@ -36,13 +36,13 @@ router.get("/manifest", async (req: Request, res: Response): Promise<void> => {
   }
 });
 
-// PUT /api/pictograms/:id - Update a pictogram's metadata (name, tags, category, contributor)
+// PUT /api/pictograms/:id - Update a pictogram's metadata (name, tags, contributor)
 router.put(
   "/:id",
   authMiddleware,
   async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     const id = req.params.id as string;
-    const { name, tags, category, contributor } = req.body;
+    const { name, tags, contributor } = req.body;
 
     if (tags !== undefined) {
       if (
@@ -60,11 +60,6 @@ router.put(
         res.status(400).json({ error: "Maximum 30 tags allowed" });
         return;
       }
-    }
-
-    if (category !== undefined && typeof category !== "string") {
-      res.status(400).json({ error: "Category must be a string" });
-      return;
     }
 
     if (name !== undefined) {
@@ -92,7 +87,6 @@ router.put(
 
       if (name !== undefined) picto.name = name;
       if (tags !== undefined) picto.tags = tags;
-      if (category !== undefined) picto.category = category;
       if (contributor !== undefined) picto.contributor = contributor;
       manifest.lastUpdated = new Date().toISOString();
 

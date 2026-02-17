@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Upload, X, Plus, Loader2, FileUp } from "lucide-react";
+import { Upload, X, Plus, Loader2, FileUp, Check } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -10,6 +10,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { getStoredToken, isAuthenticated } from "@/lib/github-auth";
 import {
@@ -25,12 +27,14 @@ interface UploadDialogProps {
   onUploadSuccess?: () => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  user?: { login: string; avatar_url: string } | null;
 }
 
 export function UploadDialog({
   onUploadSuccess,
   open: controlledOpen,
   onOpenChange,
+  user,
 }: UploadDialogProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen ?? internalOpen;
@@ -49,8 +53,10 @@ export function UploadDialog({
   const [galleries, setGalleries] = useState<Gallery[]>([]);
   const [selectedGalleryIds, setSelectedGalleryIds] = useState<string[]>([]);
   const [loadingGalleries, setLoadingGalleries] = useState(false);
+  const [gallerySearch, setGallerySearch] = useState("");
+  const [galleryDropdownOpen, setGalleryDropdownOpen] = useState(false);
 
-  // Contributor state (team-based)
+  // Contributor state
   const [contributorUsername, setContributorUsername] = useState("");
   const [contributorAvatar, setContributorAvatar] = useState<string | null>(
     null,
@@ -73,6 +79,14 @@ export function UploadDialog({
       fetchTeam();
     }
   }, [open]);
+
+  // Auto-select current user as contributor
+  useEffect(() => {
+    if (open && user && !contributorUsername) {
+      setContributorUsername(user.login);
+      setContributorAvatar(user.avatar_url);
+    }
+  }, [open, user, contributorUsername]);
 
   const fetchGalleries = async () => {
     setLoadingGalleries(true);
@@ -112,7 +126,6 @@ export function UploadDialog({
 
   const handleSelectContributor = (login: string, avatar_url: string) => {
     if (contributorUsername === login) {
-      // Deselect
       setContributorUsername("");
       setContributorAvatar(null);
     } else {
@@ -123,6 +136,22 @@ export function UploadDialog({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
+  const galleryDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close gallery dropdown on outside click
+  useEffect(() => {
+    if (!galleryDropdownOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (
+        galleryDropdownRef.current &&
+        !galleryDropdownRef.current.contains(e.target as Node)
+      ) {
+        setGalleryDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [galleryDropdownOpen]);
 
   const processFile = useCallback(
     async (selectedFile: File) => {
@@ -319,7 +348,17 @@ export function UploadDialog({
     setNewGalleryColor("#6366f1");
     setContributorUsername("");
     setContributorAvatar(null);
+    setGallerySearch("");
+    setGalleryDropdownOpen(false);
   };
+
+  const filteredGalleries = galleries.filter((g) =>
+    g.name.toLowerCase().includes(gallerySearch.toLowerCase()),
+  );
+
+  const selectedGalleryNames = galleries
+    .filter((g) => selectedGalleryIds.includes(g.id))
+    .map((g) => g);
 
   if (!isAuthenticated()) {
     return null;
@@ -335,13 +374,13 @@ export function UploadDialog({
           </Button>
         </DialogTrigger>
       )}
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Ajouter un pictogramme</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
-          {/* Drop zone */}
+        {/* Drop zone - full width when no file */}
+        {!file && (
           <div
             onDragEnter={handleDrag}
             onDragOver={handleDrag}
@@ -351,9 +390,7 @@ export function UploadDialog({
             className={`relative border-2 border-dashed rounded-lg transition-colors cursor-pointer ${
               dragActive
                 ? "border-primary bg-primary/5"
-                : file
-                  ? "border-muted-foreground/20 bg-muted/30"
-                  : "border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/20"
+                : "border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/20"
             }`}
           >
             <input
@@ -364,100 +401,86 @@ export function UploadDialog({
               disabled={uploading}
               className="hidden"
             />
-
-            {previewUrl ? (
-              <div className="flex items-center gap-4 p-4">
-                <div className="w-24 h-24 shrink-0 flex items-center justify-center bg-background rounded-md border">
-                  <img
-                    src={previewUrl}
-                    alt="SVG preview"
-                    className="w-16 h-16 object-contain"
-                  />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{file?.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {file ? `${(file.size / 1024).toFixed(1)} KB` : ""} — SVG
-                  </p>
-                  <p className="text-xs text-primary mt-1">
-                    Cliquer ou glisser pour remplacer
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-10 px-4">
-                <FileUp className="h-10 w-10 text-muted-foreground/50 mb-3" />
-                <p className="text-sm font-medium">
-                  Glisser-déposer un fichier SVG
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  ou cliquer pour parcourir
-                </p>
-              </div>
-            )}
+            <div className="flex flex-col items-center justify-center py-16 px-4">
+              <FileUp className="h-12 w-12 text-muted-foreground/50 mb-4" />
+              <p className="text-base font-medium">
+                Glisser-déposer un fichier SVG
+              </p>
+              <p className="text-sm text-muted-foreground mt-1">
+                ou cliquer pour parcourir
+              </p>
+            </div>
           </div>
+        )}
 
-          {/* Métadonnées */}
-          {file && (
-            <div className="space-y-4">
-              <label className="block text-sm font-medium">Métadonnées</label>
-
-              <div>
-                <label className="block text-xs text-muted-foreground mb-1">
-                  Titre
-                </label>
-                <Input
-                  placeholder="Nom du pictogramme"
-                  value={metadata.title || ""}
-                  onChange={(e) =>
-                    setMetadata({ ...metadata, title: e.target.value })
-                  }
+        {/* Two-column layout when file is selected */}
+        {file && (
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr] gap-6">
+            {/* Left column - Preview */}
+            <div className="flex flex-col gap-4">
+              <div
+                onDragEnter={handleDrag}
+                onDragOver={handleDrag}
+                onDragLeave={handleDrag}
+                onDrop={handleDrop}
+                onClick={() => !uploading && fileInputRef.current?.click()}
+                className={`relative flex items-center justify-center bg-muted/30 rounded-lg py-12 cursor-pointer transition-colors border-2 border-dashed border-transparent hover:border-primary/30 ${
+                  dragActive ? "border-primary bg-primary/5" : ""
+                }`}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".svg,image/svg+xml"
+                  onChange={handleFileChange}
                   disabled={uploading}
+                  className="hidden"
+                />
+                <img
+                  src={previewUrl!}
+                  alt="Aperçu SVG"
+                  className="w-48 h-48 object-contain"
                 />
               </div>
 
-              <div>
-                <label className="block text-xs text-muted-foreground mb-1">
-                  Description
-                </label>
-                <Input
-                  placeholder="Description du pictogramme"
-                  value={metadata.description || ""}
-                  onChange={(e) =>
-                    setMetadata({ ...metadata, description: e.target.value })
-                  }
-                  disabled={uploading}
-                />
+              {/* File info */}
+              <div className="text-center">
+                <p className="text-sm font-medium truncate">{file.name}</p>
+                <p className="text-xs text-muted-foreground">
+                  {(file.size / 1024).toFixed(1)} KB — SVG
+                </p>
+                <p className="text-xs text-primary mt-1">
+                  Cliquer sur l'image pour remplacer
+                </p>
               </div>
 
+              {/* Contributor */}
               <div>
-                <label className="block text-xs text-muted-foreground mb-1">
-                  Catégorie
-                </label>
-                <Input
-                  placeholder="Ex: logos, icons, illustrations"
-                  value={metadata.category || ""}
-                  onChange={(e) =>
-                    setMetadata({ ...metadata, category: e.target.value })
-                  }
-                  disabled={uploading}
-                />
-              </div>
-
-              {/* Contributeur GitHub - Team avatars */}
-              <div>
-                <label className="block text-xs text-muted-foreground mb-1">
-                  Contributeur (optionnel)
+                <label className="block text-xs text-muted-foreground mb-2">
+                  Contributeur
                 </label>
                 {loadingTeam ? (
                   <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Chargement de l'équipe...
+                    Chargement...
                   </div>
                 ) : teamMembers.length === 0 ? (
-                  <p className="text-sm text-muted-foreground py-2">
-                    Aucun collaborateur trouvé
-                  </p>
+                  contributorUsername && contributorAvatar ? (
+                    <div className="flex items-center gap-2">
+                      <img
+                        src={contributorAvatar}
+                        alt={contributorUsername}
+                        className="w-8 h-8 rounded-full ring-2 ring-primary ring-offset-2 ring-offset-background"
+                      />
+                      <span className="text-sm font-medium">
+                        {contributorUsername}
+                      </span>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      Aucun collaborateur trouvé
+                    </p>
+                  )
                 ) : (
                   <div className="flex flex-wrap items-center gap-2">
                     {teamMembers.map((member) => (
@@ -474,7 +497,7 @@ export function UploadDialog({
                         className={`relative rounded-full transition-all ${
                           contributorUsername === member.login
                             ? "ring-2 ring-primary ring-offset-2 ring-offset-background"
-                            : "hover:ring-2 hover:ring-muted-foreground/30 hover:ring-offset-1 hover:ring-offset-background"
+                            : "hover:ring-2 hover:ring-muted-foreground/30 hover:ring-offset-1 hover:ring-offset-background opacity-50 hover:opacity-100"
                         }`}
                         title={member.login}
                       >
@@ -486,24 +509,48 @@ export function UploadDialog({
                       </button>
                     ))}
                     {contributorUsername && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setContributorUsername("");
-                          setContributorAvatar(null);
-                        }}
-                        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive"
-                        disabled={uploading}
-                      >
-                        <X className="h-3 w-3" />
+                      <span className="text-xs text-muted-foreground">
                         {contributorUsername}
-                      </button>
+                      </span>
                     )}
                   </div>
                 )}
               </div>
+            </div>
 
-              {/* Tags - chips UI */}
+            {/* Right column - Metadata */}
+            <div className="flex flex-col gap-4">
+              {/* Title */}
+              <div>
+                <label className="block text-xs text-muted-foreground mb-1">
+                  Titre
+                </label>
+                <Input
+                  placeholder="Nom du pictogramme"
+                  value={metadata.title || ""}
+                  onChange={(e) =>
+                    setMetadata({ ...metadata, title: e.target.value })
+                  }
+                  disabled={uploading}
+                />
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block text-xs text-muted-foreground mb-1">
+                  Description
+                </label>
+                <Input
+                  placeholder="Description du pictogramme"
+                  value={metadata.description || ""}
+                  onChange={(e) =>
+                    setMetadata({ ...metadata, description: e.target.value })
+                  }
+                  disabled={uploading}
+                />
+              </div>
+
+              {/* Tags */}
               <div>
                 <label className="block text-xs text-muted-foreground mb-1">
                   Tags / Mots-clés
@@ -522,7 +569,7 @@ export function UploadDialog({
                     size="sm"
                     onClick={handleAddTag}
                     disabled={uploading || !tagInput.trim()}
-                    className="shrink-0"
+                    className="shrink-0 h-9"
                   >
                     <Plus className="h-4 w-4" />
                   </Button>
@@ -550,43 +597,102 @@ export function UploadDialog({
                 )}
               </div>
 
-              {/* Gallery selection */}
+              <Separator />
+
+              {/* Gallery combobox */}
               <div>
                 <label className="block text-xs text-muted-foreground mb-1">
-                  Galeries
+                  Collections
                 </label>
-                {loadingGalleries ? (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Chargement des galeries...
-                  </div>
-                ) : galleries.length === 0 ? (
-                  <p className="text-sm text-muted-foreground py-2">
-                    Aucune galerie disponible
-                  </p>
-                ) : (
-                  <div className="space-y-1.5 max-h-40 overflow-y-auto border rounded-md p-2">
-                    {galleries.map((gallery) => (
-                      <label
+
+                {/* Selected galleries as chips */}
+                {selectedGalleryNames.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    {selectedGalleryNames.map((gallery) => (
+                      <Badge
                         key={gallery.id}
-                        className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 rounded px-2 py-1.5"
+                        variant="secondary"
+                        className="gap-1.5 pr-1"
                       >
-                        <input
-                          type="checkbox"
-                          checked={selectedGalleryIds.includes(gallery.id)}
-                          onChange={() => handleToggleGallery(gallery.id)}
-                          disabled={uploading}
-                          className="rounded border-input"
-                        />
-                        <span className="text-sm">{gallery.name}</span>
                         {gallery.color && (
                           <span
-                            className="inline-block w-3 h-3 rounded-full shrink-0"
+                            className="size-2 rounded-full shrink-0"
                             style={{ backgroundColor: gallery.color }}
                           />
                         )}
-                      </label>
+                        {gallery.name}
+                        <button
+                          type="button"
+                          onClick={() => handleToggleGallery(gallery.id)}
+                          className="hover:text-destructive"
+                          disabled={uploading}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
                     ))}
+                  </div>
+                )}
+
+                {/* Dropdown search */}
+                {loadingGalleries ? (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Chargement des collections...
+                  </div>
+                ) : (
+                  <div className="relative" ref={galleryDropdownRef}>
+                    <Input
+                      placeholder="Rechercher une collection..."
+                      value={gallerySearch}
+                      onChange={(e) => {
+                        setGallerySearch(e.target.value);
+                        setGalleryDropdownOpen(true);
+                      }}
+                      onFocus={() => setGalleryDropdownOpen(true)}
+                      disabled={uploading}
+                    />
+
+                    {galleryDropdownOpen && (
+                      <div className="absolute z-50 mt-1 w-full rounded-md border bg-popover shadow-md max-h-48 overflow-y-auto">
+                        {filteredGalleries.length === 0 ? (
+                          <p className="text-sm text-muted-foreground text-center py-3">
+                            Aucune collection trouvée
+                          </p>
+                        ) : (
+                          filteredGalleries.map((gallery) => {
+                            const isSelected = selectedGalleryIds.includes(
+                              gallery.id,
+                            );
+                            return (
+                              <button
+                                key={gallery.id}
+                                type="button"
+                                className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent transition-colors text-left"
+                                onClick={() => handleToggleGallery(gallery.id)}
+                              >
+                                <Checkbox
+                                  checked={isSelected}
+                                  className="pointer-events-none"
+                                />
+                                {gallery.color && (
+                                  <span
+                                    className="size-3 rounded-full shrink-0"
+                                    style={{
+                                      backgroundColor: gallery.color,
+                                    }}
+                                  />
+                                )}
+                                <span className="truncate">{gallery.name}</span>
+                                {isSelected && (
+                                  <Check className="ml-auto h-4 w-4 text-primary shrink-0" />
+                                )}
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -599,13 +705,13 @@ export function UploadDialog({
                     disabled={uploading}
                   >
                     <Plus className="h-3 w-3" />
-                    Créer une galerie
+                    Créer une collection
                   </button>
                 ) : (
                   <div className="mt-2 border rounded-md p-3 space-y-2 bg-muted/20">
                     <div className="flex gap-2">
                       <Input
-                        placeholder="Nom de la galerie"
+                        placeholder="Nom de la collection"
                         value={newGalleryName}
                         onChange={(e) => setNewGalleryName(e.target.value)}
                         disabled={creatingGallery}
@@ -651,44 +757,51 @@ export function UploadDialog({
                 )}
               </div>
 
-              <div className="text-xs text-muted-foreground bg-muted p-3 rounded">
-                Les métadonnées seront ajoutées au SVG si elles n'existent pas
-                déjà. Les galeries et tags sont optionnels.
+              {/* Progress bar */}
+              {uploading && (
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Upload en cours...</span>
+                    <span>{progress}%</span>
+                  </div>
+                  <div className="w-full bg-muted rounded-full h-2">
+                    <div
+                      className="bg-primary h-2 rounded-full transition-all"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Actions - bottom right */}
+              <div className="flex justify-end gap-2 mt-auto pt-3 border-t">
+                <Button
+                  variant="outline"
+                  onClick={() => setOpen(false)}
+                  disabled={uploading}
+                >
+                  Annuler
+                </Button>
+                <Button onClick={handleUpload} disabled={!file || uploading}>
+                  <Upload className="h-4 w-4 mr-2" />
+                  {uploading ? "Upload..." : "Upload"}
+                </Button>
               </div>
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Progress bar */}
-          {uploading && (
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Upload en cours...</span>
-                <span>{progress}%</span>
-              </div>
-              <div className="w-full bg-muted rounded-full h-2">
-                <div
-                  className="bg-primary h-2 rounded-full transition-all"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Actions */}
+        {/* Actions when no file yet */}
+        {!file && (
           <div className="flex justify-end gap-2">
             <Button
               variant="outline"
               onClick={() => setOpen(false)}
-              disabled={uploading}
             >
               Annuler
             </Button>
-            <Button onClick={handleUpload} disabled={!file || uploading}>
-              <Upload className="h-4 w-4 mr-2" />
-              {uploading ? "Upload..." : "Upload"}
-            </Button>
           </div>
-        </div>
+        )}
       </DialogContent>
     </Dialog>
   );

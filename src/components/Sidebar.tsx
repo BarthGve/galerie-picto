@@ -53,6 +53,8 @@ export function AppSidebar({
   onDeleteGallery,
   onAddToGallery,
   onGoHome,
+  onGoDiscover,
+  currentPage,
   ...props
 }: React.ComponentProps<typeof Sidebar> & {
   galleries: Gallery[];
@@ -71,6 +73,8 @@ export function AppSidebar({
   onDeleteGallery?: (gallery: Gallery) => void;
   onAddToGallery?: (galleryId: string, pictogramId: string) => Promise<boolean>;
   onGoHome?: () => void;
+  onGoDiscover?: () => void;
+  currentPage?: string;
 }) {
   return (
     <Sidebar collapsible="offcanvas" {...props}>
@@ -100,7 +104,7 @@ export function AppSidebar({
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
-      <SidebarContent>
+      <SidebarContent className="pt-12 [&>*+*]:mt-4">
         <NavMain
           totalPictogramCount={totalPictogramCount}
           selectedGalleryId={selectedGalleryId}
@@ -110,6 +114,8 @@ export function AppSidebar({
           }}
           isAuthenticated={!!user}
           onUploadClick={onUploadClick}
+          onGoDiscover={onGoDiscover}
+          currentPage={currentPage}
         />
         <NavGalleries
           galleries={galleries}
@@ -141,12 +147,14 @@ export function AppSidebar({
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               )}
-              <ThemeToggleItem />
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
+        <SidebarMenu>
+          <ThemeToggleItem />
+        </SidebarMenu>
         <NavUser user={user} onLogin={onLogin} onLogout={onLogout} />
       </SidebarFooter>
     </Sidebar>

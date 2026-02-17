@@ -45,7 +45,7 @@ export function NavContributors({
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-      <SidebarGroupLabel>Contributeurs</SidebarGroupLabel>
+      <SidebarGroupLabel className="text-primary">Contributeurs</SidebarGroupLabel>
       <SidebarMenu>
         {contributors.map((c) => (
           <SidebarMenuItem key={c.login}>

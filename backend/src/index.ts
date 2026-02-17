@@ -15,6 +15,13 @@ import uploadRoutes from "./routes/upload.js";
 import galleriesRoutes from "./routes/galleries.js";
 import pictogramsRoutes from "./routes/pictograms.js";
 import proxyRoutes from "./routes/proxy.js";
+import githubProfileRoutes from "./routes/github-profile.js";
+import downloadsRoutes from "./routes/downloads.js";
+import {
+  initDownloads,
+  startFlushTimer,
+  shutdownDownloads,
+} from "./services/downloads.js";
 
 const app = express();
 
@@ -89,8 +96,23 @@ app.use("/api/auth", authRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/galleries", galleriesRoutes);
 app.use("/api/pictograms", pictogramsRoutes);
+app.use("/api/pictograms", downloadsRoutes);
 app.use("/api/proxy", proxyRoutes);
+app.use("/api/github/profile", githubProfileRoutes);
 
-app.listen(config.port, () => {
-  console.log(`Server running on port ${config.port}`);
+// Init downloads counter then start server
+initDownloads().then(() => {
+  startFlushTimer();
+
+  app.listen(config.port, () => {
+    console.log(`Server running on port ${config.port}`);
+  });
 });
+
+// Graceful shutdown
+for (const signal of ["SIGINT", "SIGTERM"] as const) {
+  process.on(signal, async () => {
+    await shutdownDownloads();
+    process.exit(0);
+  });
+}

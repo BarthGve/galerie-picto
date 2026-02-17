@@ -67,7 +67,6 @@ export async function uploadPictogram(
         name: metadata.title || file.name.replace(/\.svg$/i, ""),
         url: publicUrl,
         size: file.size,
-        category: metadata.category,
         tags,
         galleryIds,
         contributor,
@@ -103,7 +102,6 @@ async function notifyUploadComplete(
     name: string;
     url: string;
     size: number;
-    category?: string;
     tags: string[];
     galleryIds: string[];
     contributor?: { githubUsername: string; githubAvatarUrl: string };

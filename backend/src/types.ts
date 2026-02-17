@@ -11,7 +11,6 @@ export interface Pictogram {
   url: string;
   size: number;
   lastModified: string;
-  category?: string;
   tags?: string[];
   galleryIds?: string[];
   contributor?: Contributor;
