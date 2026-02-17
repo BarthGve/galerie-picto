@@ -69,6 +69,18 @@ export async function authMiddleware(
 
   const token = authHeader.slice(7);
 
+  // Dev mode bypass
+  if (process.env.NODE_ENV !== "production" && token === "dev-token") {
+    req.user = {
+      login: "dev-user",
+      avatar_url: "https://api.dicebear.com/9.x/pixel-art/svg?seed=dev",
+      name: "Dev User",
+      email: "dev@localhost",
+    };
+    next();
+    return;
+  }
+
   // Check cache first
   const cached = tokenCache.get(token);
   if (cached && cached.expiresAt > Date.now()) {

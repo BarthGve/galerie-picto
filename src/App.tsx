@@ -9,6 +9,8 @@ import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import {
+  DEV_MODE,
+  devLogin,
   initiateGitHubLogin,
   handleGitHubCallback,
   getGitHubUser,
@@ -155,6 +157,18 @@ function App() {
     initAuth();
   }, []);
 
+  const handleLogin = () => {
+    // Check directly — no reliance on cached module constants
+    if (!import.meta.env.VITE_GITHUB_CLIENT_ID) {
+      console.log("[DEV] Fake login activated — no VITE_GITHUB_CLIENT_ID");
+      const fakeUser = devLogin();
+      setUser(fakeUser);
+      navigateTo("discover");
+      return;
+    }
+    initiateGitHubLogin();
+  };
+
   const handleUploadSuccess = async () => {
     setUploadDialogOpen(false);
     toast.success("Pictogramme uploadé avec succès !");
@@ -266,7 +280,7 @@ function App() {
         <HomePage
           onEnterGallery={() => navigateTo("discover")}
           user={user}
-          onLogin={initiateGitHubLogin}
+          onLogin={handleLogin}
           onLogout={logout}
         />
       </Suspense>
@@ -319,7 +333,7 @@ function App() {
           onSelectContributor={handleSelectContributor}
           totalPictogramCount={pictograms.length}
           user={user}
-          onLogin={initiateGitHubLogin}
+          onLogin={handleLogin}
           onLogout={logout}
           onUploadClick={() => setUploadDialogOpen(true)}
           onCreateGallery={handleCreateGallery}

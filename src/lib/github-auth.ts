@@ -1,7 +1,16 @@
 import { API_URL } from "@/lib/config";
 
-const GITHUB_CLIENT_ID = import.meta.env.VITE_GITHUB_CLIENT_ID;
+const GITHUB_CLIENT_ID = import.meta.env.VITE_GITHUB_CLIENT_ID || "";
 const REDIRECT_URI = `${window.location.origin}${import.meta.env.BASE_URL}`;
+
+export const DEV_MODE = !GITHUB_CLIENT_ID;
+
+const DEV_USER: GitHubUser = {
+  login: "dev-user",
+  name: "Dev User",
+  avatar_url: "https://api.dicebear.com/9.x/pixel-art/svg?seed=dev",
+  email: "dev@localhost",
+};
 
 export interface GitHubUser {
   login: string;
@@ -11,9 +20,15 @@ export interface GitHubUser {
 }
 
 /**
- * Démarre le flow OAuth GitHub
+ * Démarre le flow OAuth GitHub.
+ * Si pas de client ID configuré, ne fait rien (le dev login est géré par App).
  */
 export function initiateGitHubLogin() {
+  if (DEV_MODE) {
+    // Pas de redirection — le dev login est géré côté App via devLogin()
+    return;
+  }
+
   const state = generateRandomState();
   sessionStorage.setItem("github_oauth_state", state);
 
@@ -24,6 +39,15 @@ export function initiateGitHubLogin() {
   authUrl.searchParams.set("state", state);
 
   window.location.href = authUrl.toString();
+}
+
+/**
+ * Retourne un fake user pour le mode dev.
+ * Met aussi le token en localStorage pour que isAuthenticated() fonctionne.
+ */
+export function devLogin(): GitHubUser {
+  localStorage.setItem("github_token", "dev-token");
+  return DEV_USER;
 }
 
 /**
@@ -40,7 +64,6 @@ export async function handleGitHubCallback(): Promise<string | null> {
   }
 
   try {
-    // Échanger le code contre un token via notre API
     const response = await fetch(`${API_URL}/api/auth/github`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -54,13 +77,8 @@ export async function handleGitHubCallback(): Promise<string | null> {
     const data = await response.json();
     const token = data.access_token;
 
-    // Stocker le token
     localStorage.setItem("github_token", token);
-
-    // Nettoyer l'URL
     window.history.replaceState({}, document.title, REDIRECT_URI);
-
-    // Nettoyer le state
     sessionStorage.removeItem("github_oauth_state");
 
     return token;
@@ -74,6 +92,10 @@ export async function handleGitHubCallback(): Promise<string | null> {
  * Récupère les informations de l'utilisateur GitHub
  */
 export async function getGitHubUser(token: string): Promise<GitHubUser | null> {
+  if (DEV_MODE && token === "dev-token") {
+    return DEV_USER;
+  }
+
   try {
     const response = await fetch("https://api.github.com/user", {
       headers: {
@@ -97,13 +119,12 @@ export async function getGitHubUser(token: string): Promise<GitHubUser | null> {
  * Vérifie si l'utilisateur est autorisé à uploader
  */
 export async function verifyUploadPermission(token: string): Promise<boolean> {
+  if (DEV_MODE && token === "dev-token") return true;
+
   try {
     const response = await fetch(`${API_URL}/api/auth/verify`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { Authorization: `Bearer ${token}` },
     });
-
     return response.ok;
   } catch (error) {
     console.error("Error verifying upload permission:", error);
@@ -133,7 +154,6 @@ export function isAuthenticated(): boolean {
   return !!getStoredToken();
 }
 
-// Helpers
 function generateRandomState(): string {
   const array = new Uint8Array(32);
   crypto.getRandomValues(array);
