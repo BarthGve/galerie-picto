@@ -30,18 +30,8 @@ export function NavMain({
   return (
     <SidebarGroup>
       <SidebarGroupContent className="flex flex-col gap-2">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              isActive={currentPage === "discover"}
-              onClick={onGoDiscover}
-              tooltip="Accueil"
-            >
-              <Compass />
-              <span>Accueil</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          {isAuthenticated && (
+        {isAuthenticated && (
+          <SidebarMenu>
             <SidebarMenuItem className="flex items-center gap-2">
               <SidebarMenuButton
                 tooltip="Ajouter un pictogramme"
@@ -61,7 +51,19 @@ export function NavMain({
                 <span className="sr-only">Tous</span>
               </Button>
             </SidebarMenuItem>
-          )}
+          </SidebarMenu>
+        )}
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              isActive={currentPage === "discover"}
+              onClick={onGoDiscover}
+              tooltip="Accueil"
+            >
+              <Compass />
+              <span>Accueil</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
         </SidebarMenu>
         <SidebarMenu>
           <SidebarMenuItem>

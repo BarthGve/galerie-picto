@@ -9,7 +9,6 @@ import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import {
-  DEV_MODE,
   devLogin,
   initiateGitHubLogin,
   handleGitHubCallback,
