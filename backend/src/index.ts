@@ -7,6 +7,7 @@ import rateLimit from "express-rate-limit";
 import { config } from "./config.js";
 import { readFileSync } from "fs";
 import { runMigrations, closeDb } from "./db/index.js";
+import { autoSeedIfEmpty } from "./db/seed-from-minio.js";
 
 const pkg = JSON.parse(
   readFileSync(new URL("../package.json", import.meta.url), "utf-8"),
@@ -107,8 +108,11 @@ const cleaned = cleanupOldEntries(7);
 if (cleaned > 0)
   console.log(`Cleaned ${cleaned} old anonymous download entries`);
 
-app.listen(config.port, () => {
-  console.log(`Server running on port ${config.port}`);
+// Auto-seed from Minio if DB is empty (e.g. fresh prod deployment)
+autoSeedIfEmpty().then(() => {
+  app.listen(config.port, () => {
+    console.log(`Server running on port ${config.port}`);
+  });
 });
 
 // Graceful shutdown

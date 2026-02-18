@@ -1,4 +1,5 @@
 import "dotenv/config";
+import { sql } from "drizzle-orm";
 import { config } from "../config.js";
 import { db, runMigrations } from "./index.js";
 import {
@@ -24,20 +25,17 @@ async function readJsonFromMinio<T>(key: string): Promise<T | null> {
   }
 }
 
-async function seed() {
-  console.log("Running migrations...");
-  runMigrations();
-
+async function seedData() {
   const prefix = config.minio.prefix;
 
   // 1. Seed pictograms
-  console.log("Reading pictograms-manifest.json from Minio...");
+  console.log("[seed] Reading pictograms-manifest.json from Minio...");
   const manifest = await readJsonFromMinio<PictogramManifest>(
     `${prefix}pictograms-manifest.json`,
   );
 
   if (manifest && manifest.pictograms.length > 0) {
-    console.log(`Inserting ${manifest.pictograms.length} pictograms...`);
+    console.log(`[seed] Inserting ${manifest.pictograms.length} pictograms...`);
     for (const p of manifest.pictograms) {
       db.insert(pictograms)
         .values({
@@ -54,19 +52,21 @@ async function seed() {
         .onConflictDoNothing()
         .run();
     }
-    console.log("Pictograms inserted.");
+    console.log("[seed] Pictograms inserted.");
   } else {
-    console.log("No pictograms found in Minio.");
+    console.log("[seed] No pictograms found in Minio.");
   }
 
   // 2. Seed galleries
-  console.log("Reading galleries.json from Minio...");
+  console.log("[seed] Reading galleries.json from Minio...");
   const galleriesFile = await readJsonFromMinio<GalleriesFile>(
     `${prefix}galleries.json`,
   );
 
   if (galleriesFile && galleriesFile.galleries.length > 0) {
-    console.log(`Inserting ${galleriesFile.galleries.length} galleries...`);
+    console.log(
+      `[seed] Inserting ${galleriesFile.galleries.length} galleries...`,
+    );
     for (const g of galleriesFile.galleries) {
       db.insert(galleries)
         .values({
@@ -88,20 +88,20 @@ async function seed() {
           .run();
       }
     }
-    console.log("Galleries inserted.");
+    console.log("[seed] Galleries inserted.");
   } else {
-    console.log("No galleries found in Minio.");
+    console.log("[seed] No galleries found in Minio.");
   }
 
   // 3. Seed downloads
-  console.log("Reading downloads.json from Minio...");
+  console.log("[seed] Reading downloads.json from Minio...");
   const downloadsData = await readJsonFromMinio<Record<string, number>>(
     `${prefix}downloads.json`,
   );
 
   if (downloadsData && Object.keys(downloadsData).length > 0) {
     console.log(
-      `Inserting ${Object.keys(downloadsData).length} download counters...`,
+      `[seed] Inserting ${Object.keys(downloadsData).length} download counters...`,
     );
     for (const [pictoId, count] of Object.entries(downloadsData)) {
       db.insert(downloads)
@@ -109,15 +109,42 @@ async function seed() {
         .onConflictDoNothing()
         .run();
     }
-    console.log("Downloads inserted.");
+    console.log("[seed] Downloads inserted.");
   } else {
-    console.log("No downloads found in Minio.");
+    console.log("[seed] No downloads found in Minio.");
   }
 
-  console.log("Seed complete!");
+  console.log("[seed] Seed complete!");
 }
 
-seed().catch((err) => {
-  console.error("Seed failed:", err);
-  process.exit(1);
-});
+/**
+ * Auto-seed from Minio if the pictograms table is empty.
+ * Called at server startup to ensure prod DB is populated.
+ */
+export async function autoSeedIfEmpty(): Promise<void> {
+  const result = db
+    .select({ count: sql<number>`count(*)` })
+    .from(pictograms)
+    .get();
+  const count = result?.count ?? 0;
+
+  if (count > 0) {
+    console.log(
+      `[seed] Database already has ${count} pictograms, skipping auto-seed.`,
+    );
+    return;
+  }
+
+  console.log("[seed] Database is empty, auto-seeding from Minio...");
+  await seedData();
+}
+
+// Direct execution (npx tsx src/db/seed-from-minio.ts)
+const isDirectRun = process.argv[1]?.includes("seed-from-minio");
+if (isDirectRun) {
+  runMigrations();
+  seedData().catch((err) => {
+    console.error("Seed failed:", err);
+    process.exit(1);
+  });
+}
