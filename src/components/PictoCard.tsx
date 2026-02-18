@@ -218,8 +218,8 @@ export function PictoCard({
             <Heart
               className="h-5 w-5 transition-colors"
               style={isFavorite ? {
-                color: "var(--dsfr-pink-macaron-main)",
-                fill: "var(--dsfr-pink-macaron-850)",
+                color: "var(--dsfr-red-marianne-main)",
+                fill: "var(--dsfr-red-marianne-main)",
               } : {
                 color: "var(--muted-foreground)",
               }}

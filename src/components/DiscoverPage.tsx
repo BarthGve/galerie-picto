@@ -323,7 +323,11 @@ export function DiscoverPage({
                         }}
                       >
                         <Heart
-                          className={`h-4 w-4 transition-colors ${isFavorite(picto.id) ? "fill-red-500 text-red-500" : "text-muted-foreground/30 hover:text-red-400"}`}
+                          className="h-4 w-4 transition-colors"
+                          style={isFavorite(picto.id) ? {
+                            color: "var(--dsfr-red-marianne-main)",
+                            fill: "var(--dsfr-red-marianne-main)",
+                          } : { color: "color-mix(in srgb, var(--muted-foreground) 30%, transparent)" }}
                         />
                       </button>
                     )}

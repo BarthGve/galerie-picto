@@ -103,7 +103,13 @@ export function NavMain({
                 onClick={onToggleFavorites}
                 tooltip="Mes favoris"
               >
-                <Heart className={showFavoritesOnly ? "fill-current text-red-500" : ""} />
+                <Heart
+                  className="transition-colors"
+                  style={showFavoritesOnly ? {
+                    color: "var(--dsfr-red-marianne-main)",
+                    fill: "var(--dsfr-red-marianne-main)",
+                  } : {}}
+                />
                 <span>Mes favoris</span>
               </SidebarMenuButton>
               {(favoritesCount ?? 0) > 0 && (
