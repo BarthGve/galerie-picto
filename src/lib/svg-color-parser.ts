@@ -156,12 +156,22 @@ export function replaceSvgColors(
 ): string {
   let result = svgText;
 
-  for (const [original, replacement] of Object.entries(colorMap)) {
-    if (original === replacement) continue;
+  // Use placeholders to avoid cascade conflicts (e.g. #000→#fff then #fff→#1e1e1e)
+  const entries = Object.entries(colorMap).filter(
+    ([original, replacement]) => original !== replacement,
+  );
+  const placeholders = entries.map(
+    (_, i) => `__COLOR_PLACEHOLDER_${i}__`,
+  );
+
+  // Pass 1: replace all originals with unique placeholders
+  for (let i = 0; i < entries.length; i++) {
+    const [original] = entries[i];
+    const placeholder = placeholders[i];
 
     // Replace hex colors (case insensitive)
     const hexRegex = new RegExp(original.replace("#", "#"), "gi");
-    result = result.replace(hexRegex, replacement);
+    result = result.replace(hexRegex, placeholder);
 
     // Also try 3-char hex version if applicable
     if (original.length === 7) {
@@ -175,25 +185,25 @@ export function replaceSvgColors(
       ) {
         const shortHex = `#${r}${g}${b}`;
         const shortRegex = new RegExp(shortHex.replace("#", "#"), "gi");
-        result = result.replace(shortRegex, replacement);
+        result = result.replace(shortRegex, placeholder);
       }
     }
 
     // Replace named colors that map to this hex
     for (const [name, hex] of Object.entries(CSS_COLORS)) {
       if (hex === original) {
-        // Replace in attributes: fill="red" -> fill="#newcolor"
+        // Replace in attributes: fill="red" -> fill="placeholder"
         const nameRegex = new RegExp(
           `((?:fill|stroke|stop-color|color)\\s*=\\s*")${name}(")`,
           "gi",
         );
-        result = result.replace(nameRegex, `$1${replacement}$2`);
-        // Replace in CSS: fill:red -> fill:#newcolor
+        result = result.replace(nameRegex, `$1${placeholder}$2`);
+        // Replace in CSS: fill:red -> fill:placeholder
         const cssNameRegex = new RegExp(
           `((?:fill|stroke|stop-color|color)\\s*:\\s*)${name}([;}"\\s])`,
           "gi",
         );
-        result = result.replace(cssNameRegex, `$1${replacement}$2`);
+        result = result.replace(cssNameRegex, `$1${placeholder}$2`);
       }
     }
 
@@ -205,7 +215,13 @@ export function replaceSvgColors(
       `rgb\\(\\s*${rDec}\\s*,\\s*${gDec}\\s*,\\s*${bDec}\\s*\\)`,
       "gi",
     );
-    result = result.replace(rgbRegex, replacement);
+    result = result.replace(rgbRegex, placeholder);
+  }
+
+  // Pass 2: resolve placeholders to final colors
+  for (let i = 0; i < entries.length; i++) {
+    const [, replacement] = entries[i];
+    result = result.replaceAll(placeholders[i], replacement);
   }
 
   return result;

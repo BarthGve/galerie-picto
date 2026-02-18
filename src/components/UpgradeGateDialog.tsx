@@ -37,7 +37,7 @@ export function UpgradeGateDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
-        className="overflow-hidden border-[#e2e2ee] bg-gradient-to-b from-white to-[#f4f4fa] dark:border-white/10 dark:from-[#1a1a2e] dark:to-[#16162a] p-0 shadow-2xl shadow-primary/10 sm:max-w-md sm:rounded-2xl"
+        className="overflow-hidden border-[var(--dsfr-blue-france-925)] bg-gradient-to-b from-white to-[var(--dsfr-blue-france-975)] dark:border-white/10 dark:from-[var(--dsfr-grey-50)] dark:to-[var(--dsfr-grey-50)] p-0 shadow-2xl shadow-primary/10 sm:max-w-md sm:rounded"
       >
         <VisuallyHidden.Root asChild>
           <DialogTitle>Passez en mode illimité</DialogTitle>
@@ -45,15 +45,15 @@ export function UpgradeGateDialog({
 
         {/* Gradient orbs */}
         <div className="pointer-events-none absolute -top-24 -right-24 h-64 w-64 rounded-full bg-primary/10 dark:bg-primary/20 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-purple-400/10 dark:bg-purple-600/15 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-[var(--dsfr-blue-france-main)]/10 dark:bg-[var(--dsfr-blue-france-main)]/15 blur-3xl" />
 
         {/* Content */}
         <div className="relative z-10 px-8 pt-10 pb-8">
           {/* Icon badge */}
           <div className="mb-6 flex justify-center">
             <div className="relative">
-              <div className="absolute inset-0 animate-pulse rounded-2xl bg-primary/20 dark:bg-primary/30 blur-xl" />
-              <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-purple-700 shadow-lg shadow-primary/30">
+              <div className="absolute inset-0 animate-pulse rounded bg-primary/20 dark:bg-primary/30 blur-xl" />
+              <div className="relative flex h-16 w-16 items-center justify-center rounded bg-gradient-to-br from-primary to-[var(--dsfr-blue-france-sun)] shadow-lg shadow-primary/30">
                 <Sparkles className="h-8 w-8 text-white" />
               </div>
             </div>
@@ -62,7 +62,7 @@ export function UpgradeGateDialog({
           {/* Title */}
           <h2 className="text-center text-xl font-bold text-foreground">
             Passez en mode{" "}
-            <span className="bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-primary to-[var(--dsfr-blue-france-main)] bg-clip-text text-transparent">
               illimité
             </span>
           </h2>
@@ -75,7 +75,7 @@ export function UpgradeGateDialog({
             {features.map(({ icon: Icon, label, sub }) => (
               <div
                 key={label}
-                className="group rounded-xl border border-border bg-black/[0.02] dark:bg-white/[0.03] p-3.5 transition-colors hover:border-primary/30 hover:bg-primary/[0.05]"
+                className="group rounded border border-border bg-black/[0.02] dark:bg-white/[0.03] p-3.5 transition-colors hover:border-primary/30 hover:bg-primary/[0.05]"
               >
                 <Icon className="mb-2 h-5 w-5 text-primary" />
                 <p className="whitespace-pre-line text-xs font-medium leading-tight text-foreground/80">
@@ -92,7 +92,7 @@ export function UpgradeGateDialog({
               onOpenChange(false);
               onLogin();
             }}
-            className="group mt-8 flex w-full items-center justify-center gap-2.5 rounded-xl bg-gradient-to-r from-primary to-purple-600 px-6 py-3.5 font-semibold text-white shadow-lg shadow-primary/25 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-primary/30"
+            className="group mt-8 flex w-full items-center justify-center gap-2.5 rounded bg-gradient-to-r from-[var(--dsfr-blue-france-sun)] to-[var(--dsfr-blue-france-main)] px-6 py-3.5 font-semibold text-white shadow-lg shadow-primary/25 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-primary/30"
           >
             <Github className="h-5 w-5" />
             Continuer avec GitHub

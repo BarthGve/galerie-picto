@@ -11,6 +11,7 @@ import {
   Tag,
   ChevronRight,
   TrendingUp,
+  ThumbsUp,
 } from "lucide-react";
 import { useDownloads } from "@/hooks/useDownloads";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -49,6 +50,9 @@ interface DiscoverPageProps {
   isFavorite?: (id: string) => boolean;
   onToggleFavorite?: (id: string) => void;
   onLogin?: () => void;
+  getLikeCount?: (id: string) => number;
+  hasLiked?: (id: string) => boolean;
+  onToggleLike?: (id: string) => void;
 }
 
 function timeAgo(dateStr: string): string {
@@ -78,9 +82,7 @@ function SectionHeader({
   return (
     <div className="flex items-center justify-between mb-6">
       <div className="flex items-center gap-3">
-        <div
-          className="w-10 h-10 rounded bg-primary/80 backdrop-blur-sm flex items-center justify-center text-primary-foreground shadow-lg ring-1 ring-primary/20 shrink-0"
-        >
+        <div className="w-10 h-10 rounded bg-primary/80 backdrop-blur-sm flex items-center justify-center text-primary-foreground shadow-lg ring-1 ring-primary/20 shrink-0">
           <Icon className="w-5 h-5" />
         </div>
         <h2 className="text-xl font-extrabold tracking-tight text-primary">
@@ -114,6 +116,50 @@ function BentoCard({
   );
 }
 
+const glass = (r: number, g: number, b: number): React.CSSProperties => ({
+  background: `rgba(${r}, ${g}, ${b}, 0.18)`,
+  backdropFilter: "blur(10px)",
+  WebkitBackdropFilter: "blur(10px)",
+  border: `1px solid rgba(${r}, ${g}, ${b}, 0.32)`,
+});
+
+// Visual positions [left=2nd, center=1st, right=3rd]
+const PODIUM_CONFIG = [
+  {
+    rank: 2,
+    stepHeight: "h-8",
+    stepStyle: glass(206, 206, 206),          // grey-850
+    rankStyle: { color: `var(--dsfr-grey-200)` },
+    countStyle: { color: `var(--dsfr-grey-425)` },
+    borderStyle: { borderColor: `var(--dsfr-grey-850)` },
+    pictoSize: "w-12 h-12",
+    shadowClass: "",
+    rankSize: "text-sm",
+  },
+  {
+    rank: 1,
+    stepHeight: "h-14",
+    stepStyle: glass(239, 203, 58),           // yellow-tournesol-850
+    rankStyle: { color: `var(--dsfr-yellow-tournesol-sun)` },
+    countStyle: { color: `var(--dsfr-yellow-tournesol-main)` },
+    borderStyle: {},
+    pictoSize: "w-[3.75rem] h-[3.75rem]",
+    shadowClass: "shadow-[0_4px_16px_rgba(239,203,58,0.25)]",
+    rankSize: "text-lg",
+  },
+  {
+    rank: 3,
+    stepHeight: "h-5",
+    stepStyle: glass(228, 121, 74),           // orange-terre-battue-main
+    rankStyle: { color: `var(--dsfr-orange-terre-battue-sun)` },
+    countStyle: { color: `var(--dsfr-orange-terre-battue-sun)` },
+    borderStyle: { borderColor: `var(--dsfr-orange-terre-battue-main)` },
+    pictoSize: "w-11 h-11",
+    shadowClass: "",
+    rankSize: "text-xs",
+  },
+];
+
 export function DiscoverPage({
   pictograms,
   galleries,
@@ -126,6 +172,9 @@ export function DiscoverPage({
   isFavorite,
   onToggleFavorite,
   onLogin,
+  getLikeCount,
+  hasLiked,
+  onToggleLike,
 }: DiscoverPageProps) {
   const [topContributorProfile, setTopContributorProfile] =
     useState<GitHubProfile | null>(null);
@@ -146,8 +195,23 @@ export function DiscoverPage({
     return [...pictograms]
       .filter((p) => getCount(p.id) > 0)
       .sort((a, b) => getCount(b.id) - getCount(a.id))
-      .slice(0, 5);
+      .slice(0, 3);
   }, [pictograms, getCount]);
+
+  // Podium: top 3 liked, reordered visually as [2nd, 1st, 3rd]
+  const podium = useMemo((): { items: (Pictogram | undefined)[]; show: boolean } => {
+    if (!getLikeCount) return { items: [], show: false };
+    const sorted = [...pictograms]
+      .filter((p) => getLikeCount(p.id) > 0)
+      .sort((a, b) => getLikeCount(b.id) - getLikeCount(a.id))
+      .slice(0, 3);
+    if (sorted.length === 0) return { items: [], show: false };
+    // Visual order: left=2nd, center=1st, right=3rd
+    return {
+      show: true,
+      items: [sorted[1], sorted[0], sorted[2]],
+    };
+  }, [pictograms, getLikeCount]);
 
   const topContributor = useMemo(() => {
     const counts = new Map<string, number>();
@@ -228,7 +292,7 @@ export function DiscoverPage({
            ══════════════════════════════════════════ */}
         <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-6 auto-rows-min">
 
-          {/* ── Derniers ajouts (large, 4 cols, 2 rows) ── */}
+          {/* ── Derniers ajouts (4 cols, 2 rows) ── */}
           {latestPictos.length > 0 && (
             <BentoCard className="md:col-span-4 lg:col-span-4 lg:row-span-2 hover:!shadow-sm hover:!translate-y-0">
               <SectionHeader
@@ -263,6 +327,25 @@ export function DiscoverPage({
                         />
                       </button>
                     )}
+                    {isAuthenticated && onToggleLike && (
+                      <button
+                        className="absolute bottom-3 right-3 z-10 flex items-center gap-0.5 p-1.5 rounded transition-all"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onToggleLike(picto.id);
+                        }}
+                      >
+                        <ThumbsUp
+                          className={`h-3.5 w-3.5 transition-colors ${hasLiked?.(picto.id) ? "fill-primary/30 text-primary" : "text-muted-foreground/30 hover:text-primary"}`}
+                        />
+                        {(getLikeCount?.(picto.id) ?? 0) > 0 && (
+                          <span className={`text-[10px] font-bold leading-none ${hasLiked?.(picto.id) ? "text-primary" : "text-muted-foreground/50"}`}>
+                            {getLikeCount!(picto.id)}
+                          </span>
+                        )}
+                      </button>
+                    )}
+
                     <div className="aspect-square flex items-center justify-center p-3 mb-3">
                       <DarkAwarePicto
                         pictogram={picto}
@@ -288,14 +371,11 @@ export function DiscoverPage({
             </BentoCard>
           )}
 
-          {/* ── Top téléchargés (vertical, 2 cols, 2 rows) ── */}
+          {/* ── Top téléchargés (2 cols, 1 row) ── */}
           {mostDownloaded.length > 0 && (
-            <BentoCard className="md:col-span-2 lg:col-span-2 lg:row-span-2 bg-accent hover:!shadow-sm hover:!translate-y-0">
-              <SectionHeader
-                title="Top téléchargés"
-                icon={TrendingUp}
-              />
-              <div className="space-y-3 mt-4">
+            <BentoCard className="md:col-span-2 lg:col-span-2 bg-accent hover:!shadow-sm hover:!translate-y-0">
+              <SectionHeader title="Top téléchargés" icon={TrendingUp} />
+              <div className="space-y-3">
                 {mostDownloaded.map((picto, idx) => (
                   <div
                     key={picto.id}
@@ -327,7 +407,7 @@ export function DiscoverPage({
               </div>
               <button
                 onClick={() => onNavigateGallery()}
-                className="w-full mt-6 btn-cta group relative px-6 py-3 rounded bg-primary text-primary-foreground font-bold text-sm overflow-hidden shadow-lg transition-all hover:scale-[1.02] active:scale-95"
+                className="w-full mt-4 btn-cta group relative px-6 py-2.5 rounded bg-primary text-primary-foreground font-bold text-sm overflow-hidden shadow-lg transition-all hover:scale-[1.02] active:scale-95"
               >
                 <span className="relative z-10 flex items-center justify-center gap-2">
                   Voir tout <TrendingUp className="w-4 h-4" />
@@ -336,7 +416,61 @@ export function DiscoverPage({
             </BentoCard>
           )}
 
-          {/* ── Collections à la une (wide, 4 cols) ── */}
+          {/* ── Podium des likes (2 cols, 1 row) ── */}
+          {podium.show && (
+            <BentoCard className="md:col-span-2 lg:col-span-2 hover:!shadow-sm hover:!translate-y-0">
+              <SectionHeader title="Podium des likes" icon={ThumbsUp} />
+
+              <div className="flex items-end justify-center gap-2 pt-1">
+                {podium.items.map((picto, visualIdx) => {
+                  const cfg = PODIUM_CONFIG[visualIdx];
+                  return (
+                    <div key={visualIdx} className="flex-1 flex flex-col items-center gap-1 min-w-0">
+                      {picto ? (
+                        <>
+                          {/* Pictogramme */}
+                          <div
+                            className={`${cfg.pictoSize} ${cfg.shadowClass} rounded-[4px] border bg-card flex items-center justify-center p-1.5 cursor-pointer hover:scale-110 transition-transform`}
+                            style={cfg.borderStyle}
+                            onClick={() => setSelectedPicto(picto)}
+                          >
+                            <DarkAwarePicto
+                              pictogram={picto}
+                              className="w-full h-full object-contain"
+                            />
+                          </div>
+                          {/* Nom */}
+                          <p className="text-[10px] font-bold truncate w-full text-center text-foreground leading-tight px-0.5">
+                            {picto.name}
+                          </p>
+                          {/* Nb likes */}
+                          <span className="flex items-center gap-0.5 text-[10px] font-bold" style={cfg.countStyle}>
+                            <ThumbsUp className="size-2.5" />
+                            {getLikeCount?.(picto.id) ?? 0}
+                          </span>
+                        </>
+                      ) : (
+                        /* Slot vide — équilibre visuel */
+                        <div className={`${cfg.pictoSize} opacity-0`} />
+                      )}
+
+                      {/* Marche du podium */}
+                      <div
+                        className={`w-full ${cfg.stepHeight} rounded-t-[4px] flex items-center justify-center mt-1`}
+                        style={cfg.stepStyle}
+                      >
+                        <span className={`font-black ${cfg.rankSize}`} style={cfg.rankStyle}>
+                          {cfg.rank}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </BentoCard>
+          )}
+
+          {/* ── Collections à la une (4 cols) ── */}
           {featuredGalleries.length > 0 && (
             <BentoCard className="md:col-span-4 lg:col-span-4 hover:!shadow-sm hover:!translate-y-0">
               <SectionHeader
@@ -384,7 +518,7 @@ export function DiscoverPage({
                       ))}
                     </div>
                     <span className="inline-flex items-center self-start px-3 py-1 rounded-full bg-badge-accent-bg border border-badge-accent-border text-badge-accent-text text-xs font-bold">
-                      {gallery.pictogramIds.length} pictogrammes
+                      {gallery.pictogramIds.length} picto{gallery.pictogramIds.length > 1 ? "s" : ""}
                     </span>
                   </div>
                 ))}
@@ -392,7 +526,7 @@ export function DiscoverPage({
             </BentoCard>
           )}
 
-          {/* ── Tags populaires (compact dark, 2 cols) ── */}
+          {/* ── Tags populaires (2 cols) ── */}
           {topTags.length > 0 && (
             <BentoCard className="md:col-span-2 lg:col-span-2 hover:!shadow-sm hover:!translate-y-0 bg-[var(--dsfr-blue-france-975)] dark:bg-[var(--dsfr-blue-france-main)]/[0.08]">
               <div className="flex items-center gap-3 mb-6">
@@ -408,7 +542,10 @@ export function DiscoverPage({
                   <button
                     key={name}
                     onClick={() => onNavigateGallery({ search: name })}
-                    className="px-3 py-1.5 rounded bg-background/60 border border-border text-xs font-bold text-foreground transition-all cursor-pointer" style={{ '--hover-bg': 'var(--dsfr-blue-france-850)' } as React.CSSProperties} onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'var(--dsfr-blue-france-850)'; e.currentTarget.style.borderColor = 'var(--dsfr-blue-france-850)'; }} onMouseLeave={e => { e.currentTarget.style.backgroundColor = ''; e.currentTarget.style.borderColor = ''; }}
+                    className="px-3 py-1.5 rounded-xl bg-background/60 border border-border text-xs font-bold text-foreground transition-all cursor-pointer"
+                    style={{ '--hover-bg': 'var(--dsfr-blue-france-850)' } as React.CSSProperties}
+                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'var(--dsfr-blue-france-850)'; e.currentTarget.style.borderColor = 'var(--dsfr-blue-france-850)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = ''; e.currentTarget.style.borderColor = ''; }}
                   >
                     {name}{" "}
                     <span className="opacity-40 ml-1">{count}</span>
@@ -469,12 +606,12 @@ export function DiscoverPage({
                       </span>
                     )}
                     <span className="inline-flex items-center px-3 py-1 rounded-full bg-badge-accent-bg border border-badge-accent-border text-badge-accent-text text-xs font-bold">
-                      {topContributor.count} pictogrammes
+                      {topContributor.count} picto{topContributor.count > 1 ? "s" : ""}
                     </span>
                     {topContributorProfile?.followers !== undefined && (
                       <span className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground uppercase tracking-wider">
                         <Users className="size-3.5 text-github-accent" />
-                        {topContributorProfile.followers} followers
+                        {topContributorProfile.followers} follower{topContributorProfile.followers > 1 ? "s" : ""}
                       </span>
                     )}
                   </div>

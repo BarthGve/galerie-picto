@@ -103,7 +103,7 @@ router.post(
 
       // Convert SVG to PNG
       const resvg = new Resvg(svgText, {
-        fitTo: { mode: "width", value: size },
+        fitTo: { mode: "height", value: size },
       });
       const pngData = resvg.render();
       const pngBuffer = pngData.asPng();

@@ -5,33 +5,43 @@ import { fetchSvgText } from "@/lib/svg-to-png";
 import { replaceSvgColors } from "@/lib/svg-color-parser";
 
 /**
+ * Couleurs non-standard fréquentes → couleurs DSFR officielles.
+ * Appliquées avant le remap dark pour garantir la cohérence.
+ */
+const NORMALIZE_TO_DSFR: Record<string, string> = {
+  "#303277": "#000091", // bleu foncé non-standard → blue-france-113
+  "#e3201a": "#e1000f", // rouge non-standard → red-marianne-425
+};
+
+/**
  * Mapping couleurs DSFR light → dark pour les pictogrammes artwork.
- * Source : systeme-de-design.gouv.fr/fondamentaux/pictogramme
+ * Aligné sur backend/src/services/dsfr-dark.ts
  */
 const DSFR_LIGHT_TO_DARK: Record<string, string> = {
-  "#2845c1": "#5b7de8", // blue-france-113 → blue-france-625 (artwork-major)
-  "#c83f49": "#e06670", // red-marianne-425 → red-marianne-625 (artwork-minor)
+  "#000091": "#8585f6", // blue-france-113 → blue-france-625 (artwork-major)
+  "#e1000f": "#f95c5e", // red-marianne-425 → red-marianne-625 (artwork-minor)
   "#ececff": "#21213f", // blue-france-950 → blue-france-100 (artwork-decorative)
+  "#e3e3fd": "#313178", // blue-france-925 → blue-france-125
+  "#cacafb": "#3a3a7d", // blue-france-850 → blue-france-150
+  "#6a6af4": "#8585f6", // blue-france-main-525 → blue-france-625
+  "#000000": "#ffffff", // noir pur → blanc (pour SVG noir/blanc type QR code)
+  "#ffffff": "#1e1e1e", // blanc pur → fond sombre
 };
 
 /**
  * Retourne l'URL du pictogramme adaptée au thème courant.
- * - Si une variante _dark existe → utilise darkUrl
- * - Sinon, en dark mode → fetch le SVG et applique les couleurs DSFR dark
- * - En light mode → URL d'origine
+ * En dark mode → fetch le SVG, normalise les couleurs, et applique le remap DSFR dark.
+ * En light mode → URL d'origine.
  */
 export function usePictogramUrl(pictogram: Pictogram): string {
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
-  const needsRemap = isDark && !pictogram.darkUrl;
 
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const blobUrlRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!needsRemap) {
-      // Switched back to light: revoke previous blob via ref only (no setState needed,
-      // useMemo ignores blobUrl when needsRemap is false)
+    if (!isDark) {
       if (blobUrlRef.current) {
         URL.revokeObjectURL(blobUrlRef.current);
         blobUrlRef.current = null;
@@ -46,7 +56,8 @@ export function usePictogramUrl(pictogram: Pictogram): string {
 
     fetchSvgText(pictogram.url).then((svgText) => {
       if (cancelled) return;
-      const darkSvg = replaceSvgColors(svgText, DSFR_LIGHT_TO_DARK);
+      const normalized = replaceSvgColors(svgText, NORMALIZE_TO_DSFR);
+      const darkSvg = replaceSvgColors(normalized, DSFR_LIGHT_TO_DARK);
       const blob = new Blob([darkSvg], { type: "image/svg+xml" });
       const objectUrl = URL.createObjectURL(blob);
       blobUrlRef.current = objectUrl;
@@ -60,11 +71,10 @@ export function usePictogramUrl(pictogram: Pictogram): string {
         blobUrlRef.current = null;
       }
     };
-  }, [needsRemap, pictogram.url]);  
+  }, [isDark, pictogram.url]);
 
   return useMemo(() => {
-    if (isDark && pictogram.darkUrl) return pictogram.darkUrl;
-    if (needsRemap && blobUrl) return blobUrl;
+    if (isDark && blobUrl) return blobUrl;
     return pictogram.url;
-  }, [isDark, pictogram.darkUrl, pictogram.url, needsRemap, blobUrl]);
+  }, [isDark, pictogram.url, blobUrl]);
 }

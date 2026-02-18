@@ -4,6 +4,7 @@ import { NavGalleries } from "@/components/nav-galleries";
 import { NavContributors } from "@/components/nav-contributors";
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
+import { NavUserCollections } from "@/components/NavUserCollections";
 import {
   Sidebar,
   SidebarContent,
@@ -15,7 +16,7 @@ import {
   SidebarGroup,
   SidebarGroupContent,
 } from "@/components/ui/sidebar";
-import type { Gallery, Pictogram } from "@/lib/types";
+import type { Gallery, Pictogram, UserCollection } from "@/lib/types";
 import type { GitHubUser } from "@/lib/github-auth";
 import { useTheme } from "@/hooks/use-theme";
 
@@ -41,6 +42,13 @@ export function AppSidebar({
   favoritesCount,
   showFavoritesOnly,
   onToggleFavorites,
+  userCollections,
+  selectedUserCollectionId,
+  onSelectUserCollection,
+  onCreateUserCollection,
+  onUpdateUserCollection,
+  onRemoveUserCollection,
+  onAddToUserCollection,
   ...props
 }: React.ComponentProps<typeof Sidebar> & {
   galleries: Gallery[];
@@ -64,6 +72,13 @@ export function AppSidebar({
   favoritesCount?: number;
   showFavoritesOnly?: boolean;
   onToggleFavorites?: () => void;
+  userCollections?: UserCollection[];
+  selectedUserCollectionId?: string | null;
+  onSelectUserCollection?: (id: string | null) => void;
+  onCreateUserCollection?: (name: string, color?: string) => Promise<UserCollection | null>;
+  onUpdateUserCollection?: (id: string, data: { name?: string; color?: string | null }) => Promise<void>;
+  onRemoveUserCollection?: (id: string) => Promise<void>;
+  onAddToUserCollection?: (collectionId: string, pictogramId: string) => Promise<boolean>;
 }) {
   const { theme, setTheme } = useTheme();
   const isDark = theme === "dark";
@@ -102,9 +117,12 @@ export function AppSidebar({
         <NavMain
           totalPictogramCount={totalPictogramCount}
           selectedGalleryId={selectedGalleryId}
+          selectedContributor={selectedContributor}
+          selectedUserCollectionId={selectedUserCollectionId}
           onSelectAll={() => {
             onSelectGallery(null);
             onSelectContributor(null);
+            onSelectUserCollection?.(null);
           }}
           isAuthenticated={!!user}
           onUploadClick={onUploadClick}
@@ -134,6 +152,18 @@ export function AppSidebar({
           }}
         />
 
+        {!!user && (
+          <NavUserCollections
+            collections={userCollections ?? []}
+            selectedCollectionId={selectedUserCollectionId ?? null}
+            onSelectCollection={(id) => onSelectUserCollection?.(id)}
+            onCreate={onCreateUserCollection ?? (async () => null)}
+            onUpdate={onUpdateUserCollection ?? (async () => {})}
+            onRemove={onRemoveUserCollection ?? (async () => {})}
+            onAddPictogram={onAddToUserCollection ?? (async () => false)}
+          />
+        )}
+
         {/* Nouvelle collection — style dashed B */}
         {!!user && (
           <SidebarGroup className="mt-auto">
@@ -142,7 +172,7 @@ export function AppSidebar({
                 <SidebarMenuItem>
                   <SidebarMenuButton
                     onClick={onCreateGallery}
-                    className="border-2 border-dashed border-border text-muted-foreground hover:text-foreground hover:bg-accent/60 rounded-xl"
+                    className="border-2 border-dashed border-border text-muted-foreground hover:text-foreground hover:bg-accent/60 rounded"
                   >
                     <Plus className="size-4" />
                     <span>Nouvelle collection</span>

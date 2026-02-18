@@ -37,6 +37,7 @@ async function seedData() {
   if (manifest && manifest.pictograms.length > 0) {
     console.log(`[seed] Inserting ${manifest.pictograms.length} pictograms...`);
     for (const p of manifest.pictograms) {
+      if (p.filename.endsWith("_dark.svg")) continue;
       db.insert(pictograms)
         .values({
           id: p.id,

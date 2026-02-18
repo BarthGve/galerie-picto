@@ -5,11 +5,13 @@ import {
   Minimize2,
   Maximize2,
   Search,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
-import type { Pictogram, Gallery } from "@/lib/types";
+import type { Pictogram, Gallery, UserCollection } from "@/lib/types";
 import { PictoCard } from "./PictoCard";
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 50;
 
 type SortKey = "name" | "date" | "size";
 
@@ -31,6 +33,12 @@ interface PictoGridProps {
   isFavorite?: (id: string) => boolean;
   onToggleFavorite?: (id: string) => void;
   onLogin?: () => void;
+  userCollections?: UserCollection[];
+  onAddToUserCollection?: (collectionId: string, pictogramId: string) => Promise<boolean>;
+  onRemoveFromUserCollection?: (collectionId: string, pictogramId: string) => Promise<void>;
+  getLikeCount?: (id: string) => number;
+  hasLiked?: (id: string) => boolean;
+  onToggleLike?: (id: string) => void;
 }
 
 export function PictoGrid({
@@ -48,6 +56,12 @@ export function PictoGrid({
   isFavorite,
   onToggleFavorite,
   onLogin,
+  userCollections,
+  onAddToUserCollection,
+  onRemoveFromUserCollection,
+  getLikeCount,
+  hasLiked,
+  onToggleLike,
 }: PictoGridProps) {
   const [compact, setCompact] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>("date");
@@ -102,18 +116,24 @@ export function PictoGrid({
   return (
     <div className="space-y-6">
       {/* ── Floating Toolbar ── */}
-      <div className="flex items-center justify-between bg-card/80 backdrop-blur-md p-2 rounded-2xl border border-white shadow-xl shadow-muted/20">
+      <div className="sticky top-0 z-20 pt-4 pb-2 -mt-4">
+      <div className="flex items-center justify-between p-2">
         <div className="flex items-center gap-1 overflow-x-auto px-1" style={{ scrollbarWidth: "none" }}>
           <div className="p-2 text-muted-foreground shrink-0">
             <Filter className="w-4 h-4" />
           </div>
           <button
             onClick={() => { setActiveTag(null); onPageChange(1); }}
-            className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+            className={`px-3 py-1 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
               !activeTag
-                ? "bg-foreground text-background shadow-md"
-                : "text-muted-foreground hover:bg-accent"
+                ? ""
+                : "bg-accent text-muted-foreground hover:text-foreground"
             }`}
+            style={!activeTag ? {
+              backgroundColor: "var(--dsfr-green-emeraude-975)",
+              color: "var(--dsfr-green-emeraude-sun)",
+              border: "1px solid var(--dsfr-green-emeraude-850)",
+            } : {}}
           >
             Tous
           </button>
@@ -121,11 +141,16 @@ export function PictoGrid({
             <button
               key={tag}
               onClick={() => { setActiveTag(activeTag === tag ? null : tag); onPageChange(1); }}
-              className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+              className={`px-3 py-1 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
                 activeTag === tag
-                  ? "bg-foreground text-background shadow-md"
-                  : "text-muted-foreground hover:bg-accent"
+                  ? ""
+                  : "bg-accent text-muted-foreground hover:text-foreground"
               }`}
+              style={activeTag === tag ? {
+                backgroundColor: "var(--dsfr-green-emeraude-975)",
+                color: "var(--dsfr-green-emeraude-sun)",
+                border: "1px solid var(--dsfr-green-emeraude-850)",
+              } : {}}
             >
               {tag}
             </button>
@@ -156,6 +181,7 @@ export function PictoGrid({
             </button>
           </div>
         </div>
+      </div>
       </div>
 
       {/* ── Grid ── */}
@@ -204,8 +230,38 @@ export function PictoGrid({
               }
               onLogin={onLogin}
               compact={compact}
+              userCollections={userCollections}
+              onAddToUserCollection={onAddToUserCollection}
+              onRemoveFromUserCollection={onRemoveFromUserCollection}
+              likeCount={getLikeCount?.(pictogram.id)}
+              hasLiked={hasLiked?.(pictogram.id)}
+              onToggleLike={onToggleLike ? () => onToggleLike(pictogram.id) : undefined}
             />
           ))}
+        </div>
+      )}
+
+      {/* ── Pagination ── */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-4 py-4">
+          <button
+            disabled={safePage <= 1}
+            onClick={() => { onPageChange(safePage - 1); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+            className="p-2 rounded-xl border border-border text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-30"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <span className="text-xs font-bold text-muted-foreground tabular-nums">
+            Page <span className="text-foreground">{safePage}</span> sur {totalPages}
+            <span className="text-muted-foreground/60 ml-2">({sorted.length} pictos)</span>
+          </span>
+          <button
+            disabled={safePage >= totalPages}
+            onClick={() => { onPageChange(safePage + 1); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+            className="p-2 rounded-xl border border-border text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-30"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
         </div>
       )}
 

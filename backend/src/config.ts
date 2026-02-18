@@ -14,7 +14,7 @@ export const config = {
     accessKey: process.env.MINIO_ACCESS_KEY || "",
     secretKey: process.env.MINIO_SECRET_KEY || "",
     bucket: process.env.MINIO_BUCKET || "media",
-    prefix: process.env.MINIO_PREFIX || "artwork/pictograms/",
+    prefix: process.env.MINIO_PREFIX || "artwork/dev/",
   },
 };
 

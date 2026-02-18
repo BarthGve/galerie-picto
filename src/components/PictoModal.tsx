@@ -8,7 +8,6 @@ import {
 } from "react";
 import {
   Download,
-  Copy,
   Check,
   Lock,
   Palette,
@@ -81,12 +80,11 @@ export function PictoModal({
   onDeletePictogram,
   onLogin,
 }: PictoModalProps) {
-  const [copied, setCopied] = useState(false);
   const [pngSize, setPngSize] = useState(512);
   const svgCacheRef = useRef<string | null>(null);
   const [svgLoaded, setSvgLoaded] = useState(false);
   const displayUrl = usePictogramUrl(pictogram);
-  const [showColorCustomizer, setShowColorCustomizer] = useState(false);
+  const [showColorDialog, setShowColorDialog] = useState(false);
   const [modifiedSvg, setModifiedSvg] = useState<string | null>(null);
   // Blob URL for the live preview when colors are modified
   const [previewBlobUrl, setPreviewBlobUrl] = useState<string | null>(null);
@@ -173,7 +171,7 @@ export function PictoModal({
     if (isOpen) {
       svgCacheRef.current = null;
       setSvgLoaded(false);
-      setShowColorCustomizer(false);
+      setShowColorDialog(false);
       setModifiedSvg(null);
       setPreviewBlobUrl(null);
       setEditingTags(false);
@@ -207,22 +205,7 @@ export function PictoModal({
   // The SVG to use for downloads/copy (modified if colors changed, original otherwise)
   const activeSvg = modifiedSvg || svgCacheRef.current;
 
-  const handleCopy = async () => {
-    if (!activeSvg) {
-      toast.error("SVG en cours de chargement, réessayez");
-      return;
-    }
-    try {
-      await navigator.clipboard.writeText(activeSvg);
-      setCopied(true);
-      toast.success("Code SVG copié");
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      toast.error("Impossible de copier le code SVG");
-    }
-  };
-
-  const handleDownloadSvg = () => {
+const handleDownloadSvg = () => {
     if (!activeSvg) return;
     const blob = new Blob([activeSvg], { type: "image/svg+xml;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -249,13 +232,19 @@ export function PictoModal({
         img.onerror = reject;
         img.src = url;
       });
+      const aspectRatio =
+        img.naturalWidth > 0 && img.naturalHeight > 0
+          ? img.naturalWidth / img.naturalHeight
+          : 1;
+      const canvasH = pngSize;
+      const canvasW = Math.round(canvasH * aspectRatio);
       const canvas = document.createElement("canvas");
-      canvas.width = pngSize;
-      canvas.height = pngSize;
+      canvas.width = canvasW;
+      canvas.height = canvasH;
       const ctx = canvas.getContext("2d");
       if (!ctx) throw new Error("No canvas context");
-      ctx.clearRect(0, 0, pngSize, pngSize);
-      ctx.drawImage(img, 0, 0, pngSize, pngSize);
+      ctx.clearRect(0, 0, canvasW, canvasH);
+      ctx.drawImage(img, 0, 0, canvasW, canvasH);
       canvas.toBlob((pngBlob) => {
         if (!pngBlob) return;
         const pngUrl = URL.createObjectURL(pngBlob);
@@ -470,7 +459,7 @@ export function PictoModal({
               </div>
             ) : (
               <>
-                <DialogTitle className="text-lg font-bold text-gradient-primary">
+                <DialogTitle className="text-lg font-bold text-primary">
                   {pictogram.name || pictogram.filename.replace(/\.svg$/i, "")}
                 </DialogTitle>
                 {isAuthenticated && (
@@ -531,7 +520,7 @@ export function PictoModal({
           {/* Left column - Preview + Color customization */}
           <div className="flex flex-col gap-4">
             {/* Live preview */}
-            <div className="flex items-center justify-center rounded py-12">
+            <div className="relative flex items-center justify-center rounded py-12">
               <img
                 src={previewBlobUrl || displayUrl}
                 alt={
@@ -539,11 +528,20 @@ export function PictoModal({
                 }
                 className="w-48 h-48 object-contain drop-shadow-sm"
               />
+              {isAuthenticated && svgLoaded && (
+                <button
+                  onClick={() => setShowColorDialog(true)}
+                  className="absolute bottom-3 right-3 w-8 h-8 flex items-center justify-center rounded-[4px] bg-background border border-border text-muted-foreground hover:text-primary hover:border-primary transition-colors shadow-sm"
+                  title="Personnaliser les couleurs"
+                >
+                  <Palette className="w-4 h-4" />
+                </button>
+              )}
             </div>
 
             {/* Contributor */}
             {pictogram.contributor ? (
-              <div className="flex items-center gap-3 p-3 bg-accent rounded border border-border">
+              <div className="flex items-center gap-3 p-2">
                 <img
                   src={pictogram.contributor.githubAvatarUrl}
                   alt={pictogram.contributor.githubUsername}
@@ -653,7 +651,7 @@ export function PictoModal({
                   {tags.length > 0 && (
                     <div className="flex flex-wrap gap-1.5">
                       {tags.map((tag) => (
-                        <Badge key={tag} variant="outline" className="bg-badge-bg border-badge-border text-badge-text gap-1">
+                        <Badge key={tag} variant="outline" className="bg-accent text-muted-foreground border-transparent rounded-xl px-3 py-1 text-xs font-bold gap-1">
                           {tag}
                           <button
                             onClick={() => handleRemoveTag(tag)}
@@ -691,7 +689,7 @@ export function PictoModal({
                 <div className="flex flex-wrap gap-1.5">
                   {(pictogram.tags?.length ?? 0) > 0 ? (
                     pictogram.tags!.map((tag) => (
-                      <Badge key={tag} variant="outline" className="bg-badge-bg border-badge-border text-badge-text">
+                      <Badge key={tag} variant="outline" className="bg-accent text-muted-foreground border-transparent rounded-xl px-3 py-1 text-xs font-bold">
                         {tag}
                       </Badge>
                     ))
@@ -704,46 +702,6 @@ export function PictoModal({
               )}
             </div>
 
-            {/* Color customizer */}
-            {isAuthenticated ? (
-              showColorCustomizer && svgCacheRef.current ? (
-                <Suspense
-                  fallback={
-                    <div className="h-20 flex items-center justify-center text-xs text-muted-foreground">
-                      Chargement...
-                    </div>
-                  }
-                >
-                  <ColorCustomizer
-                    svgText={svgCacheRef.current}
-                    onModifiedSvgChange={handleModifiedSvgChange}
-                  />
-                </Suspense>
-              ) : (
-                <Button
-                  variant="outline"
-                  onClick={() => setShowColorCustomizer(true)}
-                  disabled={!svgLoaded}
-                  size="sm"
-                  className="w-full rounded border-border hover:bg-accent hover:text-primary"
-                >
-                  <Palette className="h-4 w-4 mr-2" />
-                  {svgLoaded
-                    ? "Personnaliser les couleurs"
-                    : "Chargement du SVG..."}
-                </Button>
-              )
-            ) : (
-              <Button
-                variant="outline"
-                onClick={() => setUpgradeGateOpen(true)}
-                size="sm"
-                className="w-full rounded border-border"
-              >
-                <Lock className="h-4 w-4 mr-2" />
-                Personnaliser les couleurs
-              </Button>
-            )}
 
             {/* Gallery selector */}
             {showGallerySelector && (
@@ -757,111 +715,76 @@ export function PictoModal({
             )}
 
             {/* Download actions - footer */}
-            <div className="mt-auto space-y-3 pt-4 border-t border-border">
-              {isAuthenticated ? (
-                <>
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={handleDownloadSvg}
-                      disabled={!svgLoaded}
-                      className="flex-1 rounded btn-cta"
-                    >
-                      <Download className="h-4 w-4 mr-2" />
-                      SVG
-                    </Button>
-                    <Button
-                      onClick={handleCopy}
-                      variant="outline"
-                      disabled={!svgLoaded}
-                      className="flex-1 rounded border-border"
-                    >
-                      {copied ? (
-                        <>
-                          <Check className="h-4 w-4 mr-2 text-green-600" />
-                          Copié !
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="h-4 w-4 mr-2" />
-                          Copier
-                        </>
-                      )}
-                    </Button>
-                  </div>
+            <div className="mt-auto pt-4 border-t border-border space-y-1.5">
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Télécharger</p>
 
-                  <div className="flex gap-2">
-                    <select
-                      value={pngSize}
-                      onChange={(e) => setPngSize(Number(e.target.value))}
-                      className="flex h-10 w-24 items-center justify-between rounded border border-border bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                    >
-                      <option value={128}>128px</option>
-                      <option value={256}>256px</option>
-                      <option value={512}>512px</option>
-                      <option value={1024}>1024px</option>
-                    </select>
-                    <Button
-                      onClick={handleDownloadPng}
-                      variant="secondary"
-                      disabled={!svgLoaded}
-                      className="flex-1 rounded"
-                    >
-                      <Download className="h-4 w-4 mr-2" />
-                      PNG ({pngSize}px)
-                    </Button>
-                  </div>
-                </>
+              {isAuthenticated ? (
+                <div className="flex items-center gap-1.5">
+                  {/* SVG */}
+                  <button
+                    onClick={handleDownloadSvg}
+                    disabled={!svgLoaded}
+                    className="h-9 flex-1 flex items-center justify-center gap-2 rounded-[4px] text-xs font-bold text-white transition-all hover:opacity-90 disabled:opacity-50"
+                    style={{ backgroundColor: "var(--dsfr-blue-france-main)" }}
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    SVG
+                  </button>
+                  {/* Size select */}
+                  <select
+                    value={pngSize}
+                    onChange={(e) => setPngSize(Number(e.target.value))}
+                    className="h-9 w-24 rounded-[4px] border border-border bg-background px-2 text-xs font-medium focus:outline-none shrink-0 ml-2"
+                  >
+                    <option value={128}>128 px</option>
+                    <option value={256}>256 px</option>
+                    <option value={512}>512 px</option>
+                    <option value={1024}>1024 px</option>
+                  </select>
+                  {/* PNG — extra gap via ml */}
+                  <button
+                    onClick={handleDownloadPng}
+                    disabled={!svgLoaded}
+                    className="h-9 flex-1 flex items-center justify-center gap-2 rounded-[4px] text-xs font-bold text-white transition-all hover:opacity-90 disabled:opacity-50"
+                    style={{ backgroundColor: "var(--dsfr-blue-france-main)" }}
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    PNG
+                  </button>
+                </div>
               ) : (
                 <>
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={() => setUpgradeGateOpen(true)}
-                      variant="outline"
-                      className="flex-1 rounded border-border"
-                      disabled
+                  <div className="flex items-center gap-1.5">
+                    {/* SVG verrouillé */}
+                    <div
+                      className="h-9 flex-1 flex items-center justify-center gap-2 rounded-[4px] text-xs font-bold text-white opacity-40 cursor-not-allowed"
+                      style={{ backgroundColor: "var(--dsfr-blue-france-main)" }}
                     >
-                      <Lock className="h-4 w-4 mr-2" />
+                      <Lock className="w-3.5 h-3.5" />
                       SVG
-                    </Button>
-                    <Button
-                      onClick={() => setUpgradeGateOpen(true)}
-                      variant="outline"
-                      className="flex-1 rounded border-border"
-                      disabled
+                    </div>
+                    {/* PNG anonyme — extra gap via ml */}
+                    <button
+                      onClick={handleDownloadPngAnonymous}
+                      disabled={anonDownloadsRemaining === 0}
+                      className="h-9 flex-1 flex items-center justify-center gap-2 rounded-[4px] text-xs font-bold text-white transition-all hover:opacity-90 disabled:opacity-50 ml-2"
+                      style={{ backgroundColor: "var(--dsfr-blue-france-main)" }}
                     >
-                      <Lock className="h-4 w-4 mr-2" />
-                      Copier
-                    </Button>
+                      <Download className="w-3.5 h-3.5" />
+                      PNG (256 px)
+                    </button>
                   </div>
-
-                  <Button
-                    onClick={handleDownloadPngAnonymous}
-                    variant="secondary"
-                    className="w-full rounded"
-                    disabled={anonDownloadsRemaining === 0}
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    PNG (256px)
-                    {anonDownloadsRemaining !== null && anonDownloadsRemaining > 0 && (
-                      <span className="ml-1 text-xs opacity-70">
-                        ({anonDownloadsRemaining} restant{anonDownloadsRemaining > 1 ? "s" : ""})
-                      </span>
-                    )}
-                  </Button>
                   {anonDownloadsRemaining === 0 ? (
                     <p className="text-xs text-center text-muted-foreground">
                       Limite atteinte.{" "}
-                      <button
-                        className="text-primary hover:underline font-medium"
-                        onClick={() => setUpgradeGateOpen(true)}
-                      >
+                      <button className="text-primary hover:underline font-medium" onClick={() => setUpgradeGateOpen(true)}>
                         Connectez-vous
                       </button>{" "}
                       pour des téléchargements illimités.
                     </p>
                   ) : (
                     <p className="text-xs text-center text-muted-foreground">
-                      Connectez-vous pour télécharger en SVG et choisir la taille
+                      Connectez-vous pour SVG et taille personnalisée
                     </p>
                   )}
                 </>
@@ -878,6 +801,32 @@ export function PictoModal({
           onLogin={onLogin}
         />
       )}
+
+      {/* Color customizer dialog */}
+      <Dialog open={showColorDialog} onOpenChange={setShowColorDialog}>
+        <DialogContent className="sm:max-w-sm rounded border-border">
+          <DialogHeader>
+            <DialogTitle className="text-sm font-bold flex items-center gap-2">
+              <Palette className="w-4 h-4 text-primary" />
+              Personnaliser les couleurs
+            </DialogTitle>
+          </DialogHeader>
+          <Suspense
+            fallback={
+              <div className="h-20 flex items-center justify-center text-xs text-muted-foreground">
+                Chargement...
+              </div>
+            }
+          >
+            {svgCacheRef.current && (
+              <ColorCustomizer
+                svgText={svgCacheRef.current}
+                onModifiedSvgChange={handleModifiedSvgChange}
+              />
+            )}
+          </Suspense>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }

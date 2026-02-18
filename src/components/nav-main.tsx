@@ -12,6 +12,8 @@ import {
 export function NavMain({
   totalPictogramCount,
   selectedGalleryId,
+  selectedContributor,
+  selectedUserCollectionId,
   onSelectAll,
   isAuthenticated,
   onUploadClick,
@@ -23,6 +25,8 @@ export function NavMain({
 }: {
   totalPictogramCount: number;
   selectedGalleryId: string | null;
+  selectedContributor?: string | null;
+  selectedUserCollectionId?: string | null;
   onSelectAll: () => void;
   isAuthenticated: boolean;
   onUploadClick: () => void;
@@ -78,7 +82,7 @@ export function NavMain({
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
-              isActive={currentPage === "gallery" && !selectedGalleryId && !showFavoritesOnly}
+              isActive={currentPage === "gallery" && !selectedGalleryId && !selectedContributor && !showFavoritesOnly && !selectedUserCollectionId}
               onClick={onSelectAll}
               tooltip="Tous les pictogrammes"
             >

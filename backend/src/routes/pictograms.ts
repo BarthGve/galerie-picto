@@ -77,7 +77,7 @@ router.put(
   },
 );
 
-// DELETE /api/pictograms/:id - Delete a pictogram (SVG + dark variant + DB)
+// DELETE /api/pictograms/:id - Delete a pictogram (SVG + DB)
 router.delete(
   "/:id",
   authMiddleware,
@@ -98,28 +98,8 @@ router.delete(
       // Delete SVG file from Minio
       await deleteFile(key);
 
-      // Try to delete dark variant
-      const darkKey = key.replace(/\.svg$/i, "_dark.svg");
-      try {
-        await deleteFile(darkKey);
-      } catch {
-        // Non-blocking
-      }
-
       // Delete from DB (cascade handles gallery_pictograms and downloads)
       dbDeletePictogram(id);
-
-      // Also delete the dark variant from DB if it exists
-      // Dark variants have filename like "xxx_dark.svg"
-      const darkFilename = picto.filename.replace(/\.svg$/i, "_dark.svg");
-      // We need to find and delete it too
-      const { getAllPictograms } =
-        await import("../db/repositories/pictograms.js");
-      const allPictos = getAllPictograms();
-      const darkPicto = allPictos.find((p) => p.filename === darkFilename);
-      if (darkPicto) {
-        dbDeletePictogram(darkPicto.id);
-      }
 
       res.json({ success: true });
     } catch {

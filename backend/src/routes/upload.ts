@@ -8,7 +8,7 @@ import {
   isValidSvgFilename,
   isValidSvgContent,
 } from "../services/svg-sanitizer.js";
-import { normalizeToDsfr, generateDarkVariant } from "../services/dsfr-dark.js";
+import { normalizeToDsfr } from "../services/dsfr-dark.js";
 import { insertPictogram } from "../db/repositories/pictograms.js";
 import { addPictogramsToGallery } from "../db/repositories/galleries.js";
 
@@ -87,37 +87,15 @@ router.post(
         contributor,
       });
 
-      // Auto-generate dark DSFR variant
-      if (filename.endsWith(".svg") && !filename.endsWith("_dark.svg")) {
+      // Normalize DSFR colors in the uploaded SVG
+      if (filename.endsWith(".svg") && storedContent) {
         try {
-          const svgText = storedContent || (await readFileAsText(fileKey));
-
-          if (svgText) {
-            const normalizedSvg = normalizeToDsfr(svgText);
-
-            // Re-upload normalized SVG if colors were corrected
-            if (normalizedSvg !== svgText) {
-              await writeSvgFile(fileKey, normalizedSvg);
-            }
-
-            // Generate and upload dark variant
-            const darkSvg = generateDarkVariant(svgText);
-            const darkKey = fileKey.replace(/\.svg$/i, "_dark.svg");
-            await writeSvgFile(darkKey, darkSvg);
-
-            const darkFilename = filename.replace(/\.svg$/i, "_dark.svg");
-            insertPictogram({
-              id: crypto.randomUUID(),
-              name: `${name} (dark)`,
-              filename: darkFilename,
-              url: `${config.minio.endpoint}/${config.minio.bucket}/${darkKey}`,
-              size: Buffer.byteLength(darkSvg, "utf-8"),
-              lastModified: now,
-              tags,
-            });
+          const normalizedSvg = normalizeToDsfr(storedContent);
+          if (normalizedSvg !== storedContent) {
+            await writeSvgFile(fileKey, normalizedSvg);
           }
         } catch (err) {
-          console.error("Failed to generate dark variant:", err);
+          console.error("Failed to normalize DSFR colors:", err);
         }
       }
 

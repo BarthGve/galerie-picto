@@ -20,6 +20,8 @@ import proxyRoutes from "./routes/proxy.js";
 import githubProfileRoutes from "./routes/github-profile.js";
 import downloadsRoutes from "./routes/downloads.js";
 import favoritesRoutes from "./routes/favorites.js";
+import userCollectionsRoutes from "./routes/user-collections.js";
+import likesRoutes from "./routes/likes.js";
 
 const app = express();
 
@@ -98,6 +100,8 @@ app.use("/api/pictograms", downloadsRoutes);
 app.use("/api/proxy", proxyRoutes);
 app.use("/api/github/profile", githubProfileRoutes);
 app.use("/api/user", favoritesRoutes);
+app.use("/api/user", userCollectionsRoutes);
+app.use("/api/pictograms", likesRoutes);
 
 // Run migrations then start server
 runMigrations();

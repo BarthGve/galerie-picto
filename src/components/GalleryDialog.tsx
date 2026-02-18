@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Folders } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -13,15 +14,25 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import type { Gallery } from "@/lib/types";
 
+// 17 couleurs illustratives DSFR
 const COLOR_PRESETS = [
-  "#003399",
-  "#e11d48",
-  "#16a34a",
-  "#d97706",
-  "#7c3aed",
-  "#0891b2",
-  "#be185d",
-  "#4f46e5",
+  "#b7a73f",  // green-tilleul-verveine-main
+  "#68a532",  // green-bourgeon-main
+  "#00a95f",  // green-emeraude-main
+  "#009081",  // green-menthe-main
+  "#009099",  // green-archipel-main
+  "#465f9d",  // blue-ecume-main
+  "#417dc4",  // blue-cumulus-main
+  "#a558a0",  // purple-glycine-main
+  "#e18b76",  // pink-macaron-main
+  "#ce614a",  // pink-tuile-main
+  "#c8aa39",  // yellow-tournesol-main
+  "#c3992a",  // yellow-moutarde-main
+  "#e4794a",  // orange-terre-battue-main
+  "#d1b781",  // brown-cafe-creme-main
+  "#c08c65",  // brown-caramel-main
+  "#bd987a",  // brown-opera-main
+  "#aea397",  // beige-gris-galet-main
 ];
 
 interface GalleryDialogProps {
@@ -78,7 +89,10 @@ export function GalleryDialog({
       <DialogContent className="sm:max-w-md">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="flex items-center gap-3 text-primary">
+              <div className="w-9 h-9 rounded-[4px] bg-primary/20 backdrop-blur-md border border-primary/30 flex items-center justify-center text-primary shrink-0">
+                <Folders className="w-4 h-4" />
+              </div>
               {isEditing ? "Modifier la galerie" : "Nouvelle galerie"}
             </DialogTitle>
             <DialogDescription>
@@ -95,8 +109,9 @@ export function GalleryDialog({
                 id="gallery-name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Ex: Gendarmerie"
+                placeholder="Ex: Urgences"
                 required
+                className="rounded-[4px]"
               />
             </div>
 
@@ -107,6 +122,7 @@ export function GalleryDialog({
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Description optionnelle..."
+                className="rounded-[4px]"
               />
             </div>
 
@@ -126,12 +142,6 @@ export function GalleryDialog({
                     }}
                   />
                 ))}
-                <Input
-                  type="color"
-                  value={color || "#003399"}
-                  onChange={(e) => setColor(e.target.value)}
-                  className="size-6 cursor-pointer rounded-full border-0 p-0"
-                />
               </div>
               {color && (
                 <button
@@ -150,10 +160,11 @@ export function GalleryDialog({
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
+              className="rounded-[4px]"
             >
               Annuler
             </Button>
-            <Button type="submit" disabled={!name.trim() || saving}>
+            <Button type="submit" disabled={!name.trim() || saving} className="rounded-[4px]">
               {saving ? "Enregistrement..." : isEditing ? "Modifier" : "Créer"}
             </Button>
           </DialogFooter>

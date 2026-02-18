@@ -1,8 +1,10 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { usePictograms } from "@/hooks/usePictograms";
 import { useGalleries } from "@/hooks/useGalleries";
+import { useUserCollections } from "@/hooks/useUserCollections";
 import { DownloadsContext, useDownloadsProvider } from "@/hooks/useDownloads";
 import { useFavorites } from "@/hooks/useFavorites";
+import { useLikes } from "@/hooks/useLikes";
 import { PictoGrid } from "@/components/PictoGrid";
 import { AppSidebar } from "@/components/Sidebar";
 import { SiteHeader } from "@/components/site-header";
@@ -93,7 +95,16 @@ function App() {
     null,
   );
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const [selectedUserCollectionId, setSelectedUserCollectionId] = useState<string | null>(null);
   const { isFavorite, toggleFavorite, favoritesCount } = useFavorites(!!user);
+  const { getLikeCount, hasLiked, toggleLike } = useLikes(!!user);
+  const {
+    collections: userCollections,
+    create: createUserCollection,
+    update: updateUserCollection,
+    remove: removeUserCollection,
+    addPictogram: addToUserCollection,
+  } = useUserCollections(!!user);
 
   // Handle browser back/forward
   useEffect(() => {
@@ -121,6 +132,8 @@ function App() {
     if (target === "discover" || target === "home") {
       setSelectedGalleryId(null);
       setSelectedContributor(null);
+      setSelectedUserCollectionId(null);
+      setShowFavoritesOnly(false);
     }
   };
 
@@ -131,12 +144,25 @@ function App() {
 
   const handleSelectGallery = (id: string | null) => {
     setSelectedGalleryId(id);
+    setSelectedUserCollectionId(null);
+    setShowFavoritesOnly(false);
     setCurrentPage(1);
     if (page === "discover") navigateTo("gallery");
   };
 
   const handleSelectContributor = (contributor: string | null) => {
     setSelectedContributor(contributor);
+    setSelectedUserCollectionId(null);
+    setShowFavoritesOnly(false);
+    setCurrentPage(1);
+    if (page === "discover") navigateTo("gallery");
+  };
+
+  const handleSelectUserCollection = (id: string | null) => {
+    setSelectedUserCollectionId(id);
+    setSelectedGalleryId(null);
+    setSelectedContributor(null);
+    setShowFavoritesOnly(false);
     setCurrentPage(1);
     if (page === "discover") navigateTo("gallery");
   };
@@ -254,6 +280,14 @@ function App() {
       }
     }
 
+    if (selectedUserCollectionId) {
+      const col = userCollections.find((c) => c.id === selectedUserCollectionId);
+      if (col) {
+        const ids = new Set(col.pictogramIds);
+        result = result.filter((picto) => ids.has(picto.id));
+      }
+    }
+
     if (selectedContributor) {
       result = result.filter(
         (picto) => picto.contributor?.githubUsername === selectedContributor,
@@ -287,6 +321,8 @@ function App() {
     showFavoritesOnly,
     isFavorite,
     galleries,
+    selectedUserCollectionId,
+    userCollections,
   ]);
 
   // Home page — rendered before gallery data is needed
@@ -413,9 +449,17 @@ function App() {
           showFavoritesOnly={showFavoritesOnly}
           onToggleFavorites={() => {
             setShowFavoritesOnly((prev) => !prev);
+            setSelectedUserCollectionId(null);
             setCurrentPage(1);
             if (page === "discover") navigateTo("gallery");
           }}
+          userCollections={userCollections}
+          selectedUserCollectionId={selectedUserCollectionId}
+          onSelectUserCollection={handleSelectUserCollection}
+          onCreateUserCollection={createUserCollection}
+          onUpdateUserCollection={updateUserCollection}
+          onRemoveUserCollection={removeUserCollection}
+          onAddToUserCollection={addToUserCollection}
         />
 
         <SidebarInset>
@@ -425,14 +469,6 @@ function App() {
               if (page === "discover") navigateTo("gallery");
             }}
             totalCount={pictograms.length}
-            filteredCount={filteredPictograms.length}
-            page={page !== "discover" ? currentPage : undefined}
-            pageSize={page !== "discover" ? 20 : undefined}
-            totalPages={page !== "discover" ? Math.max(1, Math.ceil(filteredPictograms.length / 20)) : undefined}
-            onPageChange={page !== "discover" ? (p) => {
-              setCurrentPage(p);
-              window.scrollTo({ top: 0, behavior: "smooth" });
-            } : undefined}
           />
           <div className="flex flex-1 flex-col">
             <div className="@container/main flex flex-1 flex-col gap-2">
@@ -458,10 +494,54 @@ function App() {
                     isFavorite={isFavorite}
                     onToggleFavorite={toggleFavorite}
                     onLogin={handleLogin}
+                    getLikeCount={getLikeCount}
+                    hasLiked={hasLiked}
+                    onToggleLike={user ? toggleLike : undefined}
                   />
                 </Suspense>
               ) : (
-                <div className="flex-1 overflow-y-auto pb-12 mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8">
+                <div className="flex-1 overflow-y-auto pb-12">
+                  {/* En-tête de galerie équipe */}
+                  {selectedGalleryId && (() => {
+                    const gal = galleries.find(g => g.id === selectedGalleryId);
+                    if (!gal) return null;
+                    return (
+                      <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8 pt-6 pb-2">
+                        <div className="flex items-center gap-3 mb-1">
+                          <span
+                            className="size-3 shrink-0 rounded-full"
+                            style={{ backgroundColor: gal.color ?? "var(--muted-foreground)", opacity: gal.color ? 1 : 0.4 }}
+                          />
+                          <h2 className="font-extrabold text-lg text-foreground leading-tight">{gal.name}</h2>
+                          <span className="text-xs text-muted-foreground font-medium">{gal.pictogramIds.length} picto{gal.pictogramIds.length !== 1 ? "s" : ""}</span>
+                        </div>
+                        {gal.description && (
+                          <p className="text-sm text-muted-foreground pl-6">{gal.description}</p>
+                        )}
+                      </div>
+                    );
+                  })()}
+                  {/* En-tête de collection utilisateur */}
+                  {selectedUserCollectionId && (() => {
+                    const col = userCollections.find(c => c.id === selectedUserCollectionId);
+                    if (!col) return null;
+                    return (
+                      <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8 pt-6 pb-2">
+                        <div className="flex items-center gap-3 mb-1">
+                          <span
+                            className="size-3 shrink-0 rounded-full"
+                            style={{ backgroundColor: col.color ?? "var(--muted-foreground)", opacity: col.color ? 1 : 0.4 }}
+                          />
+                          <h2 className="font-extrabold text-lg text-foreground leading-tight">{col.name}</h2>
+                          <span className="text-xs text-muted-foreground font-medium">{col.pictogramIds.length} picto{col.pictogramIds.length !== 1 ? "s" : ""}</span>
+                        </div>
+                        {col.description && (
+                          <p className="text-sm text-muted-foreground pl-6">{col.description}</p>
+                        )}
+                      </div>
+                    );
+                  })()}
+                  <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8">
                     <PictoGrid
                       pictograms={filteredPictograms}
                       galleries={galleries}
@@ -479,7 +559,13 @@ function App() {
                       isFavorite={isFavorite}
                       onToggleFavorite={toggleFavorite}
                       onLogin={handleLogin}
+                      userCollections={user ? userCollections : undefined}
+                      onAddToUserCollection={user ? addToUserCollection : undefined}
+                      getLikeCount={getLikeCount}
+                      hasLiked={hasLiked}
+                      onToggleLike={user ? toggleLike : undefined}
                     />
+                  </div>
                 </div>
               )}
             </div>

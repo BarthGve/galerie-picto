@@ -99,23 +99,6 @@ const GITHUB_FEATURES = [
   { icon: FolderOpen, label: "Collections", description: "Créez des collections personnalisées" },
 ];
 
-function pairDarkVariants(pictograms: Pictogram[]): Pictogram[] {
-  const darkMap = new Map<string, Pictogram>();
-  const lightList: Pictogram[] = [];
-  for (const picto of pictograms) {
-    const baseName = picto.filename.replace(/\.svg$/i, "");
-    if (baseName.endsWith("_dark")) {
-      darkMap.set(baseName.replace(/_dark$/, ""), picto);
-    } else {
-      lightList.push(picto);
-    }
-  }
-  return lightList.map((picto) => {
-    const dark = darkMap.get(picto.filename.replace(/\.svg$/i, ""));
-    return dark ? { ...picto, darkUrl: dark.url } : picto;
-  });
-}
-
 export function HomePage({
   onEnterGallery,
   user,
@@ -139,14 +122,14 @@ export function HomePage({
 
         if (pictoRes.ok) {
           const data: PictogramManifest = await pictoRes.json();
-          const paired = pairDarkVariants(data.pictograms);
-          setMosaicPictos(paired.slice(0, 40));
-          const shuffled = [...paired].sort(() => Math.random() - 0.5);
+          const pictos = data.pictograms.filter(p => !p.filename.endsWith("_dark.svg"));
+          setMosaicPictos(pictos.slice(0, 40));
+          const shuffled = [...pictos].sort(() => Math.random() - 0.5);
           setPreviewPictos(shuffled.slice(0, 12));
-          setTotalCount(Math.floor(paired.length / 10) * 10);
+          setTotalCount(Math.floor(pictos.length / 10) * 10);
 
           const contribs = new Set(
-            paired.map((p) => p.contributor?.githubUsername).filter(Boolean),
+            pictos.map((p) => p.contributor?.githubUsername).filter(Boolean),
           );
           setContributors(contribs.size);
         }
@@ -261,7 +244,7 @@ export function HomePage({
                     <span className="text-foreground">
                       <AnimatedCounter value={totalCount} suffix="+" />
                     </span>{" "}
-                    pictogrammes
+                    pictos
                   </div>
                 )}
               </div>

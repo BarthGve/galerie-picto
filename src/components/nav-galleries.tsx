@@ -107,19 +107,19 @@ export function NavGalleries({
                 <DropdownMenuTrigger asChild>
                   <SidebarMenuAction
                     showOnHover
-                    className="data-[state=open]:bg-accent rounded-sm"
+                    className="data-[state=open]:bg-accent rounded-[4px]"
                   >
                     <MoreHorizontal />
                     <span className="sr-only">Plus</span>
                   </SidebarMenuAction>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
-                  className="w-36 rounded-xl border-border"
+                  className="w-36 rounded-[4px] border-border"
                   side={isMobile ? "bottom" : "right"}
                   align={isMobile ? "end" : "start"}
                 >
                   {onEditGallery && (
-                    <DropdownMenuItem onClick={() => onEditGallery(gallery)}>
+                    <DropdownMenuItem className="rounded-[4px]" onClick={() => onEditGallery(gallery)}>
                       <Pencil />
                       <span>Modifier</span>
                     </DropdownMenuItem>
@@ -129,6 +129,7 @@ export function NavGalleries({
                   )}
                   {onDeleteGallery && (
                     <DropdownMenuItem
+                      className="rounded-[4px]"
                       variant="destructive"
                       onClick={() => onDeleteGallery(gallery)}
                     >

@@ -10,8 +10,6 @@ export interface Pictogram {
   name: string;
   filename: string;
   url: string;
-  // darkUrl est calculé côté client par pairDarkVariants() et non stocké dans le manifest
-  darkUrl?: string;
   size: number;
   lastModified: string;
   tags?: string[];
@@ -38,6 +36,18 @@ export interface Gallery {
 export interface GalleriesFile {
   galleries: Gallery[];
   lastUpdated: string;
+}
+
+export interface UserCollection {
+  id: string;
+  userLogin: string;
+  name: string;
+  description: string | null;
+  color: string | null;
+  position: number;
+  createdAt: string | null;
+  updatedAt: string | null;
+  pictogramIds: string[];
 }
 
 export interface DownloadOptions {
