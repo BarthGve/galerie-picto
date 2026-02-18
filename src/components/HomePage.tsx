@@ -184,7 +184,7 @@ export function HomePage({
       <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-6">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#2845c1] to-[#6a6af4] flex items-center justify-center shadow-lg shadow-[#2845c1]/20">
+            <div className="w-8 h-8 rounded bg-gradient-to-br from-[#2845c1] to-[#6a6af4] flex items-center justify-center shadow-lg shadow-[#2845c1]/20">
               <Palette className="size-4 text-primary-foreground" />
             </div>
             <span className="text-base font-bold text-foreground">
@@ -213,7 +213,7 @@ export function HomePage({
           ) : (
             <button
               onClick={onLogin}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-foreground text-background text-sm font-semibold hover:scale-105 active:scale-95 transition-all shadow-lg"
+              className="flex items-center gap-2 px-4 py-2 rounded bg-foreground text-background text-sm font-semibold hover:scale-105 active:scale-95 transition-all shadow-lg"
             >
               <Github className="size-4" />
               Connexion
@@ -321,11 +321,11 @@ export function HomePage({
             {FEATURES.map((feature) => (
               <div
                 key={feature.title}
-                className="group relative p-8 rounded-3xl bg-card border border-border shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                className="group relative p-8 rounded bg-card border border-border shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
               >
                 <div className="relative mb-5">
                   <div
-                    className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center text-primary-foreground shadow-lg transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3`}
+                    className={`w-14 h-14 rounded bg-gradient-to-br ${feature.gradient} flex items-center justify-center text-primary-foreground shadow-lg transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3`}
                   >
                     <feature.icon className="w-6 h-6" />
                   </div>
@@ -358,7 +358,7 @@ export function HomePage({
               {previewPictos.map((picto) => (
                 <div
                   key={picto.id}
-                  className="group aspect-square rounded-3xl bg-card border border-border shadow-sm flex items-center justify-center p-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:scale-105 cursor-pointer"
+                  className="group aspect-square rounded bg-card border border-border shadow-sm flex items-center justify-center p-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:scale-105 cursor-pointer"
                   onClick={onEnterGallery}
                 >
                   <DarkAwarePicto
@@ -400,7 +400,7 @@ export function HomePage({
                   </p>
                   <button
                     onClick={onLogin}
-                    className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-github-accent text-primary-foreground font-bold hover:opacity-90 transition-all hover:scale-105 active:scale-95 shadow-lg"
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded bg-github-accent text-primary-foreground font-bold hover:opacity-90 transition-all hover:scale-105 active:scale-95 shadow-lg"
                   >
                     <Github className="w-4 h-4" />
                     Se connecter avec GitHub
@@ -412,9 +412,9 @@ export function HomePage({
                   {GITHUB_FEATURES.map((feat) => (
                     <div
                       key={feat.label}
-                      className="flex items-center gap-4 p-4 rounded-2xl glass"
+                      className="flex items-center gap-4 p-4 rounded glass"
                     >
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#2845c1] to-[#6a6af4] flex items-center justify-center text-primary-foreground shrink-0">
+                      <div className="w-10 h-10 rounded bg-gradient-to-br from-[#2845c1] to-[#6a6af4] flex items-center justify-center text-primary-foreground shrink-0">
                         <feat.icon className="w-5 h-5" />
                       </div>
                       <div>
@@ -457,7 +457,7 @@ export function HomePage({
             {!user && (
               <button
                 onClick={onLogin}
-                className="flex items-center gap-2 px-8 py-4 rounded-2xl border-2 border-border text-foreground font-bold text-lg hover:bg-muted transition-all justify-center"
+                className="flex items-center gap-2 px-8 py-4 rounded border-2 border-border text-foreground font-bold text-lg hover:bg-muted transition-all justify-center"
               >
                 <Github className="w-5 h-5" />
                 Connexion GitHub
