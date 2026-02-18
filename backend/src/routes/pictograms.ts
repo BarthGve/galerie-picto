@@ -1,42 +1,35 @@
 import { Router, Request, Response } from "express";
-import { config } from "../config.js";
 import { authMiddleware, AuthenticatedRequest } from "../middleware/auth.js";
-import { readJsonFile, writeJsonFile, deleteFile } from "../services/minio.js";
-import type { PictogramManifest, GalleriesFile } from "../types.js";
+import { deleteFile } from "../services/minio.js";
+import {
+  getManifestCached,
+  getPictogramById,
+  updatePictogram,
+  deletePictogram as dbDeletePictogram,
+} from "../db/repositories/pictograms.js";
+import { config } from "../config.js";
 
 const router = Router();
 
-const MANIFEST_KEY = `${config.minio.prefix}pictograms-manifest.json`;
-const GALLERIES_KEY = `${config.minio.prefix}galleries.json`;
-
 // GET /api/pictograms/manifest - Get the pictograms manifest (with ETag/304)
-router.get("/manifest", async (req: Request, res: Response): Promise<void> => {
+router.get("/manifest", (req: Request, res: Response): void => {
   try {
-    const result = await readJsonFile<PictogramManifest>(MANIFEST_KEY);
-    if (!result) {
-      res.json({
-        pictograms: [],
-        lastUpdated: new Date().toISOString(),
-        totalCount: 0,
-      });
-      return;
-    }
+    const { json, etag } = getManifestCached();
 
-    // ETag/304 support
-    if (req.headers["if-none-match"] === result.etag) {
+    if (req.headers["if-none-match"] === etag) {
       res.status(304).end();
       return;
     }
 
-    res.set("ETag", result.etag);
+    res.set("ETag", etag);
     res.set("Content-Type", "application/json");
-    res.send(result.json);
+    res.send(json);
   } catch {
     res.status(500).json({ error: "Failed to read manifest" });
   }
 });
 
-// PUT /api/pictograms/:id - Update a pictogram's metadata (name, tags, contributor)
+// PUT /api/pictograms/:id - Update a pictogram's metadata
 router.put(
   "/:id",
   authMiddleware,
@@ -72,34 +65,19 @@ router.put(
     }
 
     try {
-      const result = await readJsonFile<PictogramManifest>(MANIFEST_KEY);
-      if (!result) {
-        res.status(404).json({ error: "Manifest not found" });
-        return;
-      }
-
-      const manifest = result.data;
-      const picto = manifest.pictograms.find((p) => p.id === id);
-      if (!picto) {
+      const updated = updatePictogram(id, { name, tags, contributor });
+      if (!updated) {
         res.status(404).json({ error: "Pictogram not found" });
         return;
       }
-
-      if (name !== undefined) picto.name = name;
-      if (tags !== undefined) picto.tags = tags;
-      if (contributor !== undefined) picto.contributor = contributor;
-      manifest.lastUpdated = new Date().toISOString();
-
-      await writeJsonFile(MANIFEST_KEY, manifest);
-
-      res.json(picto);
+      res.json(updated);
     } catch {
       res.status(500).json({ error: "Failed to update pictogram" });
     }
   },
 );
 
-// DELETE /api/pictograms/:id - Delete a pictogram (SVG + dark variant + manifest + galleries)
+// DELETE /api/pictograms/:id - Delete a pictogram (SVG + dark variant + DB)
 router.delete(
   "/:id",
   authMiddleware,
@@ -107,15 +85,7 @@ router.delete(
     const id = req.params.id as string;
 
     try {
-      const manifestResult =
-        await readJsonFile<PictogramManifest>(MANIFEST_KEY);
-      if (!manifestResult) {
-        res.status(404).json({ error: "Manifest not found" });
-        return;
-      }
-
-      const manifest = manifestResult.data;
-      const picto = manifest.pictograms.find((p) => p.id === id);
+      const picto = getPictogramById(id);
       if (!picto) {
         res.status(404).json({ error: "Pictogram not found" });
         return;
@@ -123,50 +93,32 @@ router.delete(
 
       // Extract S3 key from URL
       const url = new URL(picto.url);
-      const key = url.pathname.replace(/^\/[^/]+\//, "");
+      const key = url.pathname.replace(`/${config.minio.bucket}/`, "");
 
-      // Delete SVG file
+      // Delete SVG file from Minio
       await deleteFile(key);
 
-      // Try to delete dark variant if it exists
-      const darkPicto = manifest.pictograms.find(
-        (p) =>
-          p.id !== id &&
-          p.filename === picto.filename.replace(/\.svg$/i, "_dark.svg"),
-      );
-      if (darkPicto) {
-        try {
-          const darkUrl = new URL(darkPicto.url);
-          const darkKey = darkUrl.pathname.replace(/^\/[^/]+\//, "");
-          await deleteFile(darkKey);
-        } catch {
-          // Non-blocking: dark variant deletion failure is acceptable
-        }
+      // Try to delete dark variant
+      const darkKey = key.replace(/\.svg$/i, "_dark.svg");
+      try {
+        await deleteFile(darkKey);
+      } catch {
+        // Non-blocking
       }
 
-      // Remove picto (and its dark variant) from manifest
-      manifest.pictograms = manifest.pictograms.filter(
-        (p) => p.id !== id && (!darkPicto || p.id !== darkPicto.id),
-      );
-      manifest.totalCount = manifest.pictograms.length;
-      manifest.lastUpdated = new Date().toISOString();
-      await writeJsonFile(MANIFEST_KEY, manifest);
+      // Delete from DB (cascade handles gallery_pictograms and downloads)
+      dbDeletePictogram(id);
 
-      // Clean up galleries
-      const galleriesResult = await readJsonFile<GalleriesFile>(GALLERIES_KEY);
-      if (galleriesResult) {
-        const galleriesFile = galleriesResult.data;
-        let changed = false;
-        for (const gallery of galleriesFile.galleries) {
-          const idx = gallery.pictogramIds.indexOf(id);
-          if (idx !== -1) {
-            gallery.pictogramIds.splice(idx, 1);
-            changed = true;
-          }
-        }
-        if (changed) {
-          await writeJsonFile(GALLERIES_KEY, galleriesFile);
-        }
+      // Also delete the dark variant from DB if it exists
+      // Dark variants have filename like "xxx_dark.svg"
+      const darkFilename = picto.filename.replace(/\.svg$/i, "_dark.svg");
+      // We need to find and delete it too
+      const { getAllPictograms } =
+        await import("../db/repositories/pictograms.js");
+      const allPictos = getAllPictograms();
+      const darkPicto = allPictos.find((p) => p.filename === darkFilename);
+      if (darkPicto) {
+        dbDeletePictogram(darkPicto.id);
       }
 
       res.json({ success: true });

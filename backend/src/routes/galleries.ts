@@ -1,13 +1,16 @@
 import { Router, Request, Response } from "express";
-import { config } from "../config.js";
 import { authMiddleware, AuthenticatedRequest } from "../middleware/auth.js";
-import { readJsonFile, writeJsonFile } from "../services/minio.js";
-import type { GalleriesFile, Gallery, PictogramManifest } from "../types.js";
+import {
+  getGalleriesCached,
+  getGalleryById,
+  createGallery,
+  updateGallery,
+  deleteGallery,
+  addPictogramsToGallery,
+  removePictogramFromGallery,
+} from "../db/repositories/galleries.js";
 
 const router = Router();
-
-const GALLERIES_KEY = `${config.minio.prefix}galleries.json`;
-const MANIFEST_KEY = `${config.minio.prefix}pictograms-manifest.json`;
 
 function slugify(text: string): string {
   return text
@@ -18,42 +21,19 @@ function slugify(text: string): string {
     .replace(/(^-|-$)/g, "");
 }
 
-async function getGalleriesFile(): Promise<GalleriesFile> {
-  const result = await readJsonFile<GalleriesFile>(GALLERIES_KEY);
-  return (
-    result?.data || { galleries: [], lastUpdated: new Date().toISOString() }
-  );
-}
-
-async function getManifest(): Promise<PictogramManifest> {
-  const result = await readJsonFile<PictogramManifest>(MANIFEST_KEY);
-  return (
-    result?.data || {
-      pictograms: [],
-      lastUpdated: new Date().toISOString(),
-      totalCount: 0,
-    }
-  );
-}
-
 // GET /api/galleries - List all galleries (with ETag/304)
-router.get("/", async (req: Request, res: Response): Promise<void> => {
+router.get("/", (req: Request, res: Response): void => {
   try {
-    const result = await readJsonFile<GalleriesFile>(GALLERIES_KEY);
-    if (!result) {
-      res.json({ galleries: [], lastUpdated: new Date().toISOString() });
-      return;
-    }
+    const { json, etag } = getGalleriesCached();
 
-    // ETag/304 support
-    if (req.headers["if-none-match"] === result.etag) {
+    if (req.headers["if-none-match"] === etag) {
       res.status(304).end();
       return;
     }
 
-    res.set("ETag", result.etag);
+    res.set("ETag", etag);
     res.set("Content-Type", "application/json");
-    res.send(result.json);
+    res.send(json);
   } catch {
     res.status(500).json({ error: "Failed to read galleries" });
   }
@@ -63,7 +43,7 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
 router.post(
   "/",
   authMiddleware,
-  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  (req: AuthenticatedRequest, res: Response): void => {
     const { name, description, color } = req.body;
 
     if (!name || typeof name !== "string") {
@@ -84,32 +64,17 @@ router.post(
     }
 
     try {
-      const data = await getGalleriesFile();
       const id = slugify(name);
 
-      if (data.galleries.some((g) => g.id === id)) {
+      if (getGalleryById(id)) {
         res
           .status(409)
           .json({ error: "A gallery with this name already exists" });
         return;
       }
 
-      const now = new Date().toISOString();
-      const gallery: Gallery = {
-        id,
-        name,
-        description,
-        color,
-        pictogramIds: [],
-        createdAt: now,
-        updatedAt: now,
-      };
-
-      data.galleries.push(gallery);
-      data.lastUpdated = now;
-      await writeJsonFile(GALLERIES_KEY, data);
+      const gallery = createGallery({ id, name, description, color });
       console.log(`Gallery created: ${gallery.id} (${gallery.name})`);
-
       res.status(201).json(gallery);
     } catch (err) {
       console.error("Failed to create gallery:", err);
@@ -122,7 +87,7 @@ router.post(
 router.put(
   "/:id",
   authMiddleware,
-  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  (req: AuthenticatedRequest, res: Response): void => {
     const id = req.params.id as string;
     const { name, description, color } = req.body;
 
@@ -143,24 +108,11 @@ router.put(
     }
 
     try {
-      const data = await getGalleriesFile();
-      const index = data.galleries.findIndex((g) => g.id === id);
-
-      if (index === -1) {
+      const gallery = updateGallery(id, { name, description, color });
+      if (!gallery) {
         res.status(404).json({ error: "Gallery not found" });
         return;
       }
-
-      const now = new Date().toISOString();
-      const gallery = data.galleries[index];
-      if (name !== undefined) gallery.name = name;
-      if (description !== undefined) gallery.description = description;
-      if (color !== undefined) gallery.color = color;
-      gallery.updatedAt = now;
-
-      data.lastUpdated = now;
-      await writeJsonFile(GALLERIES_KEY, data);
-
       res.json(gallery);
     } catch {
       res.status(500).json({ error: "Failed to update gallery" });
@@ -172,36 +124,15 @@ router.put(
 router.delete(
   "/:id",
   authMiddleware,
-  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  (req: AuthenticatedRequest, res: Response): void => {
     const id = req.params.id as string;
 
     try {
-      const data = await getGalleriesFile();
-      const index = data.galleries.findIndex((g) => g.id === id);
-
-      if (index === -1) {
+      const success = deleteGallery(id);
+      if (!success) {
         res.status(404).json({ error: "Gallery not found" });
         return;
       }
-
-      data.galleries.splice(index, 1);
-      data.lastUpdated = new Date().toISOString();
-      await writeJsonFile(GALLERIES_KEY, data);
-
-      // Remove galleryId from all pictograms in the manifest
-      const manifest = await getManifest();
-      let manifestChanged = false;
-      for (const picto of manifest.pictograms) {
-        if (picto.galleryIds?.includes(id)) {
-          picto.galleryIds = picto.galleryIds.filter((gid) => gid !== id);
-          manifestChanged = true;
-        }
-      }
-      if (manifestChanged) {
-        manifest.lastUpdated = new Date().toISOString();
-        await writeJsonFile(MANIFEST_KEY, manifest);
-      }
-
       res.json({ success: true });
     } catch {
       res.status(500).json({ error: "Failed to delete gallery" });
@@ -213,7 +144,7 @@ router.delete(
 router.post(
   "/:id/pictograms",
   authMiddleware,
-  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  (req: AuthenticatedRequest, res: Response): void => {
     const id = req.params.id as string;
     const { pictogramIds } = req.body as { pictogramIds: string[] };
 
@@ -227,38 +158,17 @@ router.post(
     }
 
     try {
-      // Update galleries.json
-      const data = await getGalleriesFile();
-      const gallery = data.galleries.find((g) => g.id === id);
-
+      const gallery = getGalleryById(id);
       if (!gallery) {
         res.status(404).json({ error: "Gallery not found" });
         return;
       }
 
-      const newIds = pictogramIds.filter(
-        (pid) => !gallery.pictogramIds.includes(pid),
-      );
-      gallery.pictogramIds.push(...newIds);
-      gallery.updatedAt = new Date().toISOString();
-      data.lastUpdated = gallery.updatedAt;
-      await writeJsonFile(GALLERIES_KEY, data);
-      console.log(`Added ${newIds.length} pictogram(s) to gallery ${id}`);
+      addPictogramsToGallery(id, pictogramIds);
+      console.log(`Added ${pictogramIds.length} pictogram(s) to gallery ${id}`);
 
-      // Update pictograms-manifest.json
-      const manifest = await getManifest();
-      for (const picto of manifest.pictograms) {
-        if (newIds.includes(picto.id)) {
-          if (!picto.galleryIds) picto.galleryIds = [];
-          if (!picto.galleryIds.includes(id)) {
-            picto.galleryIds.push(id);
-          }
-        }
-      }
-      manifest.lastUpdated = new Date().toISOString();
-      await writeJsonFile(MANIFEST_KEY, manifest);
-
-      res.json(gallery);
+      const updated = getGalleryById(id);
+      res.json(updated);
     } catch {
       res.status(500).json({ error: "Failed to add pictograms to gallery" });
     }
@@ -269,37 +179,20 @@ router.post(
 router.delete(
   "/:id/pictograms/:pictoId",
   authMiddleware,
-  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  (req: AuthenticatedRequest, res: Response): void => {
     const id = req.params.id as string;
     const pictoId = req.params.pictoId as string;
 
     try {
-      // Update galleries.json
-      const data = await getGalleriesFile();
-      const gallery = data.galleries.find((g) => g.id === id);
-
+      const gallery = getGalleryById(id);
       if (!gallery) {
         res.status(404).json({ error: "Gallery not found" });
         return;
       }
 
-      gallery.pictogramIds = gallery.pictogramIds.filter(
-        (pid) => pid !== pictoId,
-      );
-      gallery.updatedAt = new Date().toISOString();
-      data.lastUpdated = gallery.updatedAt;
-      await writeJsonFile(GALLERIES_KEY, data);
-
-      // Update pictograms-manifest.json
-      const manifest = await getManifest();
-      const picto = manifest.pictograms.find((p) => p.id === pictoId);
-      if (picto?.galleryIds) {
-        picto.galleryIds = picto.galleryIds.filter((gid) => gid !== id);
-        manifest.lastUpdated = new Date().toISOString();
-        await writeJsonFile(MANIFEST_KEY, manifest);
-      }
-
-      res.json(gallery);
+      removePictogramFromGallery(id, pictoId);
+      const updated = getGalleryById(id);
+      res.json(updated);
     } catch {
       res
         .status(500)

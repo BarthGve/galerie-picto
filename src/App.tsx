@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { usePictograms } from "@/hooks/usePictograms";
 import { useGalleries } from "@/hooks/useGalleries";
 import { DownloadsContext, useDownloadsProvider } from "@/hooks/useDownloads";
+import { useFavorites } from "@/hooks/useFavorites";
 import { PictoGrid } from "@/components/PictoGrid";
 import { AppSidebar } from "@/components/Sidebar";
 import { SiteHeader } from "@/components/site-header";
@@ -38,13 +39,18 @@ const DiscoverPage = lazy(() =>
     default: m.DiscoverPage,
   })),
 );
-
-type Page = "home" | "discover" | "gallery";
+const DiscoverShowcase = lazy(() =>
+  import("@/components/DiscoverShowcase").then((m) => ({
+    default: m.DiscoverShowcase,
+  })),
+);
+type Page = "home" | "discover" | "gallery" | "test-discover";
 
 function getInitialPage(): Page {
   const path = window.location.pathname;
   if (path === "/gallery") return "gallery";
   if (path === "/discover") return "discover";
+  if (path === "/test-discover") return "test-discover";
   // OAuth callback → go straight to gallery
   if (new URLSearchParams(window.location.search).has("code")) return "gallery";
   return "home";
@@ -83,6 +89,8 @@ function App() {
   const [selectedContributor, setSelectedContributor] = useState<string | null>(
     null,
   );
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const { isFavorite, toggleFavorite, favoritesCount } = useFavorites(!!user);
 
   // Handle browser back/forward
   useEffect(() => {
@@ -102,7 +110,9 @@ function App() {
         ? "/gallery"
         : target === "discover"
           ? "/discover"
-          : "/";
+          : target === "test-discover"
+            ? "/test-discover"
+            : "/";
     window.history.pushState(null, "", path);
     setPage(target);
   };
@@ -221,6 +231,10 @@ function App() {
   const filteredPictograms = useMemo(() => {
     let result = pictograms;
 
+    if (showFavoritesOnly) {
+      result = result.filter((picto) => isFavorite(picto.id));
+    }
+
     if (selectedGalleryId) {
       const gallery = galleries.find((g) => g.id === selectedGalleryId);
       if (gallery) {
@@ -263,6 +277,8 @@ function App() {
     searchQuery,
     selectedGalleryId,
     selectedContributor,
+    showFavoritesOnly,
+    isFavorite,
     galleries,
   ]);
 
@@ -282,6 +298,21 @@ function App() {
           onLogin={handleLogin}
           onLogout={logout}
         />
+      </Suspense>
+    );
+  }
+
+  // Test Discover Showcase page
+  if (page === "test-discover") {
+    return (
+      <Suspense
+        fallback={
+          <div className="min-h-screen flex items-center justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
+          </div>
+        }
+      >
+        <DiscoverShowcase />
       </Suspense>
     );
   }
@@ -342,6 +373,13 @@ function App() {
           onGoHome={() => navigateTo("home")}
           onGoDiscover={() => navigateTo("discover")}
           currentPage={page}
+          favoritesCount={favoritesCount}
+          showFavoritesOnly={showFavoritesOnly}
+          onToggleFavorites={() => {
+            setShowFavoritesOnly((prev) => !prev);
+            setCurrentPage(1);
+            if (page === "discover") navigateTo("gallery");
+          }}
         />
 
         <SidebarInset>
@@ -374,13 +412,16 @@ function App() {
                     onPictogramUpdated={refetchPictograms}
                     onAddToGallery={addPictogramToGallery}
                     onRemoveFromGallery={removePictogramFromGallery}
+                    isFavorite={isFavorite}
+                    onToggleFavorite={toggleFavorite}
+                    onLogin={handleLogin}
                   />
                 </Suspense>
               ) : (
                 <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
                   <div className="mx-auto w-full max-w-screen-2xl px-4 sm:px-6 lg:px-8 xl:px-10">
                     {lastUpdated && (
-                      <p className="text-xs text-muted-foreground mb-4">
+                      <p className="text-[11px] text-muted-foreground mb-6 font-medium">
                         Dernière mise à jour :{" "}
                         {new Date(lastUpdated).toLocaleString("fr-FR")}
                       </p>
@@ -399,6 +440,9 @@ function App() {
                       }
                       page={currentPage}
                       onPageChange={setCurrentPage}
+                      isFavorite={isFavorite}
+                      onToggleFavorite={toggleFavorite}
+                      onLogin={handleLogin}
                     />
                   </div>
                 </div>

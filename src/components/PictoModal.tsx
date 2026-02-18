@@ -10,6 +10,7 @@ import {
   Download,
   Copy,
   Check,
+  Lock,
   Palette,
   Pencil,
   X,
@@ -40,6 +41,7 @@ import type { Pictogram, Gallery } from "@/lib/types";
 import { fetchSvgText } from "@/lib/svg-to-png";
 import { usePictogramUrl } from "@/hooks/usePictogramUrl";
 import { GallerySelector } from "./GallerySelector";
+import { UpgradeGateDialog } from "./UpgradeGateDialog";
 import { toast } from "sonner";
 
 const ColorCustomizer = lazy(() =>
@@ -63,6 +65,7 @@ interface PictoModalProps {
   user?: { login: string; avatar_url: string } | null;
   onPictogramUpdated?: () => void;
   onDeletePictogram?: (id: string) => Promise<boolean>;
+  onLogin?: () => void;
 }
 
 export function PictoModal({
@@ -76,6 +79,7 @@ export function PictoModal({
   user,
   onPictogramUpdated,
   onDeletePictogram,
+  onLogin,
 }: PictoModalProps) {
   const [copied, setCopied] = useState(false);
   const [pngSize, setPngSize] = useState(512);
@@ -106,6 +110,64 @@ export function PictoModal({
   // Downloads tracking
   const { trackDownload, getCount } = useDownloads();
   const downloadCount = getCount(pictogram.id);
+
+  // Upgrade gate for anonymous users
+  const [upgradeGateOpen, setUpgradeGateOpen] = useState(false);
+
+  // Anonymous PNG download via server endpoint
+  const [anonDownloadsRemaining, setAnonDownloadsRemaining] = useState<
+    number | null
+  >(null);
+
+  // Check remaining downloads for anonymous on modal open
+  useEffect(() => {
+    if (isOpen && !isAuthenticated) {
+      fetch(`${API_URL}/api/pictograms/downloads/remaining`)
+        .then((res) => res.json())
+        .then((data) => setAnonDownloadsRemaining(data.remaining ?? null))
+        .catch(() => {});
+    }
+  }, [isOpen, isAuthenticated]);
+
+  const handleDownloadPngAnonymous = async () => {
+    try {
+      const res = await fetch(
+        `${API_URL}/api/pictograms/${pictogram.id}/download-png`,
+        { method: "POST" },
+      );
+      if (res.status === 403) {
+        setAnonDownloadsRemaining(0);
+        setUpgradeGateOpen(true);
+        return;
+      }
+      if (!res.ok) {
+        toast.error("Erreur lors du téléchargement");
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      const baseName = pictogram.filename.replace(/\.svg$/i, "");
+      link.download = `${baseName}-256px.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      // Update remaining count
+      const remaining = res.headers.get("X-Downloads-Remaining");
+      if (remaining !== null) {
+        setAnonDownloadsRemaining(parseInt(remaining, 10));
+      }
+
+      toast.success(
+        "Pictogramme téléchargé ! Connectez-vous pour des téléchargements illimités.",
+      );
+    } catch {
+      toast.error("Erreur réseau");
+    }
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -371,7 +433,7 @@ export function PictoModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-y-auto rounded-3xl border-border">
         <DialogHeader>
           <div className="flex items-center gap-2">
             {editingName ? (
@@ -408,14 +470,14 @@ export function PictoModal({
               </div>
             ) : (
               <>
-                <DialogTitle>
+                <DialogTitle className="text-lg font-bold text-gradient-primary">
                   {pictogram.name || pictogram.filename.replace(/\.svg$/i, "")}
                 </DialogTitle>
                 {isAuthenticated && (
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8"
+                    className="h-8 w-8 text-muted-foreground hover:text-primary"
                     onClick={() => setEditingName(true)}
                   >
                     <Pencil className="h-4 w-4" />
@@ -469,27 +531,27 @@ export function PictoModal({
           {/* Left column - Preview + Color customization */}
           <div className="flex flex-col gap-4">
             {/* Live preview */}
-            <div className="flex items-center justify-center bg-muted/30 rounded-lg py-12">
+            <div className="flex items-center justify-center rounded-2xl py-12">
               <img
                 src={previewBlobUrl || displayUrl}
                 alt={
                   pictogram.name || pictogram.filename.replace(/\.svg$/i, "")
                 }
-                className="w-48 h-48 object-contain"
+                className="w-48 h-48 object-contain drop-shadow-sm"
               />
             </div>
 
             {/* Contributor */}
             {pictogram.contributor ? (
-              <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
+              <div className="flex items-center gap-3 p-3 bg-accent rounded-2xl border border-border">
                 <img
                   src={pictogram.contributor.githubAvatarUrl}
                   alt={pictogram.contributor.githubUsername}
-                  className="w-8 h-8 rounded-full"
+                  className="w-8 h-8 rounded-full ring-2 ring-ring-accent"
                 />
                 <div className="flex-1">
                   <p className="text-xs text-muted-foreground">Contributeur</p>
-                  <p className="text-sm font-medium">
+                  <p className="text-sm font-medium text-foreground">
                     {pictogram.contributor.githubUsername}
                   </p>
                 </div>
@@ -499,7 +561,7 @@ export function PictoModal({
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-7 text-xs"
+                      className="h-7 text-xs hover:text-primary"
                       disabled={savingContributor}
                       onClick={handleSetContributor}
                     >
@@ -511,7 +573,7 @@ export function PictoModal({
               <Button
                 variant="outline"
                 size="sm"
-                className="w-full"
+                className="w-full rounded-xl"
                 disabled={savingContributor}
                 onClick={handleSetContributor}
               >
@@ -525,28 +587,28 @@ export function PictoModal({
           {/* Right column - Info & Actions */}
           <div className="flex flex-col gap-5">
             {/* Metadata */}
-            <div className="space-y-2 text-sm">
+            <div className="grid grid-cols-2 gap-3 text-sm bg-surface-subtle rounded-2xl border border-border p-4">
               <div>
-                <span className="text-muted-foreground">Nom du fichier</span>
-                <p className="font-medium">{pictogram.filename}</p>
+                <span className="text-xs text-muted-foreground">Fichier</span>
+                <p className="font-medium text-foreground truncate">{pictogram.filename}</p>
               </div>
               <div>
-                <span className="text-muted-foreground">Taille</span>
-                <p className="font-medium">
+                <span className="text-xs text-muted-foreground">Taille</span>
+                <p className="font-medium text-foreground">
                   {formatFileSize(pictogram.size)}
                 </p>
               </div>
               <div>
-                <span className="text-muted-foreground">
-                  Dernière modification
+                <span className="text-xs text-muted-foreground">
+                  Modifié le
                 </span>
-                <p className="font-medium">
+                <p className="font-medium text-foreground">
                   {formatDate(pictogram.lastModified)}
                 </p>
               </div>
               <div>
-                <span className="text-muted-foreground">Téléchargements</span>
-                <p className="font-medium">
+                <span className="text-xs text-muted-foreground">Téléchargements</span>
+                <p className="font-medium text-badge-download-text">
                   {downloadCount}
                 </p>
               </div>
@@ -576,22 +638,22 @@ export function PictoModal({
                       value={tagInput}
                       onChange={(e) => setTagInput(e.target.value)}
                       onKeyDown={handleTagKeyDown}
-                      className="h-8 text-sm"
+                      className="h-8 text-sm rounded-lg"
                     />
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={handleAddTag}
                       disabled={!tagInput.trim()}
-                      className="h-8"
+                      className="h-8 rounded-lg"
                     >
                       <Plus className="h-3 w-3" />
                     </Button>
                   </div>
                   {tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
+                    <div className="flex flex-wrap gap-1.5">
                       {tags.map((tag) => (
-                        <Badge key={tag} variant="secondary" className="gap-1">
+                        <Badge key={tag} variant="outline" className="bg-badge-bg border-badge-border text-badge-text gap-1">
                           {tag}
                           <button
                             onClick={() => handleRemoveTag(tag)}
@@ -608,6 +670,7 @@ export function PictoModal({
                       size="sm"
                       onClick={handleSaveTags}
                       disabled={savingTags}
+                      className="rounded-lg"
                     >
                       {savingTags ? "Enregistrement..." : "Enregistrer"}
                     </Button>
@@ -618,16 +681,17 @@ export function PictoModal({
                         setEditingTags(false);
                         setTags(pictogram.tags || []);
                       }}
+                      className="rounded-lg"
                     >
                       Annuler
                     </Button>
                   </div>
                 </div>
               ) : (
-                <div className="flex flex-wrap gap-1">
+                <div className="flex flex-wrap gap-1.5">
                   {(pictogram.tags?.length ?? 0) > 0 ? (
                     pictogram.tags!.map((tag) => (
-                      <Badge key={tag} variant="secondary">
+                      <Badge key={tag} variant="outline" className="bg-badge-bg border-badge-border text-badge-text">
                         {tag}
                       </Badge>
                     ))
@@ -641,31 +705,43 @@ export function PictoModal({
             </div>
 
             {/* Color customizer */}
-            {showColorCustomizer && svgCacheRef.current ? (
-              <Suspense
-                fallback={
-                  <div className="h-20 flex items-center justify-center text-xs text-muted-foreground">
-                    Chargement...
-                  </div>
-                }
-              >
-                <ColorCustomizer
-                  svgText={svgCacheRef.current}
-                  onModifiedSvgChange={handleModifiedSvgChange}
-                />
-              </Suspense>
+            {isAuthenticated ? (
+              showColorCustomizer && svgCacheRef.current ? (
+                <Suspense
+                  fallback={
+                    <div className="h-20 flex items-center justify-center text-xs text-muted-foreground">
+                      Chargement...
+                    </div>
+                  }
+                >
+                  <ColorCustomizer
+                    svgText={svgCacheRef.current}
+                    onModifiedSvgChange={handleModifiedSvgChange}
+                  />
+                </Suspense>
+              ) : (
+                <Button
+                  variant="outline"
+                  onClick={() => setShowColorCustomizer(true)}
+                  disabled={!svgLoaded}
+                  size="sm"
+                  className="w-full rounded-xl border-border hover:bg-accent hover:text-primary"
+                >
+                  <Palette className="h-4 w-4 mr-2" />
+                  {svgLoaded
+                    ? "Personnaliser les couleurs"
+                    : "Chargement du SVG..."}
+                </Button>
+              )
             ) : (
               <Button
                 variant="outline"
-                onClick={() => setShowColorCustomizer(true)}
-                disabled={!svgLoaded}
+                onClick={() => setUpgradeGateOpen(true)}
                 size="sm"
-                className="w-full"
+                className="w-full rounded-xl border-border"
               >
-                <Palette className="h-4 w-4 mr-2" />
-                {svgLoaded
-                  ? "Personnaliser les couleurs"
-                  : "Chargement du SVG..."}
+                <Lock className="h-4 w-4 mr-2" />
+                Personnaliser les couleurs
               </Button>
             )}
 
@@ -681,61 +757,127 @@ export function PictoModal({
             )}
 
             {/* Download actions - footer */}
-            <div className="mt-auto space-y-3 pt-3 border-t">
-              <div className="flex gap-2">
-                <Button
-                  onClick={handleDownloadSvg}
-                  disabled={!svgLoaded}
-                  className="flex-1"
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  SVG
-                </Button>
-                <Button
-                  onClick={handleCopy}
-                  variant="outline"
-                  disabled={!svgLoaded}
-                  className="flex-1"
-                >
-                  {copied ? (
-                    <>
-                      <Check className="h-4 w-4 mr-2 text-green-600" />
-                      Copié !
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="h-4 w-4 mr-2" />
-                      Copier
-                    </>
-                  )}
-                </Button>
-              </div>
+            <div className="mt-auto space-y-3 pt-4 border-t border-border">
+              {isAuthenticated ? (
+                <>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={handleDownloadSvg}
+                      disabled={!svgLoaded}
+                      className="flex-1 rounded-xl btn-cta"
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      SVG
+                    </Button>
+                    <Button
+                      onClick={handleCopy}
+                      variant="outline"
+                      disabled={!svgLoaded}
+                      className="flex-1 rounded-xl border-border"
+                    >
+                      {copied ? (
+                        <>
+                          <Check className="h-4 w-4 mr-2 text-green-600" />
+                          Copié !
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="h-4 w-4 mr-2" />
+                          Copier
+                        </>
+                      )}
+                    </Button>
+                  </div>
 
-              <div className="flex gap-2">
-                <select
-                  value={pngSize}
-                  onChange={(e) => setPngSize(Number(e.target.value))}
-                  className="flex h-10 w-24 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                >
-                  <option value={128}>128px</option>
-                  <option value={256}>256px</option>
-                  <option value={512}>512px</option>
-                  <option value={1024}>1024px</option>
-                </select>
-                <Button
-                  onClick={handleDownloadPng}
-                  variant="secondary"
-                  disabled={!svgLoaded}
-                  className="flex-1"
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  PNG ({pngSize}px)
-                </Button>
-              </div>
+                  <div className="flex gap-2">
+                    <select
+                      value={pngSize}
+                      onChange={(e) => setPngSize(Number(e.target.value))}
+                      className="flex h-10 w-24 items-center justify-between rounded-xl border border-border bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                    >
+                      <option value={128}>128px</option>
+                      <option value={256}>256px</option>
+                      <option value={512}>512px</option>
+                      <option value={1024}>1024px</option>
+                    </select>
+                    <Button
+                      onClick={handleDownloadPng}
+                      variant="secondary"
+                      disabled={!svgLoaded}
+                      className="flex-1 rounded-xl"
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      PNG ({pngSize}px)
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => setUpgradeGateOpen(true)}
+                      variant="outline"
+                      className="flex-1 rounded-xl border-border"
+                      disabled
+                    >
+                      <Lock className="h-4 w-4 mr-2" />
+                      SVG
+                    </Button>
+                    <Button
+                      onClick={() => setUpgradeGateOpen(true)}
+                      variant="outline"
+                      className="flex-1 rounded-xl border-border"
+                      disabled
+                    >
+                      <Lock className="h-4 w-4 mr-2" />
+                      Copier
+                    </Button>
+                  </div>
+
+                  <Button
+                    onClick={handleDownloadPngAnonymous}
+                    variant="secondary"
+                    className="w-full rounded-xl"
+                    disabled={anonDownloadsRemaining === 0}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    PNG (256px)
+                    {anonDownloadsRemaining !== null && anonDownloadsRemaining > 0 && (
+                      <span className="ml-1 text-xs opacity-70">
+                        ({anonDownloadsRemaining} restant{anonDownloadsRemaining > 1 ? "s" : ""})
+                      </span>
+                    )}
+                  </Button>
+                  {anonDownloadsRemaining === 0 ? (
+                    <p className="text-xs text-center text-muted-foreground">
+                      Limite atteinte.{" "}
+                      <button
+                        className="text-primary hover:underline font-medium"
+                        onClick={() => setUpgradeGateOpen(true)}
+                      >
+                        Connectez-vous
+                      </button>{" "}
+                      pour des téléchargements illimités.
+                    </p>
+                  ) : (
+                    <p className="text-xs text-center text-muted-foreground">
+                      Connectez-vous pour télécharger en SVG et choisir la taille
+                    </p>
+                  )}
+                </>
+              )}
             </div>
           </div>
         </div>
       </DialogContent>
+
+      {onLogin && (
+        <UpgradeGateDialog
+          open={upgradeGateOpen}
+          onOpenChange={setUpgradeGateOpen}
+          onLogin={onLogin}
+        />
+      )}
     </Dialog>
   );
 }

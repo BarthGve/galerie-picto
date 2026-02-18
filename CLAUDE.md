@@ -23,10 +23,16 @@ galerie/
 │   ├── hooks/                # Custom hooks (usePictograms, useGalleries)
 │   └── lib/                  # Utilitaires et types
 ├── backend/                  # Backend Express.js
+│   ├── drizzle/              # Migrations SQL generees par Drizzle Kit
 │   └── src/
-│       ├── routes/           # Endpoints API (auth, upload, galleries, pictograms, proxy)
+│       ├── db/               # Base de donnees SQLite
+│       │   ├── schema.ts     # Schema Drizzle (pictograms, galleries, downloads, users, favorites)
+│       │   ├── index.ts      # Connexion et migrations
+│       │   ├── seed-from-minio.ts  # Script de migration one-shot depuis JSON Minio
+│       │   └── repositories/ # Repositories (pictograms, galleries, downloads, users, favorites)
+│       ├── routes/           # Endpoints API (auth, upload, galleries, pictograms, proxy, favorites)
 │       ├── services/         # Services (minio S3, svg-sanitizer, dsfr-dark)
-│       ├── middleware/       # Auth middleware
+│       ├── middleware/       # Auth middleware (auth.ts pour collaborateurs, auth-any-user.ts pour tous)
 │       └── config.ts         # Configuration et validation env vars
 ├── public/                   # Static assets
 ├── dist/                     # Production build output
@@ -55,9 +61,10 @@ This project uses the BMAD framework for structured development workflows. The f
 - **Frontend**: React 19 + TypeScript 5.9 + Vite 7
 - **UI**: Tailwind CSS 4 + shadcn/ui components
 - **Backend**: Express.js (dossier `backend/`)
-- **Storage**: Minio S3-compatible (cdn.kerjean.net)
-- **Authentification**: GitHub OAuth
-- **Deploiement**: Railway (frontend + backend)
+- **Database**: SQLite (via Drizzle ORM + better-sqlite3)
+- **Storage**: Minio S3-compatible (cdn.kerjean.net) — uniquement pour les fichiers SVG
+- **Authentification**: GitHub OAuth (2 niveaux : `authMiddleware` pour collaborateurs, `authAnyUser` pour tout utilisateur connecte)
+- **Deploiement**: Railway (frontend + backend, volume persistant pour SQLite)
 
 ### Build Commands
 ```bash
@@ -79,6 +86,7 @@ pnpm build            # Construire le frontend pour la production
   - `PORT`, `CORS_ORIGIN`
   - `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `GITHUB_ALLOWED_USERNAME`
   - `MINIO_ENDPOINT`, `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY`, `MINIO_BUCKET`, `MINIO_PREFIX`
+  - `DATABASE_PATH` (optionnel, defaut `./data/galerie.db`)
 
 ### Deployment
 - Heberge sur Railway
@@ -97,11 +105,12 @@ pnpm build            # Construire le frontend pour la production
 - **No-cache** : Seules les reponses aux mutations (POST/PUT/DELETE) ont `Cache-Control: no-store`
 
 ### Backend
-- **Lectures S3** : Utiliser le SDK S3 directement (`GetObjectCommand` + `transformToString()`). Ne JAMAIS utiliser des URLs signees + fetch HTTP pour lire des fichiers depuis le meme backend
-- **Cache en memoire** : `minio.ts` maintient un cache JSON avec TTL de 30s et JSON pre-serialise pour eviter `JSON.stringify()` a chaque requete
+- **SQLite + Drizzle ORM** : Toutes les donnees (pictogrammes, galleries, downloads, users, favoris) sont stockees dans SQLite via Drizzle ORM. Les fichiers JSON sur Minio ne sont plus utilises.
+- **Minio** : Utilise uniquement pour le stockage des fichiers SVG binaires (`writeSvgFile`, `deleteFile`, `readFileAsText`)
+- **Cache en memoire** : Les repositories `pictograms.ts` et `galleries.ts` maintiennent un cache avec TTL de 30s et JSON pre-serialise
 - **ETag/304** : Les endpoints GET `/api/pictograms/manifest` et `/api/galleries` supportent `If-None-Match` et renvoient 304 si le contenu n'a pas change
-- **JSON compact** : `writeJsonFile` ecrit du JSON sans pretty-print pour reduire la taille ~30%
-- **Type de retour** : `readJsonFile<T>()` retourne `JsonReadResult<T> | null` avec `{ data, json, etag }`. Toujours destructurer `.data` pour acceder aux donnees
+- **WAL mode** : SQLite est configure en WAL pour de meilleures performances en lecture concurrente
+- **Seed script** : `backend/src/db/seed-from-minio.ts` permet de migrer les donnees existantes depuis les fichiers JSON Minio vers SQLite
 - **Compression** : Le middleware `compression()` est actif sur toutes les reponses
 
 ## Bonnes pratiques Securite
@@ -136,3 +145,89 @@ If you need to understand BMAD workflows or tasks:
 - Task definitions: In `_bmad/core/tasks/`
 
 The BMAD framework is self-documenting through its XML and markdown workflow files.
+
+# MCP Gemini Design - MANDATORY UNIQUE WORKFLOW
+
+## ABSOLUTE RULE
+
+You NEVER write frontend/UI code yourself. Gemini is your frontend developer.
+
+---
+
+## AVAILABLE TOOLS
+
+### `generate_vibes`
+Generates a visual page with 5 differently styled sections. The user opens the page, sees all 5 vibes, and picks their favorite. The code from the chosen vibe becomes the design-system.md.
+
+### `create_frontend`
+Creates a NEW complete file (page, component, section).
+
+### `modify_frontend`
+Makes ONE design modification to existing code. Returns a FIND/REPLACE block to apply.
+
+### `snippet_frontend`
+Generates a code snippet to INSERT into an existing file. For adding elements without rewriting the entire file.
+
+---
+
+## WORKFLOW (NO ALTERNATIVES)
+
+### STEP 1: Check for design-system.md
+
+BEFORE any frontend call → check if `design-system.md` exists at project root.
+
+### STEP 2A: If design-system.md DOES NOT EXIST
+
+1. Call `generate_vibes` with projectDescription, projectType, techStack
+2. Receive the code for a page with 5 visual sections
+3. Ask: "You don't have a design system. Can I create vibes-selection.tsx so you can visually choose your style?"
+4. If yes → Write the page to the file
+5. User chooses: "vibe 3" or "the 5th one"
+6. Extract THE ENTIRE CODE between `<!-- VIBE_X_START -->` and `<!-- VIBE_X_END -->`
+7. Save it to `design-system.md`
+8. Ask: "Delete vibes-selection.tsx?"
+9. Continue normally
+
+### STEP 2B: If design-system.md EXISTS
+
+Read it and use its content for frontend calls.
+
+### STEP 3: Frontend Calls
+
+For EVERY call (create_frontend, modify_frontend, snippet_frontend), you MUST pass:
+
+- `designSystem`: Copy-paste the ENTIRE content of design-system.md (all the code, not a summary)
+- `context`: Functional/business context WITH ALL REAL DATA. Include:
+  - What it does, features, requirements
+  - ALL real text/labels to display (status labels, button text, titles...)
+  - ALL real data values (prices, stats, numbers...)
+  - Enum values and their exact meaning
+  - Any business-specific information
+
+**WHY**: Gemini will use placeholders `[Title]`, `[Price]` for missing info. If you don't provide real data, you'll get placeholders or worse - fake data.
+
+---
+
+## FORBIDDEN
+
+- Writing frontend without Gemini
+- Skipping the vibes workflow when design-system.md is missing
+- Extracting "rules" instead of THE ENTIRE code
+- Manually creating design-system.md
+- Passing design/styling info in `context` (that goes in `designSystem`)
+- Summarizing the design system instead of copy-pasting it entirely
+- Calling Gemini without providing real data (labels, stats, prices, etc.) → leads to fake info
+
+## EXPECTED
+
+- Check for design-system.md BEFORE anything
+- Follow the complete vibes workflow if missing
+- Pass the FULL design-system.md content in `designSystem`
+- Pass functional context in `context` (purpose, features, requirements)
+
+## EXCEPTIONS (you can code these yourself)
+
+- Text-only changes
+- JS logic without UI
+- Non-visual bug fixes
+- Data wiring (useQuery, etc.)

@@ -1,4 +1,4 @@
-import { Images, CirclePlus, Compass } from "lucide-react";
+import { Images, CirclePlus, Compass, Heart } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -18,6 +18,9 @@ export function NavMain({
   onUploadClick,
   onGoDiscover,
   currentPage,
+  favoritesCount,
+  showFavoritesOnly,
+  onToggleFavorites,
 }: {
   totalPictogramCount: number;
   selectedGalleryId: string | null;
@@ -26,24 +29,27 @@ export function NavMain({
   onUploadClick: () => void;
   onGoDiscover?: () => void;
   currentPage?: string;
+  favoritesCount?: number;
+  showFavoritesOnly?: boolean;
+  onToggleFavorites?: () => void;
 }) {
   return (
     <SidebarGroup>
-      <SidebarGroupContent className="flex flex-col gap-2">
+      <SidebarGroupContent className="flex flex-col gap-1">
         {isAuthenticated && (
           <SidebarMenu>
             <SidebarMenuItem className="flex items-center gap-2">
               <SidebarMenuButton
                 tooltip="Ajouter un pictogramme"
                 onClick={onUploadClick}
-                className="bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground min-w-8 duration-200 ease-linear"
+                className="bg-gradient-to-r from-rose-500 via-fuchsia-600 to-indigo-600 text-white hover:opacity-90 hover:text-white active:opacity-90 active:text-white min-w-8 duration-200 ease-linear shadow-sm"
               >
                 <CirclePlus />
                 <span>Ajouter</span>
               </SidebarMenuButton>
               <Button
                 size="icon"
-                className="size-8 group-data-[collapsible=icon]:opacity-0"
+                className="size-8 group-data-[collapsible=icon]:opacity-0 rounded-lg border-border"
                 variant="outline"
                 onClick={onSelectAll}
               >
@@ -68,16 +74,37 @@ export function NavMain({
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
-              isActive={currentPage === "gallery" && selectedGalleryId === null}
+              isActive={currentPage === "gallery" && !selectedGalleryId && !showFavoritesOnly}
               onClick={onSelectAll}
               tooltip="Tous les pictogrammes"
             >
               <Images />
               <span>Tous les pictogrammes</span>
             </SidebarMenuButton>
-            <SidebarMenuBadge>{totalPictogramCount}</SidebarMenuBadge>
+            <SidebarMenuBadge className="bg-badge-accent-bg text-badge-accent-text border border-badge-accent-border text-[10px] rounded-full px-1.5">
+              {totalPictogramCount}
+            </SidebarMenuBadge>
           </SidebarMenuItem>
         </SidebarMenu>
+        {isAuthenticated && onToggleFavorites && (
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                isActive={showFavoritesOnly}
+                onClick={onToggleFavorites}
+                tooltip="Mes favoris"
+              >
+                <Heart className={showFavoritesOnly ? "fill-current text-red-500" : ""} />
+                <span>Mes favoris</span>
+              </SidebarMenuButton>
+              {(favoritesCount ?? 0) > 0 && (
+                <SidebarMenuBadge className="bg-badge-download-bg text-badge-download-text border border-badge-download-border text-[10px] rounded-full px-1.5">
+                  {favoritesCount}
+                </SidebarMenuBadge>
+              )}
+            </SidebarMenuItem>
+          </SidebarMenu>
+        )}
       </SidebarGroupContent>
     </SidebarGroup>
   );

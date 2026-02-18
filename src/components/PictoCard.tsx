@@ -1,5 +1,5 @@
 import { lazy, Suspense, useRef, useState } from "react";
-import { Copy, Check, Download } from "lucide-react";
+import { Copy, Check, Download, Heart } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +27,9 @@ interface PictoCardProps {
   selectedGalleryId?: string | null;
   onPictogramUpdated?: () => void;
   onDeletePictogram?: (id: string) => Promise<boolean>;
+  isFavorite?: boolean;
+  onToggleFavorite?: () => void;
+  onLogin?: () => void;
 }
 
 export function PictoCard({
@@ -39,6 +42,9 @@ export function PictoCard({
   selectedGalleryId,
   onPictogramUpdated,
   onDeletePictogram,
+  isFavorite,
+  onToggleFavorite,
+  onLogin,
 }: PictoCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -95,7 +101,7 @@ export function PictoCard({
   return (
     <>
       <Card
-        className="group relative overflow-hidden transition-all hover:shadow-lg cursor-pointer"
+        className="group relative overflow-hidden rounded-2xl border border-border bg-card transition-all duration-300 hover:-translate-y-1 hover:shadow-xl cursor-pointer"
         draggable
         onDragStart={(e) => {
           e.dataTransfer.setData("application/pictogram-id", pictogram.id);
@@ -104,7 +110,7 @@ export function PictoCard({
         onClick={() => setIsModalOpen(true)}
         onMouseEnter={prefetchSvg}
       >
-        <div className="aspect-[4/3] relative flex items-center justify-center bg-muted/30 p-4">
+        <div className="aspect-[4/3] relative flex items-center justify-center p-4">
           <img
             src={displayUrl}
             alt={pictogram.name || pictogram.filename.replace(/\.svg$/i, "")}
@@ -112,7 +118,7 @@ export function PictoCard({
             decoding="async"
             width={128}
             height={128}
-            className="w-full h-full max-w-32 max-h-32 object-contain transition-transform group-hover:scale-110"
+            className="w-full h-full max-w-32 max-h-32 object-contain drop-shadow-sm transition-transform duration-200 group-hover:scale-110"
           />
           {displayedGalleries.length > 0 && (
             <div className="absolute bottom-1.5 left-1.5 flex gap-1">
@@ -131,6 +137,21 @@ export function PictoCard({
           )}
         </div>
 
+        {/* Favorite button - always visible when favorited */}
+        {onToggleFavorite && (
+          <button
+            className={`absolute top-2 left-2 z-10 transition-opacity ${isFavorite ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleFavorite();
+            }}
+          >
+            <Heart
+              className={`h-5 w-5 transition-colors ${isFavorite ? "fill-red-500 text-red-500" : "text-muted-foreground hover:text-red-400"}`}
+            />
+          </button>
+        )}
+
         {/* Quick actions overlay */}
         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
           {showGallerySelector && (
@@ -145,7 +166,7 @@ export function PictoCard({
           <Button
             size="sm"
             variant="secondary"
-            className="h-8 w-8 p-0"
+            className="h-8 w-8 p-0 rounded-lg"
             onClick={handleCopy}
           >
             {copied ? (
@@ -156,17 +177,17 @@ export function PictoCard({
           </Button>
         </div>
 
-        <div className="p-3 border-t space-y-1.5">
-          <h3 className="font-semibold text-sm truncate leading-tight">
+        <div className="px-3 pb-3 pt-2 border-t border-border space-y-1.5">
+          <h3 className="font-bold text-sm text-foreground truncate leading-tight">
             {pictogram.name || pictogram.filename.replace(/\.svg$/i, "")}
           </h3>
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <div className="flex items-center gap-1.5">
-              <Badge variant="secondary" className="text-[10px] h-5 px-1.5">
+              <Badge variant="outline" className="text-[10px] h-5 px-1.5 bg-badge-bg border-badge-border text-badge-text">
                 {formatFileSize(pictogram.size)}
               </Badge>
               {downloadCount > 0 && (
-                <span className="flex items-center gap-0.5 text-[10px]">
+                <span className="flex items-center gap-0.5 text-[10px] text-badge-download-text">
                   <Download className="size-2.5" />
                   {downloadCount}
                 </span>
@@ -177,7 +198,7 @@ export function PictoCard({
                 <img
                   src={pictogram.contributor.githubAvatarUrl}
                   alt={pictogram.contributor.githubUsername}
-                  className="w-3.5 h-3.5 rounded-full"
+                  className="w-3.5 h-3.5 rounded-full ring-1 ring-ring-accent"
                 />
                 <span className="truncate max-w-[70px] text-[10px]">
                   {pictogram.contributor.githubUsername}
@@ -201,6 +222,7 @@ export function PictoCard({
             user={user}
             onPictogramUpdated={onPictogramUpdated}
             onDeletePictogram={onDeletePictogram}
+            onLogin={onLogin}
           />
         </Suspense>
       )}

@@ -1,9 +1,16 @@
 import { useCallback, useEffect, useState, useRef } from "react";
-import { Palette, LogOut } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import {
+  Palette,
+  LogOut,
+  ArrowRight,
+  Search,
+  Sparkles,
+  Github,
+  Heart,
+  UploadCloud,
+  FolderOpen,
+  Download,
+} from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { PictoMosaic } from "@/components/PictoMosaic";
 import { DarkAwarePicto } from "@/components/DarkAwarePicto";
@@ -18,13 +25,11 @@ interface HomePageProps {
   onLogout: () => void;
 }
 
-function StatCell({
+function AnimatedCounter({
   value,
-  label,
   suffix = "",
 }: {
   value: number;
-  label: string;
   suffix?: string;
 }) {
   const [display, setDisplay] = useState(0);
@@ -58,82 +63,41 @@ function StatCell({
   );
 
   return (
-    <div ref={refCallback} className="text-center">
-      <div className="text-3xl font-bold text-primary">
-        {display}
-        {suffix}
-      </div>
-      <div className="text-sm text-foreground/70">{label}</div>
-    </div>
+    <span ref={refCallback}>
+      {display}
+      {suffix}
+    </span>
   );
 }
 
 const FEATURES = [
   {
-    icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <circle cx="11" cy="11" r="8" />
-        <path d="m21 21-4.3-4.3" />
-      </svg>
-    ),
+    icon: Search,
     title: "Recherche rapide",
     description:
       "Trouvez instantanément le pictogramme dont vous avez besoin par nom, tag ou galerie.",
+    gradient: "from-amber-400 to-orange-500",
   },
   {
-    icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-        <path d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z" />
-      </svg>
-    ),
+    icon: Palette,
     title: "Personnalisation",
     description:
       "Changez les couleurs à la volée et téléchargez en SVG ou PNG selon vos besoins.",
+    gradient: "from-rose-500 to-fuchsia-600",
   },
   {
-    icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="m7.5 4.27 9 5.15" />
-        <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
-        <path d="m3.3 7 8.7 5 8.7-5" />
-        <path d="M12 22V12" />
-      </svg>
-    ),
+    icon: FolderOpen,
     title: "Collections",
     description:
       "Organisez vos pictogrammes en collections thématiques pour vos projets.",
+    gradient: "from-indigo-500 to-purple-600",
   },
+];
+
+const GITHUB_FEATURES = [
+  { icon: Heart, label: "Favoris", description: "Sauvegardez vos pictos préférés" },
+  { icon: UploadCloud, label: "Upload", description: "Ajoutez vos propres pictogrammes" },
+  { icon: FolderOpen, label: "Collections", description: "Créez des collections personnalisées" },
 ];
 
 function pairDarkVariants(pictograms: Pictogram[]): Pictogram[] {
@@ -163,7 +127,7 @@ export function HomePage({
   const [previewPictos, setPreviewPictos] = useState<Pictogram[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [collections, setCollections] = useState(0);
-  const [contributors, setContributors] = useState(0);
+  const [, setContributors] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -202,13 +166,31 @@ export function HomePage({
   }, []);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background font-sans">
+      {/* Background dot pattern */}
+      <div
+        className="fixed inset-0 -z-20 opacity-[0.03] pointer-events-none"
+        style={{
+          backgroundImage: "radial-gradient(#000 1px, transparent 1px)",
+          backgroundSize: "32px 32px",
+        }}
+      />
+
+      {/* Animated gradient blobs — decorative, kept as explicit gradients */}
+      <div className="fixed top-[-10%] right-[-5%] w-96 h-96 bg-gradient-to-tr from-amber-300 to-rose-400 rounded-full blur-3xl -z-10 opacity-30 dark:opacity-15 animate-blob" />
+      <div className="fixed bottom-[-10%] left-[-5%] w-80 h-80 bg-gradient-to-tr from-indigo-300 to-cyan-400 rounded-full blur-3xl -z-10 opacity-30 dark:opacity-15 animate-blob animation-delay-2000" />
+      <div className="fixed top-[40%] left-[30%] w-64 h-64 bg-gradient-to-tr from-fuchsia-300 to-purple-400 rounded-full blur-3xl -z-10 opacity-20 dark:opacity-10 animate-blob animation-delay-4000" />
+
       {/* Navbar */}
-      <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-sm">
+      <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-6">
-          <div className="flex items-center gap-2">
-            <Palette className="size-5 text-primary" />
-            <span className="text-base font-semibold">Galerie Picto</span>
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-rose-500 to-fuchsia-600 flex items-center justify-center shadow-lg shadow-rose-500/20">
+              <Palette className="size-4 text-primary-foreground" />
+            </div>
+            <span className="text-base font-bold text-foreground">
+              Galerie Picto
+            </span>
           </div>
           {user ? (
             <div className="flex items-center gap-3">
@@ -218,21 +200,25 @@ export function HomePage({
                   {(user.name || user.login).slice(0, 2).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <span className="hidden sm:inline text-sm font-medium">
+              <span className="hidden sm:inline text-sm font-medium text-foreground">
                 {user.name || user.login}
               </span>
-              <Button variant="outline" size="sm" onClick={onLogout}>
-                <LogOut className="size-4" />
+              <button
+                onClick={onLogout}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
+              >
+                <LogOut className="size-3.5" />
                 <span className="hidden sm:inline">Déconnexion</span>
-              </Button>
+              </button>
             </div>
           ) : (
-            <Button variant="outline" size="sm" onClick={onLogin}>
-              <svg className="size-4" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z" />
-              </svg>
+            <button
+              onClick={onLogin}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-foreground text-background text-sm font-semibold hover:scale-105 active:scale-95 transition-all shadow-lg"
+            >
+              <Github className="size-4" />
               Connexion
-            </Button>
+            </button>
           )}
         </div>
       </header>
@@ -241,28 +227,82 @@ export function HomePage({
       <section className="relative overflow-hidden">
         <div className="mx-auto max-w-7xl px-6 py-16 md:py-24">
           <div className="grid gap-12 lg:grid-cols-2 lg:gap-8 items-center">
-            <div className="flex flex-col gap-6 max-w-xl">
-              <Badge
-                variant="secondary"
-                className="w-fit text-xs tracking-wider uppercase"
-              >
-                Galerie Picto
-              </Badge>
-              <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
-                Vos pictogrammes,{" "}
-                <span className="text-primary">prêts à l'emploi</span>
-              </h1>
-              <p className="text-lg text-muted-foreground leading-relaxed">
-                Une bibliothèque de pictogrammes SVG libres et personnalisables.
-                Recherchez, personnalisez les couleurs et téléchargez en un
-                clic.
-              </p>
-              <div className="flex flex-wrap gap-3 pt-2">
-                <Button size="lg" onClick={onEnterGallery}>
-                  Explorer la galerie
-                </Button>
+            <div className="flex flex-col gap-8 max-w-xl">
+              {/* Badge */}
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-badge-bg border border-badge-border text-badge-text font-bold text-sm tracking-wide uppercase w-fit">
+                <Sparkles className="w-4 h-4" />
+                100% Gratuit
               </div>
+
+              {/* Headline */}
+              <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-foreground leading-[1.1]">
+                Vos pictogrammes,{" "}
+                <br className="hidden sm:block" />
+                <span className="text-gradient-primary italic inline-block pr-6">
+                  prêts à l'emploi
+                </span>
+              </h1>
+
+              {/* Subtitle */}
+              <p className="text-lg md:text-xl text-muted-foreground leading-relaxed font-medium">
+                Une bibliothèque de pictogrammes SVG libres et personnalisables.
+                Recherchez, personnalisez les couleurs et téléchargez en un clic.
+              </p>
+
+              {/* CTA */}
+              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                <button
+                  onClick={onEnterGallery}
+                  className="btn-cta px-8 py-4 rounded-2xl bg-foreground text-background font-bold text-lg shadow-2xl transition-all hover:scale-105 active:scale-95"
+                >
+                  <span className="flex items-center gap-2">
+                    Explorer la galerie
+                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  </span>
+                </button>
+
+                {totalCount > 0 && (
+                  <div className="text-sm font-semibold text-muted-foreground">
+                    <span className="text-foreground">
+                      <AnimatedCounter value={totalCount} suffix="+" />
+                    </span>{" "}
+                    pictogrammes
+                  </div>
+                )}
+              </div>
+
+              {/* Stats */}
+              {totalCount > 0 && (
+                <div className="flex gap-8 pt-4 border-t border-border">
+                  <div>
+                    <div className="text-2xl font-black text-foreground">
+                      <AnimatedCounter value={collections} />
+                    </div>
+                    <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      Collections
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-black text-foreground">
+                      SVG/PNG
+                    </div>
+                    <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      Formats
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-black text-foreground">
+                      Libre
+                    </div>
+                    <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      Licence
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
+
+            {/* Mosaic */}
             <div className="hidden lg:block">
               <PictoMosaic pictograms={mosaicPictos} loading={loading} />
             </div>
@@ -270,76 +310,63 @@ export function HomePage({
         </div>
       </section>
 
-      <Separator />
-
-      {/* Stats */}
-      {totalCount > 0 && (
-        <section className="py-12 bg-primary/5 dark:bg-primary/10">
-          <div className="mx-auto max-w-4xl px-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-              <StatCell value={totalCount} label="Pictogrammes" suffix="+" />
-              <StatCell value={collections} label="Collections" />
-              <StatCell
-                value={contributors}
-                label={contributors > 1 ? "Contributeurs" : "Contributeur"}
-              />
-              <StatCell value={2} label="Formats (SVG/PNG)" />
-            </div>
-          </div>
-        </section>
-      )}
-
-      <Separator />
-
       {/* Features */}
-      <section className="py-16 md:py-24">
+      <section className="py-16 md:py-24 relative">
         <div className="mx-auto max-w-5xl px-6">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl text-primary">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground">
               Tout ce qu'il vous faut
             </h2>
-            <p className="mt-3 text-muted-foreground max-w-2xl mx-auto">
+            <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto font-medium">
               Des outils simples et efficaces pour trouver et utiliser vos
               pictogrammes.
             </p>
           </div>
           <div className="grid gap-6 md:grid-cols-3">
             {FEATURES.map((feature) => (
-              <Card key={feature.title} className="text-center">
-                <CardHeader>
-                  <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                    {feature.icon}
+              <div
+                key={feature.title}
+                className="group relative p-8 rounded-3xl bg-card border border-border shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+              >
+                <div className="relative mb-5">
+                  <div
+                    className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center text-primary-foreground shadow-lg transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3`}
+                  >
+                    <feature.icon className="w-6 h-6" />
                   </div>
-                  <CardTitle className="text-base">{feature.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">{feature.description}</p>
-                </CardContent>
-              </Card>
+                </div>
+                <h3 className="text-lg font-bold text-foreground mb-2">
+                  {feature.title}
+                </h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  {feature.description}
+                </p>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      <Separator />
-
-      {/* Preview grid - glassmorphism 3D */}
+      {/* Preview grid */}
       {previewPictos.length > 0 && (
-        <section className="py-16 md:py-24 bg-muted/50">
+        <section className="py-16 md:py-24 relative">
           <div className="mx-auto max-w-5xl px-6">
             <div className="text-center mb-12">
-              <h2 className="text-2xl font-bold tracking-tight sm:text-3xl text-primary">
-                Aperçu de la collection
+              <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground">
+                Aperçu de la{" "}
+                <span className="text-gradient-primary">
+                  collection
+                </span>
               </h2>
-              <p className="mt-3 text-muted-foreground">
-                Quelques pictogrammes parmi les {totalCount} disponibles.
+              <p className="mt-4 text-lg text-muted-foreground">
+                Quelques pictogrammes parmi les {totalCount}+ disponibles.
               </p>
             </div>
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
               {previewPictos.map((picto) => (
                 <div
                   key={picto.id}
-                  className="group aspect-square rounded-xl bg-card/60 dark:bg-card/30 backdrop-blur-md border border-border/50 flex items-center justify-center p-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl cursor-pointer shadow-sm"
+                  className="group aspect-square rounded-3xl bg-card border border-border shadow-sm flex items-center justify-center p-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:scale-105 cursor-pointer"
                   onClick={onEnterGallery}
                 >
                   <DarkAwarePicto
@@ -353,25 +380,122 @@ export function HomePage({
         </section>
       )}
 
-      <Separator />
+      {/* GitHub Bonus Section */}
+      {!user && (
+        <section className="py-16 md:py-24">
+          <div className="mx-auto max-w-4xl px-6">
+            <div className="relative p-8 md:p-12 rounded-[2rem] bg-accent border border-github-border shadow-xl overflow-hidden">
+              {/* Background decoration */}
+              <div className="absolute top-0 right-0 p-8 opacity-[0.07]">
+                <Github className="w-48 h-48 rotate-12" />
+              </div>
+
+              <div className="relative z-10 grid md:grid-cols-2 gap-8 items-center">
+                <div className="space-y-4">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-badge-accent-bg border border-badge-accent-border text-badge-accent-text text-xs font-bold uppercase tracking-wider">
+                    <Github className="w-3.5 h-3.5" />
+                    Bonus GitHub
+                  </div>
+                  <h2 className="text-2xl md:text-3xl font-extrabold text-foreground">
+                    Débloquez des{" "}
+                    <span className="text-github-accent">
+                      fonctionnalités exclusives
+                    </span>
+                  </h2>
+                  <p className="text-muted-foreground font-medium leading-relaxed">
+                    Connectez-vous avec votre compte GitHub pour accéder à
+                    des outils supplémentaires. C'est gratuit et instantané.
+                  </p>
+                  <button
+                    onClick={onLogin}
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-github-accent text-primary-foreground font-bold hover:opacity-90 transition-all hover:scale-105 active:scale-95 shadow-lg"
+                  >
+                    <Github className="w-4 h-4" />
+                    Se connecter avec GitHub
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="grid gap-3">
+                  {GITHUB_FEATURES.map((feat) => (
+                    <div
+                      key={feat.label}
+                      className="flex items-center gap-4 p-4 rounded-2xl glass"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-primary-foreground shrink-0">
+                        <feat.icon className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <div className="text-sm font-bold text-foreground">
+                          {feat.label}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {feat.description}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* CTA bottom */}
       <section className="py-16 md:py-24">
         <div className="mx-auto max-w-3xl px-6 text-center">
-          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl text-primary">
-            Prêt à explorer ?
+          <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground">
+            Prêt à{" "}
+            <span className="text-gradient-primary">
+              explorer
+            </span>{" "}
+            ?
           </h2>
-          <p className="mt-3 text-muted-foreground max-w-xl mx-auto">
+          <p className="mt-4 text-lg text-muted-foreground max-w-xl mx-auto font-medium">
             Accédez à l'ensemble des pictogrammes, filtrez par collection et
             personnalisez les couleurs.
           </p>
-          <div className="mt-8">
-            <Button size="lg" onClick={onEnterGallery}>
-              Ouvrir la galerie
-            </Button>
+          <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+            <button
+              onClick={onEnterGallery}
+              className="btn-cta px-8 py-4 rounded-2xl bg-foreground text-background font-bold text-lg shadow-2xl transition-all hover:scale-105 active:scale-95"
+            >
+              <span className="flex items-center gap-2 justify-center">
+                Ouvrir la galerie
+                <ArrowRight className="w-5 h-5" />
+              </span>
+            </button>
+            {!user && (
+              <button
+                onClick={onLogin}
+                className="flex items-center gap-2 px-8 py-4 rounded-2xl border-2 border-border text-foreground font-bold text-lg hover:bg-muted transition-all justify-center"
+              >
+                <Github className="w-5 h-5" />
+                Connexion GitHub
+              </button>
+            )}
           </div>
         </div>
       </section>
+
+      {/* Footer */}
+      <footer className="border-t border-border py-8">
+        <div className="mx-auto max-w-7xl px-6 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-rose-500 to-fuchsia-600 flex items-center justify-center">
+              <Palette className="size-3 text-primary-foreground" />
+            </div>
+            <span>
+              Galerie Picto — Libre et open source
+            </span>
+          </div>
+          <div className="flex gap-6 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            <Download className="w-3.5 h-3.5 inline" />
+            <span>SVG & PNG</span>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

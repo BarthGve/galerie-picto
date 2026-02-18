@@ -45,7 +45,7 @@ export function NavContributors({
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-      <SidebarGroupLabel className="text-primary">Contributeurs</SidebarGroupLabel>
+      <SidebarGroupLabel className="text-xs font-bold uppercase tracking-wider text-gradient-primary">Contributeurs</SidebarGroupLabel>
       <SidebarMenu>
         {contributors.map((c) => (
           <SidebarMenuItem key={c.login}>
@@ -61,11 +61,13 @@ export function NavContributors({
               <img
                 src={c.avatarUrl}
                 alt={c.login}
-                className="size-5 shrink-0 rounded-full"
+                className="size-5 shrink-0 rounded-full ring-1 ring-ring-accent"
               />
               <span>{c.login}</span>
             </SidebarMenuButton>
-            <SidebarMenuBadge>{c.count}</SidebarMenuBadge>
+            <SidebarMenuBadge className="bg-badge-accent-bg text-badge-accent-text border border-badge-accent-border text-[10px] rounded-full px-1.5">
+              {c.count}
+            </SidebarMenuBadge>
           </SidebarMenuItem>
         ))}
       </SidebarMenu>

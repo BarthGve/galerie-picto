@@ -37,7 +37,7 @@ export function PictoMosaic({ pictograms, loading }: PictoMosaicProps) {
   }
 
   return (
-    <div className="relative h-[420px] overflow-hidden select-none pointer-events-none">
+    <div className="relative h-[420px] overflow-hidden select-none pointer-events-none rounded-3xl">
       <div
         className="flex gap-3 absolute inset-0"
         style={{
@@ -56,12 +56,7 @@ export function PictoMosaic({ pictograms, loading }: PictoMosaicProps) {
             {col.map((picto, i) => (
               <div
                 key={`${colIdx}-${i}`}
-                className="w-[100px] h-[100px] shrink-0 rounded-xl bg-white/10 dark:bg-white/5 backdrop-blur-sm border border-white/20 dark:border-white/10 flex items-center justify-center p-3"
-                style={{
-                  perspective: "600px",
-                  boxShadow:
-                    "0 4px 16px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.2)",
-                }}
+                className="w-[100px] h-[100px] shrink-0 rounded-2xl bg-card border border-border shadow-sm flex items-center justify-center p-3"
               >
                 <DarkAwarePicto
                   pictogram={picto}

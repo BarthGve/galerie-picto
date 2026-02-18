@@ -72,7 +72,7 @@ export function NavGalleries({
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-      <SidebarGroupLabel className="text-primary">Collections</SidebarGroupLabel>
+      <SidebarGroupLabel className="text-xs font-bold uppercase tracking-wider text-gradient-primary">Collections</SidebarGroupLabel>
       <SidebarMenu>
         {galleries.map((gallery) => (
           <SidebarMenuItem key={gallery.id}>
@@ -98,7 +98,7 @@ export function NavGalleries({
               />
               <span>{gallery.name}</span>
             </SidebarMenuButton>
-            <SidebarMenuBadge className="group-hover/menu-item:opacity-0 transition-opacity">
+            <SidebarMenuBadge className="group-hover/menu-item:opacity-0 transition-opacity bg-badge-accent-bg text-badge-accent-text border border-badge-accent-border text-[10px] rounded-full px-1.5">
               {gallery.pictogramIds.length}
             </SidebarMenuBadge>
             {(onEditGallery || onDeleteGallery) && (
@@ -113,7 +113,7 @@ export function NavGalleries({
                   </SidebarMenuAction>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
-                  className="w-36 rounded-lg"
+                  className="w-36 rounded-xl border-border"
                   side={isMobile ? "bottom" : "right"}
                   align={isMobile ? "end" : "start"}
                 >

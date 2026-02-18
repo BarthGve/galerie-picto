@@ -6,6 +6,7 @@ import compression from "compression";
 import rateLimit from "express-rate-limit";
 import { config } from "./config.js";
 import { readFileSync } from "fs";
+import { runMigrations, closeDb } from "./db/index.js";
 
 const pkg = JSON.parse(
   readFileSync(new URL("../package.json", import.meta.url), "utf-8"),
@@ -17,11 +18,7 @@ import pictogramsRoutes from "./routes/pictograms.js";
 import proxyRoutes from "./routes/proxy.js";
 import githubProfileRoutes from "./routes/github-profile.js";
 import downloadsRoutes from "./routes/downloads.js";
-import {
-  initDownloads,
-  startFlushTimer,
-  shutdownDownloads,
-} from "./services/downloads.js";
+import favoritesRoutes from "./routes/favorites.js";
 
 const app = express();
 
@@ -99,20 +96,25 @@ app.use("/api/pictograms", pictogramsRoutes);
 app.use("/api/pictograms", downloadsRoutes);
 app.use("/api/proxy", proxyRoutes);
 app.use("/api/github/profile", githubProfileRoutes);
+app.use("/api/user", favoritesRoutes);
 
-// Init downloads counter then start server
-initDownloads().then(() => {
-  startFlushTimer();
+// Run migrations then start server
+runMigrations();
 
-  app.listen(config.port, () => {
-    console.log(`Server running on port ${config.port}`);
-  });
+// Cleanup old anonymous download entries
+import { cleanupOldEntries } from "./db/repositories/anonymous-downloads.js";
+const cleaned = cleanupOldEntries(7);
+if (cleaned > 0)
+  console.log(`Cleaned ${cleaned} old anonymous download entries`);
+
+app.listen(config.port, () => {
+  console.log(`Server running on port ${config.port}`);
 });
 
 // Graceful shutdown
 for (const signal of ["SIGINT", "SIGTERM"] as const) {
-  process.on(signal, async () => {
-    await shutdownDownloads();
+  process.on(signal, () => {
+    closeDb();
     process.exit(0);
   });
 }

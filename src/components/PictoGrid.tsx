@@ -21,6 +21,9 @@ interface PictoGridProps {
   onDeletePictogram?: (id: string) => Promise<boolean>;
   page: number;
   onPageChange: (page: number) => void;
+  isFavorite?: (id: string) => boolean;
+  onToggleFavorite?: (id: string) => void;
+  onLogin?: () => void;
 }
 
 export function PictoGrid({
@@ -35,6 +38,9 @@ export function PictoGrid({
   onDeletePictogram,
   page,
   onPageChange,
+  isFavorite,
+  onToggleFavorite,
+  onLogin,
 }: PictoGridProps) {
   const totalPages = Math.max(1, Math.ceil(pictograms.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
@@ -51,8 +57,8 @@ export function PictoGrid({
 
   if (pictograms.length === 0) {
     return (
-      <div className="text-center py-16">
-        <p className="text-lg text-muted-foreground">
+      <div className="text-center py-24">
+        <p className="text-lg font-medium text-muted-foreground">
           Aucun pictogramme trouvé
         </p>
       </div>
@@ -84,16 +90,19 @@ export function PictoGrid({
             selectedGalleryId={selectedGalleryId}
             onPictogramUpdated={onPictogramUpdated}
             onDeletePictogram={onDeletePictogram}
+            isFavorite={isFavorite?.(pictogram.id)}
+            onToggleFavorite={isAuthenticated && onToggleFavorite ? () => onToggleFavorite(pictogram.id) : undefined}
+            onLogin={onLogin}
           />
         ))}
       </div>
 
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-1">
+        <div className="flex items-center justify-center gap-1.5 pt-4">
           <Button
             variant="outline"
             size="icon"
-            className="h-8 w-8"
+            className="h-9 w-9 rounded-xl border-border"
             disabled={safePage <= 1}
             onClick={() => handlePageChange(safePage - 1)}
           >
@@ -105,7 +114,7 @@ export function PictoGrid({
               <Button
                 variant="outline"
                 size="sm"
-                className="h-8 w-8 p-0"
+                className="h-9 w-9 p-0 rounded-xl border-border"
                 onClick={() => handlePageChange(1)}
               >
                 1
@@ -121,7 +130,7 @@ export function PictoGrid({
               key={p}
               variant={p === safePage ? "default" : "outline"}
               size="sm"
-              className="h-8 w-8 p-0"
+              className={`h-9 w-9 p-0 rounded-xl ${p === safePage ? "" : "border-border"}`}
               onClick={() => handlePageChange(p)}
             >
               {p}
@@ -136,7 +145,7 @@ export function PictoGrid({
               <Button
                 variant="outline"
                 size="sm"
-                className="h-8 w-8 p-0"
+                className="h-9 w-9 p-0 rounded-xl border-border"
                 onClick={() => handlePageChange(totalPages)}
               >
                 {totalPages}
@@ -147,14 +156,14 @@ export function PictoGrid({
           <Button
             variant="outline"
             size="icon"
-            className="h-8 w-8"
+            className="h-9 w-9 rounded-xl border-border"
             disabled={safePage >= totalPages}
             onClick={() => handlePageChange(safePage + 1)}
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
 
-          <span className="ml-2 text-xs text-muted-foreground tabular-nums">
+          <span className="ml-3 text-xs text-muted-foreground tabular-nums">
             {(safePage - 1) * PAGE_SIZE + 1}-
             {Math.min(safePage * PAGE_SIZE, pictograms.length)} sur{" "}
             {pictograms.length}

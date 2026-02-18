@@ -55,6 +55,9 @@ export function AppSidebar({
   onGoHome,
   onGoDiscover,
   currentPage,
+  favoritesCount,
+  showFavoritesOnly,
+  onToggleFavorites,
   ...props
 }: React.ComponentProps<typeof Sidebar> & {
   galleries: Gallery[];
@@ -75,6 +78,9 @@ export function AppSidebar({
   onGoHome?: () => void;
   onGoDiscover?: () => void;
   currentPage?: string;
+  favoritesCount?: number;
+  showFavoritesOnly?: boolean;
+  onToggleFavorites?: () => void;
 }) {
   return (
     <Sidebar collapsible="offcanvas" {...props}>
@@ -83,7 +89,7 @@ export function AppSidebar({
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
-              className="data-[slot=sidebar-menu-button]:!p-1.5"
+              className="data-[slot=sidebar-menu-button]:!p-1.5 hover:bg-accent/60"
             >
               <a
                 href="/"
@@ -94,9 +100,11 @@ export function AppSidebar({
                   }
                 }}
               >
-                <Palette className="!size-5 text-primary" />
-                <span className="text-base font-semibold">Galerie Picto</span>
-                <span className="text-muted-foreground ml-auto text-[10px]">
+                <div className="flex items-center justify-center size-7 rounded-lg bg-gradient-to-br from-rose-500 via-fuchsia-600 to-indigo-600 shadow-sm">
+                  <Palette className="!size-4 text-white" />
+                </div>
+                <span className="text-base font-bold text-gradient-primary">Galerie Picto</span>
+                <span className="text-muted-foreground/60 ml-auto text-[10px] font-medium">
                   v{__APP_VERSION__}
                 </span>
               </a>
@@ -104,7 +112,7 @@ export function AppSidebar({
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
-      <SidebarContent className="pt-12 [&>*+*]:mt-4">
+      <SidebarContent className="pt-8 [&>*+*]:mt-3">
         <NavMain
           totalPictogramCount={totalPictogramCount}
           selectedGalleryId={selectedGalleryId}
@@ -116,6 +124,9 @@ export function AppSidebar({
           onUploadClick={onUploadClick}
           onGoDiscover={onGoDiscover}
           currentPage={currentPage}
+          favoritesCount={favoritesCount}
+          showFavoritesOnly={showFavoritesOnly}
+          onToggleFavorites={onToggleFavorites}
         />
         <NavGalleries
           galleries={galleries}
@@ -141,8 +152,11 @@ export function AppSidebar({
             <SidebarMenu>
               {!!user && (
                 <SidebarMenuItem>
-                  <SidebarMenuButton onClick={onCreateGallery}>
-                    <Plus />
+                  <SidebarMenuButton
+                    onClick={onCreateGallery}
+                    className="text-muted-foreground hover:text-primary hover:bg-accent/60"
+                  >
+                    <Plus className="size-4" />
                     <span>Nouvelle collection</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -151,7 +165,7 @@ export function AppSidebar({
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter>
+      <SidebarFooter className="border-t border-sidebar-border pt-2">
         <SidebarMenu>
           <ThemeToggleItem />
         </SidebarMenu>
