@@ -96,14 +96,17 @@ function BentoCard({
   children,
   className = "",
   onClick,
+  style,
 }: {
   children: React.ReactNode;
   className?: string;
   onClick?: () => void;
+  style?: React.CSSProperties;
 }) {
   return (
     <div
       onClick={onClick}
+      style={style}
       className={`group relative bg-card rounded p-6 md:p-8 shadow-sm transition-all duration-500 hover:shadow-xl overflow-hidden ${className}`}
     >
       {children}
