@@ -756,13 +756,14 @@ const handleDownloadSvg = () => {
                 <>
                   <div className="flex items-center gap-1.5">
                     {/* SVG verrouillé */}
-                    <div
-                      className="h-9 flex-1 flex items-center justify-center gap-2 rounded-[4px] text-xs font-bold text-white opacity-40 cursor-not-allowed"
+                    <button
+                      onClick={() => setUpgradeGateOpen(true)}
+                      className="h-9 flex-1 flex items-center justify-center gap-2 rounded-[4px] text-xs font-bold text-white opacity-60 hover:opacity-80 transition-opacity"
                       style={{ backgroundColor: "var(--dsfr-blue-france-main)" }}
                     >
                       <Lock className="w-3.5 h-3.5" />
                       SVG
-                    </div>
+                    </button>
                     {/* PNG anonyme — extra gap via ml */}
                     <button
                       onClick={handleDownloadPngAnonymous}

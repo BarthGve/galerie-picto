@@ -246,18 +246,21 @@ export function PictoCard({
               onRemove={onRemoveFromUserCollection}
             />
           )}
-          <Button
-            size="sm"
-            variant="secondary"
-            className="h-8 w-8 p-0 rounded-lg border border-border shadow-sm"
-            onClick={handleCopy}
-          >
-            {copied ? (
-              <Check className="h-4 w-4 text-green-600" />
-            ) : (
-              <Copy className="h-4 w-4" />
-            )}
-          </Button>
+          {isAuthenticated && (
+            <Button
+              size="sm"
+              variant="secondary"
+              className="h-8 w-8 p-0 rounded-lg border border-border shadow-sm"
+              onClick={handleCopy}
+              title="Copier le SVG"
+            >
+              {copied ? (
+                <Check className="h-4 w-4 text-green-600" />
+              ) : (
+                <Copy className="h-4 w-4" />
+              )}
+            </Button>
+          )}
         </div>
 
         {compact ? (
