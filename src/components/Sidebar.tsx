@@ -1,4 +1,4 @@
-import { Moon, Sparkles, Plus, Sun, Github, ArrowRight } from "lucide-react";
+import { Moon, Palette, Plus, Sun, Github, ArrowRight } from "lucide-react";
 
 import { NavGalleries } from "@/components/nav-galleries";
 import { NavContributors } from "@/components/nav-contributors";
@@ -103,7 +103,7 @@ export function AppSidebar({
                 }}
               >
                 <div className="flex items-center justify-center size-8 rounded-xl bg-foreground shadow-lg">
-                  <Sparkles className="!size-5 text-background" />
+                  <Palette className="!size-5 text-background" />
                 </div>
                 <span className="text-xl font-black tracking-tighter">Galerie Picto</span>
               </a>
@@ -164,7 +164,7 @@ export function AppSidebar({
           />
         )}
 
-        {/* Nouvelle collection — style dashed B */}
+        {/* Nouvelle galerie — style dashed B */}
         {!!user && (
           <SidebarGroup className="mt-auto">
             <SidebarGroupContent>
@@ -175,7 +175,7 @@ export function AppSidebar({
                     className="border-2 border-dashed border-border text-muted-foreground hover:text-foreground hover:bg-accent/60 rounded"
                   >
                     <Plus className="size-4" />
-                    <span>Nouvelle collection</span>
+                    <span>Nouvelle galerie</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>

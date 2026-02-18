@@ -336,10 +336,10 @@ export function DiscoverPage({
                         }}
                       >
                         <ThumbsUp
-                          className={`h-3.5 w-3.5 transition-colors ${hasLiked?.(picto.id) ? "fill-primary/30 text-primary" : "text-muted-foreground/30 hover:text-primary"}`}
+                          className={`h-3.5 w-3.5 transition-colors ${hasLiked?.(picto.id) ? "fill-[var(--dsfr-blue-france-main)] text-[var(--dsfr-blue-france-main)]" : "text-muted-foreground/30 hover:text-[var(--dsfr-blue-france-main)]"}`}
                         />
                         {(getLikeCount?.(picto.id) ?? 0) > 0 && (
-                          <span className={`text-[10px] font-bold leading-none ${hasLiked?.(picto.id) ? "text-primary" : "text-muted-foreground/50"}`}>
+                          <span className={`text-[10px] font-bold leading-none ${hasLiked?.(picto.id) ? "text-[var(--dsfr-blue-france-main)]" : "text-muted-foreground/50"}`}>
                             {getLikeCount!(picto.id)}
                           </span>
                         )}
@@ -474,7 +474,7 @@ export function DiscoverPage({
           {featuredGalleries.length > 0 && (
             <BentoCard className="md:col-span-4 lg:col-span-4 hover:!shadow-sm hover:!translate-y-0">
               <SectionHeader
-                title="Collections à la une"
+                title="Galeries à la une"
                 icon={FolderOpen}
               />
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

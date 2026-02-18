@@ -281,12 +281,12 @@ export function PictoCard({
                   disabled={!isAuthenticated}
                   className={`flex items-center gap-0.5 text-[10px] shrink-0 transition-colors ${
                     hasLiked
-                      ? "text-primary"
-                      : "text-muted-foreground hover:text-primary"
+                      ? "text-[var(--dsfr-blue-france-main)]"
+                      : "text-muted-foreground hover:text-[var(--dsfr-blue-france-main)]"
                   } disabled:cursor-default disabled:hover:text-muted-foreground`}
                   title={isAuthenticated ? (hasLiked ? "Retirer mon like" : "Liker") : undefined}
                 >
-                  <ThumbsUp className={`size-2.5 ${hasLiked ? "fill-primary/30" : ""}`} />
+                  <ThumbsUp className={`size-2.5 ${hasLiked ? "fill-[var(--dsfr-blue-france-main)]" : ""}`} />
                   {likeCount > 0 && <span>{likeCount}</span>}
                 </button>
               )}

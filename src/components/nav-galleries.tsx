@@ -72,7 +72,7 @@ export function NavGalleries({
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
       <div className="px-3 mb-1">
-        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Collections</span>
+        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Galeries</span>
       </div>
       <SidebarMenu>
         {galleries.map((gallery) => (

@@ -16,39 +16,10 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
+import { CollectionFormDialog, DSFR_PRESET_COLORS } from "@/components/ui/collection-form-dialog";
+import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
 import { toast } from "sonner";
 import type { UserCollection } from "@/lib/types";
-
-// 17 couleurs illustratives DSFR
-const PRESET_COLORS = [
-  "#b7a73f",  // green-tilleul-verveine-main
-  "#68a532",  // green-bourgeon-main
-  "#00a95f",  // green-emeraude-main
-  "#009081",  // green-menthe-main
-  "#009099",  // green-archipel-main
-  "#465f9d",  // blue-ecume-main
-  "#417dc4",  // blue-cumulus-main
-  "#a558a0",  // purple-glycine-main
-  "#e18b76",  // pink-macaron-main
-  "#ce614a",  // pink-tuile-main
-  "#c8aa39",  // yellow-tournesol-main
-  "#c3992a",  // yellow-moutarde-main
-  "#e4794a",  // orange-terre-battue-main
-  "#d1b781",  // brown-cafe-creme-main
-  "#c08c65",  // brown-caramel-main
-  "#bd987a",  // brown-opera-main
-  "#aea397",  // beige-gris-galet-main
-];
 
 interface NavUserCollectionsProps {
   collections: UserCollection[];
@@ -73,50 +44,23 @@ export function NavUserCollections({
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<UserCollection | null>(null);
-  const [inputName, setInputName] = useState("");
-  const [inputDescription, setInputDescription] = useState("");
-  const [inputColor, setInputColor] = useState(PRESET_COLORS[0]);
-  const [saving, setSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<UserCollection | null>(null);
 
-  const openCreate = () => {
-    setInputName("");
-    setInputDescription("");
-    setInputColor(PRESET_COLORS[0]);
-    setCreateOpen(true);
-  };
-
-  const openEdit = (col: UserCollection) => {
-    setEditTarget(col);
-    setInputName(col.name);
-    setInputDescription(col.description ?? "");
-    setInputColor(col.color ?? PRESET_COLORS[0]);
-  };
-
-  const handleSave = async () => {
-    if (!inputName.trim()) return;
-    setSaving(true);
-    try {
-      const desc = inputDescription.trim() || undefined;
-      if (editTarget) {
-        await onUpdate(editTarget.id, { name: inputName.trim(), color: inputColor, description: desc ?? null });
-        setEditTarget(null);
-      } else {
-        const col = await onCreate(inputName.trim(), inputColor, desc);
-        if (col) {
-          setCreateOpen(false);
-          toast.success(`Collection « ${col.name} » créée`);
-        }
-      }
-    } finally {
-      setSaving(false);
+  const handleSaveCollection = async (data: { name: string; description?: string; color?: string }) => {
+    if (editTarget) {
+      await onUpdate(editTarget.id, { name: data.name, color: data.color, description: data.description ?? null });
+      setEditTarget(null);
+    } else {
+      const col = await onCreate(data.name, data.color, data.description);
+      if (col) toast.success(`Collection « ${col.name} » créée`);
     }
   };
 
   const handleDelete = async (col: UserCollection) => {
-    if (!window.confirm(`Supprimer « ${col.name} » ?`)) return;
     await onRemove(col.id);
     toast.success(`Collection « ${col.name} » supprimée`);
     if (selectedCollectionId === col.id) onSelectCollection(null);
+    setDeleteTarget(null);
   };
 
   const handleDragOver = (e: React.DragEvent, colId: string) => {
@@ -137,76 +81,41 @@ export function NavUserCollections({
   };
 
   const DialogForm = (
-    <Dialog
+    <CollectionFormDialog
       open={createOpen || !!editTarget}
-      onOpenChange={(open) => {
-        if (!open) { setCreateOpen(false); setEditTarget(null); }
-      }}
-    >
-      <DialogContent className="sm:max-w-sm">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-3 text-primary">
-            <div className="w-9 h-9 rounded-[4px] bg-primary/20 backdrop-blur-md border border-primary/30 flex items-center justify-center text-primary shrink-0">
-              <FolderPlus className="w-4 h-4" />
-            </div>
-            {editTarget ? "Modifier la collection" : "Nouvelle collection utilisateur"}
-          </DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4 py-2">
-          <Input
-            autoFocus
-            placeholder="Nom de la collection"
-            value={inputName}
-            maxLength={100}
-            onChange={(e) => setInputName(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSave()}
-            className="rounded-[4px]"
-          />
-          <Textarea
-            placeholder="Description (optionnelle)..."
-            value={inputDescription}
-            maxLength={500}
-            rows={2}
-            onChange={(e) => setInputDescription(e.target.value)}
-            className="rounded-[4px] resize-none"
-          />
-          <div>
-            <p className="text-xs text-muted-foreground mb-2">Couleur</p>
-            <div className="flex gap-2 flex-wrap">
-              {PRESET_COLORS.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  className={`w-6 h-6 rounded-full transition-transform hover:scale-110 ${inputColor === c ? "ring-2 ring-offset-2 ring-foreground scale-110" : ""}`}
-                  style={{ backgroundColor: c }}
-                  onClick={() => setInputColor(c)}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => { setCreateOpen(false); setEditTarget(null); }} className="rounded-[4px]">
-            Annuler
-          </Button>
-          <Button onClick={handleSave} disabled={!inputName.trim() || saving} className="rounded-[4px]">
-            {editTarget ? "Enregistrer" : "Créer"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      onOpenChange={(open) => { if (!open) { setCreateOpen(false); setEditTarget(null); } }}
+      onSave={handleSaveCollection}
+      title={editTarget ? "Modifier la collection" : "Nouvelle collection utilisateur"}
+      icon={FolderPlus}
+      initialName={editTarget?.name ?? ""}
+      initialDescription={editTarget?.description ?? ""}
+      initialColor={editTarget?.color ?? DSFR_PRESET_COLORS[0]}
+      namePlaceholder="Nom de la collection"
+      submitLabel={editTarget ? "Enregistrer" : "Créer"}
+    />
+  );
+
+  const DeleteDialog = (
+    <DeleteConfirmDialog
+      open={!!deleteTarget}
+      onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+      onConfirm={() => deleteTarget && handleDelete(deleteTarget)}
+      title="Supprimer cette collection ?"
+      description={<>La collection <span className="font-semibold">« {deleteTarget?.name} »</span> sera supprimée définitivement. Les pictogrammes qu'elle contient ne seront pas supprimés.</>}
+    />
   );
 
   return (
     <>
       {DialogForm}
+      {DeleteDialog}
       <SidebarGroup className="group-data-[collapsible=icon]:hidden">
         <div className="px-3 mb-1 flex items-center justify-between">
           <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
             Mes collections
           </span>
           <button
-            onClick={openCreate}
+            onClick={() => setCreateOpen(true)}
             className="text-muted-foreground hover:text-foreground transition-colors"
             title="Nouvelle collection"
           >
@@ -253,12 +162,12 @@ export function NavUserCollections({
                     side={isMobile ? "bottom" : "right"}
                     align={isMobile ? "end" : "start"}
                   >
-                    <DropdownMenuItem className="rounded-[4px]" onClick={() => openEdit(col)}>
+                    <DropdownMenuItem className="rounded-[4px]" onClick={() => setEditTarget(col)}>
                       <Pencil />
                       <span>Modifier</span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem className="rounded-[4px]" variant="destructive" onClick={() => handleDelete(col)}>
+                    <DropdownMenuItem className="rounded-[4px]" variant="destructive" onClick={() => setDeleteTarget(col)}>
                       <Trash2 />
                       <span>Supprimer</span>
                     </DropdownMenuItem>
@@ -288,7 +197,7 @@ export function NavUserCollections({
               const pictoId = e.dataTransfer.getData("application/pictogram-id");
               if (!pictoId) return;
               // Auto-create first collection
-              const col = await onCreate("Ma collection", PRESET_COLORS[0]);
+              const col = await onCreate("Ma collection", DSFR_PRESET_COLORS[0]);
               if (col) {
                 await onAddPictogram(col.id, pictoId);
                 toast.success(`Ajouté à « ${col.name} »`);

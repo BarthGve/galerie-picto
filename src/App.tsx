@@ -11,6 +11,7 @@ import { SiteHeader } from "@/components/site-header";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { toast } from "sonner";
+import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
 import {
   devLogin,
   initiateGitHubLogin,
@@ -170,6 +171,9 @@ function App() {
   const [editingGallery, setEditingGallery] = useState<
     (typeof galleries)[number] | null
   >(null);
+  const [galleryToDelete, setGalleryToDelete] = useState<
+    (typeof galleries)[number] | null
+  >(null);
 
   useEffect(() => {
     async function initAuth() {
@@ -225,18 +229,20 @@ function App() {
     return success;
   };
 
-  const handleDeleteGallery = async (gallery: (typeof galleries)[number]) => {
-    const confirmed = window.confirm(
-      `Supprimer la collection « ${gallery.name} » ? Les pictogrammes ne seront pas supprimés.`,
-    );
-    if (!confirmed) return;
-    const success = await deleteGallery(gallery.id);
+  const handleDeleteGallery = (gallery: (typeof galleries)[number]) => {
+    setGalleryToDelete(gallery);
+  };
+
+  const handleConfirmDeleteGallery = async () => {
+    if (!galleryToDelete) return;
+    const success = await deleteGallery(galleryToDelete.id);
     if (success) {
-      toast.success(`Collection « ${gallery.name} » supprimée`);
-      if (selectedGalleryId === gallery.id) {
+      toast.success(`Galerie « ${galleryToDelete.name} » supprimée`);
+      if (selectedGalleryId === galleryToDelete.id) {
         setSelectedGalleryId(null);
       }
     }
+    setGalleryToDelete(null);
   };
 
   const handleCreateGallery = () => {
@@ -593,6 +599,14 @@ function App() {
             />
           </Suspense>
         )}
+
+        <DeleteConfirmDialog
+          open={!!galleryToDelete}
+          onOpenChange={(open) => { if (!open) setGalleryToDelete(null); }}
+          onConfirm={handleConfirmDeleteGallery}
+          title="Supprimer cette galerie ?"
+          description={<>La galerie <span className="font-semibold">« {galleryToDelete?.name} »</span> sera supprimée définitivement. Les pictogrammes qu'elle contient ne seront pas supprimés.</>}
+        />
       </SidebarProvider>
       </div>
     </TooltipProvider>
