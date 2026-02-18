@@ -105,6 +105,7 @@ function App() {
     update: updateUserCollection,
     remove: removeUserCollection,
     addPictogram: addToUserCollection,
+    removePictogram: removeFromUserCollection,
   } = useUserCollections(!!user);
 
   // Handle browser back/forward
@@ -567,6 +568,7 @@ function App() {
                       onLogin={handleLogin}
                       userCollections={user ? userCollections : undefined}
                       onAddToUserCollection={user ? addToUserCollection : undefined}
+                      onRemoveFromUserCollection={user ? removeFromUserCollection : undefined}
                       getLikeCount={getLikeCount}
                       hasLiked={hasLiked}
                       onToggleLike={user ? toggleLike : undefined}
