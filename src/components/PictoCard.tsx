@@ -30,6 +30,7 @@ interface PictoCardProps {
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
   onLogin?: () => void;
+  compact?: boolean;
 }
 
 export function PictoCard({
@@ -45,6 +46,7 @@ export function PictoCard({
   isFavorite,
   onToggleFavorite,
   onLogin,
+  compact,
 }: PictoCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -101,7 +103,7 @@ export function PictoCard({
   return (
     <>
       <Card
-        className="group relative overflow-hidden rounded-2xl border border-border bg-card transition-all duration-300 hover:-translate-y-1 hover:shadow-xl cursor-pointer"
+        className={`group relative overflow-hidden rounded-2xl border border-border bg-card transition-all duration-300 hover:-translate-y-1 hover:shadow-xl cursor-pointer ${compact ? "p-0" : ""}`}
         draggable
         onDragStart={(e) => {
           e.dataTransfer.setData("application/pictogram-id", pictogram.id);
@@ -110,7 +112,7 @@ export function PictoCard({
         onClick={() => setIsModalOpen(true)}
         onMouseEnter={prefetchSvg}
       >
-        <div className="aspect-[4/3] relative flex items-center justify-center p-4">
+        <div className={`relative flex items-center justify-center ${compact ? "aspect-square p-2" : "aspect-[4/3] p-4"}`}>
           <img
             src={displayUrl}
             alt={pictogram.name || pictogram.filename.replace(/\.svg$/i, "")}
@@ -118,8 +120,9 @@ export function PictoCard({
             decoding="async"
             width={128}
             height={128}
-            className="w-full h-full max-w-32 max-h-32 object-contain drop-shadow-sm transition-transform duration-200 group-hover:scale-110"
+            className={`w-full h-full object-contain drop-shadow-sm transition-transform duration-200 group-hover:scale-110 ${compact ? "max-w-12 max-h-12" : "max-w-24 max-h-24"}`}
           />
+          <div className="absolute inset-4 bg-primary/10 blur-2xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
           {displayedGalleries.length > 0 && (
             <div className="absolute bottom-1.5 left-1.5 flex gap-1">
               {displayedGalleries.map((g) => (
@@ -153,7 +156,7 @@ export function PictoCard({
         )}
 
         {/* Quick actions overlay */}
-        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-1 z-20">
           {showGallerySelector && (
             <GallerySelector
               galleries={galleries}
@@ -166,7 +169,7 @@ export function PictoCard({
           <Button
             size="sm"
             variant="secondary"
-            className="h-8 w-8 p-0 rounded-lg"
+            className="h-8 w-8 p-0 rounded-lg border border-border shadow-sm"
             onClick={handleCopy}
           >
             {copied ? (
@@ -177,36 +180,44 @@ export function PictoCard({
           </Button>
         </div>
 
-        <div className="px-3 pb-3 pt-2 border-t border-border space-y-1.5">
-          <h3 className="font-bold text-sm text-foreground truncate leading-tight">
-            {pictogram.name || pictogram.filename.replace(/\.svg$/i, "")}
-          </h3>
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <div className="flex items-center gap-1.5">
-              <Badge variant="outline" className="text-[10px] h-5 px-1.5 bg-badge-bg border-badge-border text-badge-text">
-                {formatFileSize(pictogram.size)}
-              </Badge>
-              {downloadCount > 0 && (
-                <span className="flex items-center gap-0.5 text-[10px] text-badge-download-text">
-                  <Download className="size-2.5" />
-                  {downloadCount}
-                </span>
+        {compact ? (
+          <div className="px-2 pb-2 pt-1">
+            <h3 className="font-bold text-xs text-foreground truncate leading-tight text-center">
+              {pictogram.name || pictogram.filename.replace(/\.svg$/i, "")}
+            </h3>
+          </div>
+        ) : (
+          <div className="px-3 pb-3 pt-2 border-t border-border space-y-1.5">
+            <h3 className="font-extrabold text-sm text-foreground truncate leading-tight">
+              {pictogram.name || pictogram.filename.replace(/\.svg$/i, "")}
+            </h3>
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <div className="flex items-center gap-1.5">
+                <Badge variant="outline" className="text-[10px] h-5 px-1.5 bg-badge-bg border-badge-border text-badge-text">
+                  {formatFileSize(pictogram.size)}
+                </Badge>
+                {downloadCount > 0 && (
+                  <span className="flex items-center gap-0.5 text-[10px] text-badge-download-text">
+                    <Download className="size-2.5" />
+                    {downloadCount}
+                  </span>
+                )}
+              </div>
+              {pictogram.contributor && (
+                <div className="flex items-center gap-1">
+                  <img
+                    src={pictogram.contributor.githubAvatarUrl}
+                    alt={pictogram.contributor.githubUsername}
+                    className="w-3.5 h-3.5 rounded-full ring-1 ring-ring-accent"
+                  />
+                  <span className="truncate max-w-[70px] text-[10px]">
+                    {pictogram.contributor.githubUsername}
+                  </span>
+                </div>
               )}
             </div>
-            {pictogram.contributor && (
-              <div className="flex items-center gap-1">
-                <img
-                  src={pictogram.contributor.githubAvatarUrl}
-                  alt={pictogram.contributor.githubUsername}
-                  className="w-3.5 h-3.5 rounded-full ring-1 ring-ring-accent"
-                />
-                <span className="truncate max-w-[70px] text-[10px]">
-                  {pictogram.contributor.githubUsername}
-                </span>
-              </div>
-            )}
           </div>
-        </div>
+        )}
       </Card>
 
       {isModalOpen && (

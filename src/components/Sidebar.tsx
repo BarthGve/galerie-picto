@@ -1,4 +1,4 @@
-import { Moon, Palette, Plus, Sun } from "lucide-react";
+import { Moon, Sparkles, Plus, Sun, Github, ArrowRight } from "lucide-react";
 
 import { NavGalleries } from "@/components/nav-galleries";
 import { NavContributors } from "@/components/nav-contributors";
@@ -18,23 +18,6 @@ import {
 import type { Gallery, Pictogram } from "@/lib/types";
 import type { GitHubUser } from "@/lib/github-auth";
 import { useTheme } from "@/hooks/use-theme";
-
-function ThemeToggleItem() {
-  const { theme, setTheme } = useTheme();
-  const isDark = theme === "dark";
-
-  return (
-    <SidebarMenuItem>
-      <SidebarMenuButton
-        onClick={() => setTheme(isDark ? "light" : "dark")}
-        tooltip={isDark ? "Mode clair" : "Mode sombre"}
-      >
-        {isDark ? <Sun /> : <Moon />}
-        <span>{isDark ? "Mode clair" : "Mode sombre"}</span>
-      </SidebarMenuButton>
-    </SidebarMenuItem>
-  );
-}
 
 export function AppSidebar({
   galleries,
@@ -82,8 +65,12 @@ export function AppSidebar({
   showFavoritesOnly?: boolean;
   onToggleFavorites?: () => void;
 }) {
+  const { theme, setTheme } = useTheme();
+  const isDark = theme === "dark";
+
   return (
     <Sidebar collapsible="offcanvas" {...props}>
+      {/* ── Header : Logo compact style B ── */}
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
@@ -100,19 +87,18 @@ export function AppSidebar({
                   }
                 }}
               >
-                <div className="flex items-center justify-center size-7 rounded-lg bg-gradient-to-br from-rose-500 via-fuchsia-600 to-indigo-600 shadow-sm">
-                  <Palette className="!size-4 text-white" />
+                <div className="flex items-center justify-center size-8 rounded-xl bg-foreground shadow-lg">
+                  <Sparkles className="!size-5 text-background" />
                 </div>
-                <span className="text-base font-bold text-gradient-primary">Galerie Picto</span>
-                <span className="text-muted-foreground/60 ml-auto text-[10px] font-medium">
-                  v{__APP_VERSION__}
-                </span>
+                <span className="text-xl font-black tracking-tighter">Galerie Picto</span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
-      <SidebarContent className="pt-8 [&>*+*]:mt-3">
+
+      {/* ── Content ── */}
+      <SidebarContent className="pt-6 [&>*+*]:mt-6">
         <NavMain
           totalPictogramCount={totalPictogramCount}
           selectedGalleryId={selectedGalleryId}
@@ -147,29 +133,64 @@ export function AppSidebar({
             if (login) onSelectGallery(null);
           }}
         />
-        <SidebarGroup className="mt-auto">
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {!!user && (
+
+        {/* Nouvelle collection — style dashed B */}
+        {!!user && (
+          <SidebarGroup className="mt-auto">
+            <SidebarGroupContent>
+              <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton
                     onClick={onCreateGallery}
-                    className="text-muted-foreground hover:text-primary hover:bg-accent/60"
+                    className="border-2 border-dashed border-border text-muted-foreground hover:text-foreground hover:bg-accent/60 rounded-xl"
                   >
                     <Plus className="size-4" />
                     <span>Nouvelle collection</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-              )}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {/* ── GitHub Bonus Card (non-connecté) ── */}
+        {!user && (
+          <SidebarGroup className="group-data-[collapsible=icon]:hidden mt-auto">
+            <div className="relative p-5 rounded-3xl bg-gradient-to-br from-[#e3e3fd] to-white border border-[#adadf9] shadow-lg overflow-hidden group mb-6">
+              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                <Github className="w-16 h-16 rotate-12" />
+              </div>
+              <div className="relative z-10 space-y-2">
+                <div className="flex items-center gap-2 text-[#2845c1] font-bold text-xs">
+                  <Github className="w-4 h-4" />
+                  Bonus GitHub
+                </div>
+                <p className="text-muted-foreground text-[11px] font-medium leading-relaxed">
+                  Connectez-vous pour débloquer <span className="text-[#2845c1]">favoris</span> et <span className="text-[#2845c1]">collections</span>.
+                </p>
+                <button
+                  onClick={onLogin}
+                  className="text-[11px] font-bold text-[#2845c1] flex items-center gap-1 hover:gap-2 transition-all"
+                >
+                  Se connecter <ArrowRight className="w-3 h-3" />
+                </button>
+              </div>
+            </div>
+          </SidebarGroup>
+        )}
       </SidebarContent>
+
+      {/* ── Footer : user + theme toggle inline style B ── */}
       <SidebarFooter className="border-t border-sidebar-border pt-2">
-        <SidebarMenu>
-          <ThemeToggleItem />
-        </SidebarMenu>
-        <NavUser user={user} onLogin={onLogin} onLogout={onLogout} />
+        <div className="flex items-center justify-between px-2 py-1">
+          <NavUser user={user} onLogin={onLogin} onLogout={onLogout} />
+          <button
+            onClick={() => setTheme(isDark ? "light" : "dark")}
+            className="p-2 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors shrink-0"
+          >
+            {isDark ? <Sun className="size-4" /> : <Moon className="size-4" />}
+          </button>
+        </div>
       </SidebarFooter>
     </Sidebar>
   );

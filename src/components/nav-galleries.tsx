@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   SidebarGroup,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuAction,
   SidebarMenuButton,
@@ -72,7 +71,9 @@ export function NavGalleries({
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-      <SidebarGroupLabel className="text-xs font-bold uppercase tracking-wider text-gradient-primary">Collections</SidebarGroupLabel>
+      <div className="px-3 mb-1">
+        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Collections</span>
+      </div>
       <SidebarMenu>
         {galleries.map((gallery) => (
           <SidebarMenuItem key={gallery.id}>
@@ -90,15 +91,15 @@ export function NavGalleries({
               }
             >
               <span
-                className="size-3 shrink-0 rounded-full"
+                className="size-2 shrink-0 rounded-full"
                 style={{
                   backgroundColor: gallery.color || "var(--muted-foreground)",
                   opacity: gallery.color ? 1 : 0.3,
                 }}
               />
-              <span>{gallery.name}</span>
+              <span className="text-sm font-bold">{gallery.name}</span>
             </SidebarMenuButton>
-            <SidebarMenuBadge className="group-hover/menu-item:opacity-0 transition-opacity bg-badge-accent-bg text-badge-accent-text border border-badge-accent-border text-[10px] rounded-full px-1.5">
+            <SidebarMenuBadge className="group-hover/menu-item:opacity-0 transition-opacity text-[10px] font-black px-1.5 py-0.5 rounded-md bg-accent text-muted-foreground">
               {gallery.pictogramIds.length}
             </SidebarMenuBadge>
             {(onEditGallery || onDeleteGallery) && (

@@ -9,6 +9,8 @@ import {
   FolderOpen,
   Heart,
   Tag,
+  ChevronRight,
+  TrendingUp,
 } from "lucide-react";
 import { useDownloads } from "@/hooks/useDownloads";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -67,22 +69,44 @@ function timeAgo(dateStr: string): string {
 function SectionHeader({
   title,
   icon: Icon,
-  gradient,
+  action,
 }: {
   title: string;
   icon: React.ElementType;
-  gradient: string;
+  action?: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center gap-3 mb-6">
-      <div
-        className={`w-10 h-10 rounded-2xl bg-gradient-to-br ${gradient} flex items-center justify-center text-primary-foreground shadow-lg shrink-0`}
-      >
-        <Icon className="w-5 h-5" />
+    <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center gap-3">
+        <div
+          className="w-10 h-10 rounded-2xl bg-[#c83f49] flex items-center justify-center text-white shadow-lg shrink-0"
+        >
+          <Icon className="w-5 h-5" />
+        </div>
+        <h2 className="text-xl font-extrabold tracking-tight text-primary">
+          {title}
+        </h2>
       </div>
-      <h2 className="text-xl font-extrabold tracking-tight text-gradient-primary">
-        {title}
-      </h2>
+      {action}
+    </div>
+  );
+}
+
+function BentoCard({
+  children,
+  className = "",
+  onClick,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  onClick?: () => void;
+}) {
+  return (
+    <div
+      onClick={onClick}
+      className={`group relative bg-card rounded-[2rem] p-6 md:p-8 shadow-sm transition-all duration-500 hover:shadow-xl overflow-hidden ${className}`}
+    >
+      {children}
     </div>
   );
 }
@@ -112,7 +136,7 @@ export function DiscoverPage({
           new Date(b.lastModified).getTime() -
           new Date(a.lastModified).getTime(),
       )
-      .slice(0, 5);
+      .slice(0, 6);
   }, [pictograms]);
 
   const mostDownloaded = useMemo(() => {
@@ -184,10 +208,10 @@ export function DiscoverPage({
 
   return (
     <div className="flex flex-col gap-8 py-6">
-      <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8 space-y-16">
+      <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div>
-          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground">
+        <div className="mb-10">
+          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-primary">
             Découvrir
           </h1>
           <p className="mt-2 text-lg text-muted-foreground font-medium">
@@ -196,132 +220,234 @@ export function DiscoverPage({
           </p>
         </div>
 
-        {/* Derniers ajouts */}
-        {latestPictos.length > 0 && (
-          <section>
-            <SectionHeader
-              title="Derniers ajouts"
-              icon={Clock}
-              gradient="from-amber-400 to-orange-500"
-            />
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-              {latestPictos.map((picto) => (
-                <div
-                  key={picto.id}
-                  className="group relative bg-card border border-border rounded-3xl p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl cursor-pointer"
-                  onClick={() => setSelectedPicto(picto)}
-                >
-                  {isAuthenticated && onToggleFavorite && isFavorite && (
-                    <button
-                      className="absolute top-3 right-3 z-10"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onToggleFavorite(picto.id);
-                      }}
-                    >
-                      <Heart
-                        className={`h-4 w-4 transition-colors ${isFavorite(picto.id) ? "fill-red-500 text-red-500" : "text-muted-foreground/40 hover:text-red-400"}`}
-                      />
-                    </button>
-                  )}
-                  <div className="aspect-square rounded-2xl flex items-center justify-center p-4 mb-3">
-                    <DarkAwarePicto
-                      pictogram={picto}
-                      className="w-full h-full object-contain transition-transform duration-200 group-hover:scale-110"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-sm font-bold text-foreground truncate">
-                      {picto.name}
-                    </p>
-                    <p className="text-xs font-medium text-muted-foreground">
-                      {timeAgo(picto.lastModified)}
-                    </p>
-                    {picto.tags && picto.tags.length > 0 && (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-badge-bg border border-badge-border text-badge-text text-[10px] font-bold uppercase tracking-wide">
-                        {picto.tags[0]}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
+        {/* ══════════════════════════════════════════
+            BENTO GRID
+           ══════════════════════════════════════════ */}
+        <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-6 auto-rows-min">
 
-        {/* Les plus téléchargés */}
-        {mostDownloaded.length > 0 && (
-          <section>
-            <SectionHeader
-              title="Les plus téléchargés"
-              icon={Download}
-              gradient="from-rose-500 to-fuchsia-600"
-            />
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-              {mostDownloaded.map((picto) => (
-                <div
-                  key={picto.id}
-                  className="group bg-card border border-border rounded-3xl p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl cursor-pointer"
-                  onClick={() => setSelectedPicto(picto)}
-                >
-                  <div className="aspect-square rounded-2xl flex items-center justify-center p-4 mb-3">
-                    <DarkAwarePicto
-                      pictogram={picto}
-                      className="w-full h-full object-contain transition-transform duration-200 group-hover:scale-110"
-                    />
+          {/* ── Derniers ajouts (large, 4 cols, 2 rows) ── */}
+          {latestPictos.length > 0 && (
+            <BentoCard className="md:col-span-4 lg:col-span-4 lg:row-span-2">
+              <SectionHeader
+                title="Derniers ajouts"
+                icon={Clock}
+                action={
+                  <button
+                    onClick={() => onNavigateGallery()}
+                    className="text-primary text-sm font-bold flex items-center gap-1 hover:gap-2 transition-all"
+                  >
+                    Tout voir <ChevronRight className="w-4 h-4" />
+                  </button>
+                }
+              />
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                {latestPictos.map((picto) => (
+                  <div
+                    key={picto.id}
+                    className="group/item relative rounded-2xl p-4 border border-border hover:bg-accent/30 transition-all duration-300 cursor-pointer"
+                    onClick={() => setSelectedPicto(picto)}
+                  >
+                    {isAuthenticated && onToggleFavorite && isFavorite && (
+                      <button
+                        className="absolute top-3 right-3 z-10 p-1.5 rounded-lg transition-all"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onToggleFavorite(picto.id);
+                        }}
+                      >
+                        <Heart
+                          className={`h-4 w-4 transition-colors ${isFavorite(picto.id) ? "fill-red-500 text-red-500" : "text-muted-foreground/30 hover:text-red-400"}`}
+                        />
+                      </button>
+                    )}
+                    <div className="aspect-square flex items-center justify-center p-3 mb-3">
+                      <DarkAwarePicto
+                        pictogram={picto}
+                        className="w-full h-full object-contain transition-transform duration-200 group-hover/item:scale-110"
+                      />
+                    </div>
+                    <div className="text-center space-y-1">
+                      <p className="text-sm font-bold text-foreground truncate group-hover/item:text-primary transition-colors">
+                        {picto.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground font-medium">
+                        {timeAgo(picto.lastModified)}
+                      </p>
+                      {picto.tags && picto.tags.length > 0 && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-badge-bg border border-badge-border text-badge-text text-[10px] font-bold uppercase tracking-wide">
+                          {picto.tags[0]}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-sm font-bold text-foreground truncate">
-                      {picto.name}
-                    </p>
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-badge-download-bg border border-badge-download-border text-badge-download-text text-[10px] font-bold">
-                      <Download className="size-2.5" />
-                      {getCount(picto.id)}
+                ))}
+              </div>
+            </BentoCard>
+          )}
+
+          {/* ── Top téléchargés (vertical, 2 cols, 2 rows) ── */}
+          {mostDownloaded.length > 0 && (
+            <BentoCard className="md:col-span-2 lg:col-span-2 lg:row-span-2 bg-accent">
+              <SectionHeader
+                title="Top téléchargés"
+                icon={TrendingUp}
+              />
+              <div className="space-y-3 mt-4">
+                {mostDownloaded.map((picto, idx) => (
+                  <div
+                    key={picto.id}
+                    className="flex items-center gap-3 p-3 rounded-2xl bg-card/60 border border-border hover:shadow-lg transition-all cursor-pointer"
+                    onClick={() => setSelectedPicto(picto)}
+                  >
+                    <div className="w-11 h-11 rounded-xl border border-border flex items-center justify-center p-1 shrink-0">
+                      <DarkAwarePicto
+                        pictogram={picto}
+                        width={36}
+                        height={36}
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-sm truncate text-foreground">
+                        {picto.name}
+                      </p>
+                      <span className="inline-flex items-center gap-1 text-badge-download-text text-[10px] font-bold">
+                        <Download className="size-2.5" />
+                        {getCount(picto.id)}
+                      </span>
+                    </div>
+                    <span className="font-extrabold text-primary/15 text-xl italic">
+                      #{idx + 1}
                     </span>
                   </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
+                ))}
+              </div>
+              <button
+                onClick={() => onNavigateGallery()}
+                className="w-full mt-6 btn-cta group relative px-6 py-3 rounded-2xl bg-foreground text-background font-bold text-sm overflow-hidden shadow-lg transition-all hover:scale-[1.02] active:scale-95"
+              >
+                <span className="relative z-10 flex items-center justify-center gap-2">
+                  Voir tout <TrendingUp className="w-4 h-4" />
+                </span>
+                <div className="absolute inset-0 bg-gradient-to-r from-[#2845c1] to-[#6a6af4] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              </button>
+            </BentoCard>
+          )}
 
-        {/* Contributeur à la une */}
-        {topContributor && (
-          <section>
-            <SectionHeader
-              title="Contributeur à la une"
-              icon={Star}
-              gradient="from-fuchsia-500 to-purple-600"
-            />
-            <div className="relative p-8 md:p-10 rounded-[2rem] bg-accent border border-github-border shadow-xl overflow-hidden group">
+          {/* ── Collections à la une (wide, 4 cols) ── */}
+          {featuredGalleries.length > 0 && (
+            <BentoCard className="md:col-span-4 lg:col-span-4">
+              <SectionHeader
+                title="Collections à la une"
+                icon={FolderOpen}
+              />
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {featuredGalleries.map((gallery) => (
+                  <div
+                    key={gallery.id}
+                    className="flex flex-col p-5 rounded-2xl border border-border hover:bg-accent/30 hover:shadow-lg transition-all cursor-pointer"
+                    onClick={() =>
+                      onNavigateGallery({ galleryId: gallery.id })
+                    }
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      {gallery.color && (
+                        <div
+                          className="w-3 h-3 rounded-full shrink-0"
+                          style={{ backgroundColor: gallery.color }}
+                        />
+                      )}
+                      <h3 className="text-base font-extrabold text-foreground truncate">
+                        {gallery.name}
+                      </h3>
+                    </div>
+                    {gallery.description && (
+                      <p className="text-sm text-muted-foreground font-medium line-clamp-2 leading-relaxed mb-3">
+                        {gallery.description}
+                      </p>
+                    )}
+                    <div className="flex items-center gap-2 mb-3 mt-auto">
+                      {galleryPreviewPictos(gallery).map((picto) => (
+                        <div
+                          key={picto.id}
+                          className="w-9 h-9 rounded-lg border border-border flex items-center justify-center p-0.5"
+                        >
+                          <DarkAwarePicto
+                            pictogram={picto}
+                            width={28}
+                            height={28}
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    <span className="inline-flex items-center self-start px-3 py-1 rounded-full bg-badge-accent-bg border border-badge-accent-border text-badge-accent-text text-xs font-bold">
+                      {gallery.pictogramIds.length} pictogrammes
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </BentoCard>
+          )}
+
+          {/* ── Tags populaires (compact dark, 2 cols) ── */}
+          {topTags.length > 0 && (
+            <BentoCard className="md:col-span-2 lg:col-span-2 bg-foreground text-background">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center text-white">
+                  <Tag className="w-5 h-5" />
+                </div>
+                <h2 className="text-xl font-extrabold tracking-tight">
+                  Tags populaires
+                </h2>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {topTags.slice(0, 15).map(({ name, count }) => (
+                  <button
+                    key={name}
+                    onClick={() => onNavigateGallery({ search: name })}
+                    className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs font-bold hover:bg-primary hover:border-primary/40 transition-all cursor-pointer"
+                  >
+                    {name}{" "}
+                    <span className="opacity-40 ml-1">{count}</span>
+                  </button>
+                ))}
+              </div>
+            </BentoCard>
+          )}
+
+          {/* ── Contributeur à la une (full width banner) ── */}
+          {topContributor && (
+            <BentoCard className="md:col-span-full lg:col-span-full bg-accent p-8 md:p-10">
               <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:opacity-[0.1] transition-opacity pointer-events-none">
                 <svg className="w-48 h-48 rotate-12" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z" />
                 </svg>
               </div>
 
-              <div className="relative z-10 flex flex-col sm:flex-row items-center gap-8">
+              <div className="relative z-10 flex flex-col lg:flex-row items-center gap-8">
                 <div className="relative shrink-0">
-                  <Avatar className="h-24 w-24 ring-4 ring-ring-accent ring-offset-2 ring-offset-background shadow-xl">
+                  <div className="absolute -inset-4 bg-gradient-to-tr from-[#e3e3fd] to-[#2845c1] rounded-full blur-2xl opacity-20 group-hover:opacity-40 transition-opacity" />
+                  <Avatar className="relative h-28 w-28 md:h-36 md:w-36 ring-4 ring-ring-accent ring-offset-2 ring-offset-background shadow-xl">
                     <AvatarImage
                       src={
                         topContributorProfile?.avatar_url ||
-                        `https://github.com/${topContributor.username}.png?size=96`
+                        `https://github.com/${topContributor.username}.png?size=144`
                       }
                       alt={topContributor.username}
                     />
-                    <AvatarFallback className="text-xl font-bold">
+                    <AvatarFallback className="text-2xl font-bold">
                       {topContributor.username.slice(0, 2).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-gradient-to-br from-rose-500 to-fuchsia-600 border-2 border-background flex items-center justify-center text-primary-foreground shadow-lg">
-                    <Star className="w-4 h-4 fill-current" />
+                  <div className="absolute -bottom-1 -right-1 w-10 h-10 rounded-full bg-gradient-to-br from-[#2845c1] to-[#6a6af4] border-2 border-background flex items-center justify-center text-primary-foreground shadow-lg">
+                    <Star className="w-5 h-5 fill-current" />
                   </div>
                 </div>
 
-                <div className="flex-1 text-center sm:text-left space-y-3">
+                <div className="flex-1 text-center lg:text-left space-y-3">
                   <div>
-                    <h3 className="text-2xl font-black text-foreground tracking-tight">
+                    <h3 className="text-2xl md:text-3xl font-black text-foreground tracking-tight">
                       {topContributorProfile?.name || topContributor.username}
                     </h3>
                     <p className="text-github-accent font-bold">
@@ -329,11 +455,11 @@ export function DiscoverPage({
                     </p>
                   </div>
                   {topContributorProfile?.bio && (
-                    <p className="text-muted-foreground font-medium leading-relaxed">
+                    <p className="text-muted-foreground font-medium leading-relaxed max-w-xl">
                       {topContributorProfile.bio}
                     </p>
                   )}
-                  <div className="flex flex-wrap items-center gap-4 justify-center sm:justify-start">
+                  <div className="flex flex-wrap items-center gap-4 justify-center lg:justify-start">
                     {topContributorProfile?.location && (
                       <span className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground uppercase tracking-wider">
                         <MapPin className="size-3.5 text-chart-1" />
@@ -366,93 +492,9 @@ export function DiscoverPage({
                   </a>
                 )}
               </div>
-            </div>
-          </section>
-        )}
-
-        {/* Collections à la une */}
-        {featuredGalleries.length > 0 && (
-          <section>
-            <SectionHeader
-              title="Collections à la une"
-              icon={FolderOpen}
-              gradient="from-indigo-500 to-purple-600"
-            />
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {featuredGalleries.map((gallery) => (
-                <div
-                  key={gallery.id}
-                  className="group bg-card border border-border rounded-3xl p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl cursor-pointer"
-                  onClick={() =>
-                    onNavigateGallery({ galleryId: gallery.id })
-                  }
-                >
-                  <div className="space-y-3 mb-4">
-                    <div className="flex items-center gap-2">
-                      {gallery.color && (
-                        <div
-                          className="w-3 h-3 rounded-full shrink-0"
-                          style={{ backgroundColor: gallery.color }}
-                        />
-                      )}
-                      <h3 className="text-base font-extrabold text-foreground truncate">
-                        {gallery.name}
-                      </h3>
-                    </div>
-                    {gallery.description && (
-                      <p className="text-sm text-muted-foreground font-medium line-clamp-2 leading-relaxed">
-                        {gallery.description}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 mb-3">
-                    {galleryPreviewPictos(gallery).map((picto) => (
-                      <div
-                        key={picto.id}
-                        className="w-10 h-10 rounded-xl bg-surface-subtle border border-border flex items-center justify-center p-1 group-hover:bg-accent transition-colors"
-                      >
-                        <DarkAwarePicto
-                          pictogram={picto}
-                          width={32}
-                          height={32}
-                          className="w-full h-full object-contain"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                  <span className="inline-flex items-center px-3 py-1 rounded-full bg-badge-accent-bg border border-badge-accent-border text-badge-accent-text text-xs font-bold">
-                    {gallery.pictogramIds.length} pictogrammes
-                  </span>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Tags */}
-        {topTags.length > 0 && (
-          <section className="pb-4">
-            <SectionHeader
-              title="Tags populaires"
-              icon={Tag}
-              gradient="from-cyan-500 to-blue-600"
-            />
-            <div className="flex flex-wrap gap-3">
-              {topTags.map(({ name, count }) => (
-                <button
-                  key={name}
-                  onClick={() => onNavigateGallery({ search: name })}
-                  className="px-4 py-2 rounded-full bg-card border border-border text-muted-foreground font-bold text-sm transition-all hover:border-primary/30 hover:bg-accent hover:text-primary hover:scale-105 active:scale-95 shadow-sm flex items-center gap-2"
-                >
-                  {name}
-                  <span className="text-muted-foreground/60 font-medium text-xs">
-                    {count}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </section>
-        )}
+            </BentoCard>
+          )}
+        </div>
       </div>
 
       {selectedPicto && (

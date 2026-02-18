@@ -1,10 +1,17 @@
-import { useMemo } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useMemo, useState } from "react";
+import {
+  Filter,
+  ArrowUpDown,
+  Minimize2,
+  Maximize2,
+  Search,
+} from "lucide-react";
 import type { Pictogram, Gallery } from "@/lib/types";
 import { PictoCard } from "./PictoCard";
-import { Button } from "@/components/ui/button";
 
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 20;
+
+type SortKey = "name" | "date" | "size";
 
 interface PictoGridProps {
   pictograms: Pictogram[];
@@ -42,134 +49,166 @@ export function PictoGrid({
   onToggleFavorite,
   onLogin,
 }: PictoGridProps) {
-  const totalPages = Math.max(1, Math.ceil(pictograms.length / PAGE_SIZE));
+  const [compact, setCompact] = useState(false);
+  const [sortKey, setSortKey] = useState<SortKey>("date");
+  const [activeTag, setActiveTag] = useState<string | null>(null);
+
+  // Extract top tags from pictograms
+  const topTags = useMemo(() => {
+    const tagCounts = new Map<string, number>();
+    for (const p of pictograms) {
+      for (const t of p.tags ?? []) {
+        tagCounts.set(t, (tagCounts.get(t) ?? 0) + 1);
+      }
+    }
+    return [...tagCounts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+      .map(([tag]) => tag);
+  }, [pictograms]);
+
+  // Filter by tag
+  const tagFiltered = useMemo(() => {
+    if (!activeTag) return pictograms;
+    return pictograms.filter((p) => p.tags?.includes(activeTag));
+  }, [pictograms, activeTag]);
+
+  // Sort
+  const sorted = useMemo(() => {
+    const arr = [...tagFiltered];
+    if (sortKey === "name") arr.sort((a, b) => a.name.localeCompare(b.name));
+    else if (sortKey === "size") arr.sort((a, b) => b.size - a.size);
+    else arr.sort((a, b) => new Date(b.lastModified).getTime() - new Date(a.lastModified).getTime());
+    return arr;
+  }, [tagFiltered, sortKey]);
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
 
   const visiblePictograms = useMemo(
-    () => pictograms.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE),
-    [pictograms, safePage],
+    () => sorted.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE),
+    [sorted, safePage],
   );
 
-  const handlePageChange = (newPage: number) => {
-    onPageChange(newPage);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+  const cycleSortKey = () => {
+    setSortKey((prev) =>
+      prev === "date" ? "name" : prev === "name" ? "size" : "date",
+    );
   };
 
-  if (pictograms.length === 0) {
-    return (
-      <div className="text-center py-24">
-        <p className="text-lg font-medium text-muted-foreground">
-          Aucun pictogramme trouvé
-        </p>
-      </div>
-    );
-  }
+  const sortLabel = sortKey === "date" ? "Date" : sortKey === "name" ? "Nom" : "Taille";
 
-  // Build page numbers to display (max 5 visible)
-  const pageNumbers: number[] = [];
-  const maxVisible = 5;
-  let start = Math.max(1, safePage - Math.floor(maxVisible / 2));
-  const end = Math.min(totalPages, start + maxVisible - 1);
-  start = Math.max(1, end - maxVisible + 1);
-  for (let i = start; i <= end; i++) {
-    pageNumbers.push(i);
-  }
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5 sm:gap-6 lg:gap-8">
-        {visiblePictograms.map((pictogram) => (
-          <PictoCard
-            key={pictogram.id}
-            pictogram={pictogram}
-            galleries={galleries}
-            onAddToGallery={onAddToGallery}
-            onRemoveFromGallery={onRemoveFromGallery}
-            isAuthenticated={isAuthenticated}
-            user={user}
-            selectedGalleryId={selectedGalleryId}
-            onPictogramUpdated={onPictogramUpdated}
-            onDeletePictogram={onDeletePictogram}
-            isFavorite={isFavorite?.(pictogram.id)}
-            onToggleFavorite={isAuthenticated && onToggleFavorite ? () => onToggleFavorite(pictogram.id) : undefined}
-            onLogin={onLogin}
-          />
-        ))}
+      {/* ── Floating Toolbar ── */}
+      <div className="flex items-center justify-between bg-card/80 backdrop-blur-md p-2 rounded-2xl border border-white shadow-xl shadow-muted/20">
+        <div className="flex items-center gap-1 overflow-x-auto px-1" style={{ scrollbarWidth: "none" }}>
+          <div className="p-2 text-muted-foreground shrink-0">
+            <Filter className="w-4 h-4" />
+          </div>
+          <button
+            onClick={() => { setActiveTag(null); onPageChange(1); }}
+            className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+              !activeTag
+                ? "bg-foreground text-background shadow-md"
+                : "text-muted-foreground hover:bg-accent"
+            }`}
+          >
+            Tous
+          </button>
+          {topTags.map((tag) => (
+            <button
+              key={tag}
+              onClick={() => { setActiveTag(activeTag === tag ? null : tag); onPageChange(1); }}
+              className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                activeTag === tag
+                  ? "bg-foreground text-background shadow-md"
+                  : "text-muted-foreground hover:bg-accent"
+              }`}
+            >
+              {tag}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-2 px-2 border-l border-border shrink-0">
+          <button
+            onClick={cycleSortKey}
+            className="flex items-center gap-2 px-3 py-1.5 hover:bg-accent rounded-xl text-xs font-bold text-muted-foreground transition-colors"
+          >
+            <ArrowUpDown className="w-4 h-4" />
+            <span className="hidden md:inline">Tri: {sortLabel}</span>
+          </button>
+          <div className="w-px h-6 bg-border mx-1" />
+          <div className="flex bg-accent p-1 rounded-xl">
+            <button
+              onClick={() => setCompact(true)}
+              className={`p-1.5 rounded-lg transition-all ${compact ? "bg-card shadow-sm text-foreground" : "text-muted-foreground"}`}
+            >
+              <Minimize2 className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setCompact(false)}
+              className={`p-1.5 rounded-lg transition-all ${!compact ? "bg-card shadow-sm text-foreground" : "text-muted-foreground"}`}
+            >
+              <Maximize2 className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
       </div>
 
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-1.5 pt-4">
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-9 w-9 rounded-xl border-border"
-            disabled={safePage <= 1}
-            onClick={() => handlePageChange(safePage - 1)}
+      {/* ── Grid ── */}
+      {sorted.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
+          <div className="relative mb-6">
+            <div className="absolute inset-0 bg-primary/20 blur-3xl opacity-20 rounded-full animate-pulse" />
+            <Search className="w-20 h-20 text-muted-foreground/30 relative z-10" />
+          </div>
+          <h2 className="text-3xl font-extrabold text-foreground mb-2 tracking-tight">Aucun résultat trouvé</h2>
+          <p className="text-muted-foreground max-w-sm mx-auto font-medium mb-8">
+            Nous n'avons trouvé aucun pictogramme correspondant à vos filtres actuels. Essayez d'autres mots-clés.
+          </p>
+          <button
+            onClick={() => { setActiveTag(null); onPageChange(1); }}
+            className="px-6 py-3 rounded-xl bg-foreground text-background font-bold text-sm shadow-xl hover:scale-105 transition-transform"
           >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-
-          {start > 1 && (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-9 w-9 p-0 rounded-xl border-border"
-                onClick={() => handlePageChange(1)}
-              >
-                1
-              </Button>
-              {start > 2 && (
-                <span className="px-1 text-muted-foreground text-sm">...</span>
-              )}
-            </>
-          )}
-
-          {pageNumbers.map((p) => (
-            <Button
-              key={p}
-              variant={p === safePage ? "default" : "outline"}
-              size="sm"
-              className={`h-9 w-9 p-0 rounded-xl ${p === safePage ? "" : "border-border"}`}
-              onClick={() => handlePageChange(p)}
-            >
-              {p}
-            </Button>
+            Réinitialiser les filtres
+          </button>
+        </div>
+      ) : (
+        <div
+          className={
+            compact
+              ? "grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-3"
+              : "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5 sm:gap-6"
+          }
+        >
+          {visiblePictograms.map((pictogram) => (
+            <PictoCard
+              key={pictogram.id}
+              pictogram={pictogram}
+              galleries={galleries}
+              onAddToGallery={onAddToGallery}
+              onRemoveFromGallery={onRemoveFromGallery}
+              isAuthenticated={isAuthenticated}
+              user={user}
+              selectedGalleryId={selectedGalleryId}
+              onPictogramUpdated={onPictogramUpdated}
+              onDeletePictogram={onDeletePictogram}
+              isFavorite={isFavorite?.(pictogram.id)}
+              onToggleFavorite={
+                isAuthenticated && onToggleFavorite
+                  ? () => onToggleFavorite(pictogram.id)
+                  : undefined
+              }
+              onLogin={onLogin}
+              compact={compact}
+            />
           ))}
-
-          {end < totalPages && (
-            <>
-              {end < totalPages - 1 && (
-                <span className="px-1 text-muted-foreground text-sm">...</span>
-              )}
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-9 w-9 p-0 rounded-xl border-border"
-                onClick={() => handlePageChange(totalPages)}
-              >
-                {totalPages}
-              </Button>
-            </>
-          )}
-
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-9 w-9 rounded-xl border-border"
-            disabled={safePage >= totalPages}
-            onClick={() => handlePageChange(safePage + 1)}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-
-          <span className="ml-3 text-xs text-muted-foreground tabular-nums">
-            {(safePage - 1) * PAGE_SIZE + 1}-
-            {Math.min(safePage * PAGE_SIZE, pictograms.length)} sur{" "}
-            {pictograms.length}
-          </span>
         </div>
       )}
+
     </div>
   );
 }

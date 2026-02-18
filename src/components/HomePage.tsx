@@ -83,14 +83,14 @@ const FEATURES = [
     title: "Personnalisation",
     description:
       "Changez les couleurs à la volée et téléchargez en SVG ou PNG selon vos besoins.",
-    gradient: "from-rose-500 to-fuchsia-600",
+    gradient: "from-[#2845c1] to-[#6a6af4]",
   },
   {
     icon: FolderOpen,
     title: "Collections",
     description:
       "Organisez vos pictogrammes en collections thématiques pour vos projets.",
-    gradient: "from-indigo-500 to-purple-600",
+    gradient: "from-[#c83f49] to-[#c83f49]",
   },
 ];
 
@@ -177,15 +177,15 @@ export function HomePage({
       />
 
       {/* Animated gradient blobs — decorative, kept as explicit gradients */}
-      <div className="fixed top-[-10%] right-[-5%] w-96 h-96 bg-gradient-to-tr from-amber-300 to-rose-400 rounded-full blur-3xl -z-10 opacity-30 dark:opacity-15 animate-blob" />
-      <div className="fixed bottom-[-10%] left-[-5%] w-80 h-80 bg-gradient-to-tr from-indigo-300 to-cyan-400 rounded-full blur-3xl -z-10 opacity-30 dark:opacity-15 animate-blob animation-delay-2000" />
-      <div className="fixed top-[40%] left-[30%] w-64 h-64 bg-gradient-to-tr from-fuchsia-300 to-purple-400 rounded-full blur-3xl -z-10 opacity-20 dark:opacity-10 animate-blob animation-delay-4000" />
+      <div className="fixed top-[-10%] right-[-5%] w-96 h-96 bg-gradient-to-tr from-[#e3e3fd] to-[#6a6af4] rounded-full blur-3xl -z-10 opacity-30 dark:opacity-15 animate-blob" />
+      <div className="fixed bottom-[-10%] left-[-5%] w-80 h-80 bg-gradient-to-tr from-[#fddede] to-[#c83f49] rounded-full blur-3xl -z-10 opacity-30 dark:opacity-15 animate-blob animation-delay-2000" />
+      <div className="fixed top-[40%] left-[30%] w-64 h-64 bg-gradient-to-tr from-[#adadf9] to-[#2845c1] rounded-full blur-3xl -z-10 opacity-20 dark:opacity-10 animate-blob animation-delay-4000" />
 
       {/* Navbar */}
       <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-6">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-rose-500 to-fuchsia-600 flex items-center justify-center shadow-lg shadow-rose-500/20">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#2845c1] to-[#6a6af4] flex items-center justify-center shadow-lg shadow-[#2845c1]/20">
               <Palette className="size-4 text-primary-foreground" />
             </div>
             <span className="text-base font-bold text-foreground">
@@ -422,7 +422,7 @@ export function HomePage({
                       key={feat.label}
                       className="flex items-center gap-4 p-4 rounded-2xl glass"
                     >
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-primary-foreground shrink-0">
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#2845c1] to-[#6a6af4] flex items-center justify-center text-primary-foreground shrink-0">
                         <feat.icon className="w-5 h-5" />
                       </div>
                       <div>
@@ -483,7 +483,7 @@ export function HomePage({
       <footer className="border-t border-border py-8">
         <div className="mx-auto max-w-7xl px-6 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-rose-500 to-fuchsia-600 flex items-center justify-center">
+            <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#2845c1] to-[#6a6af4] flex items-center justify-center">
               <Palette className="size-3 text-primary-foreground" />
             </div>
             <span>

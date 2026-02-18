@@ -44,10 +44,14 @@ const DiscoverShowcase = lazy(() =>
     default: m.DiscoverShowcase,
   })),
 );
-type Page = "home" | "discover" | "gallery" | "test-discover";
+const GalleryProposalA = lazy(() => import("@/components/GalleryProposalA"));
+const GalleryProposalB = lazy(() => import("@/components/GalleryProposalB"));
+type Page = "home" | "discover" | "gallery" | "test-discover" | "gallery-a" | "gallery-b";
 
 function getInitialPage(): Page {
   const path = window.location.pathname;
+  if (path === "/gallery-a") return "gallery-a";
+  if (path === "/gallery-b") return "gallery-b";
   if (path === "/gallery") return "gallery";
   if (path === "/discover") return "discover";
   if (path === "/test-discover") return "test-discover";
@@ -63,7 +67,6 @@ function App() {
     pictograms,
     loading,
     error,
-    lastUpdated,
     refetch: refetchPictograms,
     deletePictogram,
   } = usePictograms();
@@ -115,6 +118,10 @@ function App() {
             : "/";
     window.history.pushState(null, "", path);
     setPage(target);
+    if (target === "discover" || target === "home") {
+      setSelectedGalleryId(null);
+      setSelectedContributor(null);
+    }
   };
 
   const handleSearchChange = (query: string) => {
@@ -302,6 +309,21 @@ function App() {
     );
   }
 
+  // Gallery proposals preview
+  if (page === "gallery-a" || page === "gallery-b") {
+    return (
+      <Suspense
+        fallback={
+          <div className="min-h-screen flex items-center justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
+          </div>
+        }
+      >
+        {page === "gallery-a" ? <GalleryProposalA /> : <GalleryProposalB />}
+      </Suspense>
+    );
+  }
+
   // Test Discover Showcase page
   if (page === "test-discover") {
     return (
@@ -345,6 +367,20 @@ function App() {
   return (
     <DownloadsContext.Provider value={downloadsValue}>
     <TooltipProvider>
+      <div className="relative">
+        {/* ── Background orbs + dot grid (Proposition B) ── */}
+        <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+          <div
+            className="absolute -top-[10%] -right-[5%] w-[40vw] h-[40vw] rounded-full bg-gradient-to-br from-[#e3e3fd] to-[#6a6af4] blur-3xl opacity-20 animate-pulse"
+            style={{ animationDuration: "15s" }}
+          />
+          <div
+            className="absolute -bottom-[10%] -left-[5%] w-[35vw] h-[35vw] rounded-full bg-gradient-to-tr from-[#fddede] to-[#c83f49] blur-3xl opacity-20 animate-pulse"
+            style={{ animationDuration: "20s" }}
+          />
+          <div className="absolute inset-0 bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:32px_32px] opacity-[0.03]" />
+        </div>
+
       <SidebarProvider
         style={
           {
@@ -354,7 +390,7 @@ function App() {
         }
       >
         <AppSidebar
-          variant="inset"
+          variant="sidebar"
           galleries={galleries}
           pictograms={pictograms}
           selectedGalleryId={selectedGalleryId}
@@ -390,6 +426,13 @@ function App() {
             }}
             totalCount={pictograms.length}
             filteredCount={filteredPictograms.length}
+            page={page !== "discover" ? currentPage : undefined}
+            pageSize={page !== "discover" ? 20 : undefined}
+            totalPages={page !== "discover" ? Math.max(1, Math.ceil(filteredPictograms.length / 20)) : undefined}
+            onPageChange={page !== "discover" ? (p) => {
+              setCurrentPage(p);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            } : undefined}
           />
           <div className="flex flex-1 flex-col">
             <div className="@container/main flex flex-1 flex-col gap-2">
@@ -418,14 +461,7 @@ function App() {
                   />
                 </Suspense>
               ) : (
-                <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-                  <div className="mx-auto w-full max-w-screen-2xl px-4 sm:px-6 lg:px-8 xl:px-10">
-                    {lastUpdated && (
-                      <p className="text-[11px] text-muted-foreground mb-6 font-medium">
-                        Dernière mise à jour :{" "}
-                        {new Date(lastUpdated).toLocaleString("fr-FR")}
-                      </p>
-                    )}
+                <div className="flex-1 overflow-y-auto pb-12 mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8">
                     <PictoGrid
                       pictograms={filteredPictograms}
                       galleries={galleries}
@@ -444,7 +480,6 @@ function App() {
                       onToggleFavorite={toggleFavorite}
                       onLogin={handleLogin}
                     />
-                  </div>
                 </div>
               )}
             </div>
@@ -473,6 +508,7 @@ function App() {
           </Suspense>
         )}
       </SidebarProvider>
+      </div>
     </TooltipProvider>
     </DownloadsContext.Provider>
   );

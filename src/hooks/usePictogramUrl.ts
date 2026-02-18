@@ -9,8 +9,8 @@ import { replaceSvgColors } from "@/lib/svg-color-parser";
  * Source : systeme-de-design.gouv.fr/fondamentaux/pictogramme
  */
 const DSFR_LIGHT_TO_DARK: Record<string, string> = {
-  "#000091": "#8585f6", // blue-france-113 → blue-france-625 (artwork-major)
-  "#e1000f": "#f95c5e", // red-marianne-425 → red-marianne-625 (artwork-minor)
+  "#2845c1": "#5b7de8", // blue-france-113 → blue-france-625 (artwork-major)
+  "#c83f49": "#e06670", // red-marianne-425 → red-marianne-625 (artwork-minor)
   "#ececff": "#21213f", // blue-france-950 → blue-france-100 (artwork-decorative)
 };
 

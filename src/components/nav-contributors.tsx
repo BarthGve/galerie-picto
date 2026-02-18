@@ -1,6 +1,5 @@
 import {
   SidebarGroup,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuBadge,
@@ -45,7 +44,9 @@ export function NavContributors({
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-      <SidebarGroupLabel className="text-xs font-bold uppercase tracking-wider text-gradient-primary">Contributeurs</SidebarGroupLabel>
+      <div className="px-3 mb-1">
+        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Contributeurs</span>
+      </div>
       <SidebarMenu>
         {contributors.map((c) => (
           <SidebarMenuItem key={c.login}>
@@ -61,11 +62,11 @@ export function NavContributors({
               <img
                 src={c.avatarUrl}
                 alt={c.login}
-                className="size-5 shrink-0 rounded-full ring-1 ring-ring-accent"
+                className="size-5 shrink-0 rounded-full ring-1 ring-border"
               />
-              <span>{c.login}</span>
+              <span className="text-sm font-bold">{c.login}</span>
             </SidebarMenuButton>
-            <SidebarMenuBadge className="bg-badge-accent-bg text-badge-accent-text border border-badge-accent-border text-[10px] rounded-full px-1.5">
+            <SidebarMenuBadge className="text-[10px] font-black px-1.5 py-0.5 rounded-md bg-accent text-muted-foreground">
               {c.count}
             </SidebarMenuBadge>
           </SidebarMenuItem>

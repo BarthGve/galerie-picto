@@ -6,163 +6,163 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ═══════════════════════════════════════════════════
-   DESIGN SYSTEM — Playful Gradient (Vibe 3)
-   Palette : rose/fuchsia/indigo + ambre accents
+   DESIGN SYSTEM — DSFR Tricolore (Bleu-Blanc-Rouge)
+   Palette : Blue France / Red Marianne / Greys DSFR
    ═══════════════════════════════════════════════════ */
 
 :root {
     /* ── Surfaces ── */
     --background: #ffffff;
-    --foreground: #0f172a;
+    --foreground: #161616;
     --card: #ffffff;
-    --card-foreground: #0f172a;
+    --card-foreground: #161616;
     --popover: #ffffff;
-    --popover-foreground: #0f172a;
+    --popover-foreground: #161616;
 
-    /* ── Primary : fuchsia-600 ── */
-    --primary: #c026d3;
+    /* ── Primary : Blue France ── */
+    --primary: #2845c1;
     --primary-foreground: #ffffff;
 
-    /* ── Secondary : slate-100 ── */
-    --secondary: #f1f5f9;
-    --secondary-foreground: #0f172a;
+    /* ── Secondary : DSFR grey-100 ── */
+    --secondary: #f6f6f6;
+    --secondary-foreground: #161616;
 
-    /* ── Muted : slate-50/100 ── */
-    --muted: #f8fafc;
-    --muted-foreground: #64748b;
+    /* ── Muted : DSFR grey-50/100 ── */
+    --muted: #f6f6f6;
+    --muted-foreground: #666666;
 
-    /* ── Accent : indigo-50 ── */
-    --accent: #eef2ff;
-    --accent-foreground: #0f172a;
+    /* ── Accent : Blue France light ── */
+    --accent: #e3e3fd;
+    --accent-foreground: #161616;
 
-    --destructive: oklch(0.58 0.22 27);
+    --destructive: #c83f49;
 
     /* ── Borders & inputs ── */
-    --border: #e2e8f0;
-    --input: #e2e8f0;
-    --ring: #c026d3;
+    --border: #dddddd;
+    --input: #dddddd;
+    --ring: #2845c1;
 
-    /* ── Charts (gradient palette) ── */
-    --chart-1: #f43f5e;
-    --chart-2: #c026d3;
-    --chart-3: #818cf8;
-    --chart-4: #4f46e5;
-    --chart-5: #f59e0b;
+    /* ── Charts (tricolore palette) ── */
+    --chart-1: #2845c1;
+    --chart-2: #c83f49;
+    --chart-3: #6a6af4;
+    --chart-4: #0063cb;
+    --chart-5: #c83f49;
 
     --radius: 0.75rem;
 
     /* ── Sidebar ── */
-    --sidebar: #faf8ff;
-    --sidebar-foreground: #0f172a;
-    --sidebar-primary: #c026d3;
+    --sidebar: #ffffff;
+    --sidebar-foreground: #161616;
+    --sidebar-primary: #2845c1;
     --sidebar-primary-foreground: #ffffff;
-    --sidebar-accent: #eef2ff;
-    --sidebar-accent-foreground: #0f172a;
-    --sidebar-border: #e2e8f0;
-    --sidebar-ring: #c026d3;
+    --sidebar-accent: #e3e3fd;
+    --sidebar-accent-foreground: #161616;
+    --sidebar-border: #eeeeee;
+    --sidebar-ring: #2845c1;
 
-    /* ── Vibe 3 custom tokens ── */
-    --gradient-primary: linear-gradient(to right, #f43f5e, #c026d3, #4f46e5);
-    --gradient-cta-hover: linear-gradient(to right, #f43f5e, #c026d3);
-    --gradient-blob-warm: linear-gradient(to top right, #fcd34d, #fb7185);
-    --gradient-blob-cool: linear-gradient(to top right, #a5b4fc, #22d3ee);
-    --gradient-blob-mid: linear-gradient(to top right, #f0abfc, #a78bfa);
+    /* ── DSFR Tricolore custom tokens ── */
+    --gradient-primary: linear-gradient(to right, #2845c1, #7a6b9a, #c83f49);
+    --gradient-cta-hover: linear-gradient(to right, #2845c1, #2323ff);
+    --gradient-blob-warm: linear-gradient(to top right, #fddede, #c83f49);
+    --gradient-blob-cool: linear-gradient(to top right, #e3e3fd, #6a6af4);
+    --gradient-blob-mid: linear-gradient(to top right, #ececfe, #adadf9);
 
-    /* Badge — amber (default tags) */
-    --color-badge-bg: #fef3c7;
-    --color-badge-border: #fde68a;
-    --color-badge-text: #b45309;
+    /* Badge — Blue France light (default tags) */
+    --color-badge-bg: #ececfe;
+    --color-badge-border: #c1c1fb;
+    --color-badge-text: #2845c1;
 
-    /* Badge accent — indigo (collections, counts) */
-    --color-badge-accent-bg: #e0e7ff;
-    --color-badge-accent-border: #c7d2fe;
-    --color-badge-accent-text: #4338ca;
+    /* Badge accent — Blue France (collections, counts) */
+    --color-badge-accent-bg: #e3e3fd;
+    --color-badge-accent-border: #adadf9;
+    --color-badge-accent-text: #2845c1;
 
-    /* Badge download — rose */
-    --color-badge-download-bg: #ffe4e6;
-    --color-badge-download-border: #fecdd3;
-    --color-badge-download-text: #be123c;
+    /* Badge download — Red Marianne */
+    --color-badge-download-bg: #fee9e9;
+    --color-badge-download-border: #fcbfbf;
+    --color-badge-download-text: #c83f49;
 
     /* GitHub card */
-    --color-github-bg: linear-gradient(to bottom right, #eef2ff, #ffffff);
-    --color-github-border: #c7d2fe;
-    --color-github-accent: #4f46e5;
+    --color-github-bg: linear-gradient(to bottom right, #e3e3fd, #ffffff);
+    --color-github-border: #adadf9;
+    --color-github-accent: #2845c1;
 
     /* Contributor ring */
-    --color-ring-accent: #c7d2fe;
+    --color-ring-accent: #adadf9;
 
     /* Surface subtle (picto preview bg) */
-    --color-surface-subtle: #f8fafc;
+    --color-surface-subtle: #f6f6f6;
 }
 
 .dark {
     /* ── Surfaces ── */
-    --background: #020617;
-    --foreground: #e2e8f0;
-    --card: #0f172a;
-    --card-foreground: #e2e8f0;
-    --popover: #0f172a;
-    --popover-foreground: #e2e8f0;
+    --background: #161616;
+    --foreground: #e5e5e5;
+    --card: #1e1e1e;
+    --card-foreground: #e5e5e5;
+    --popover: #1e1e1e;
+    --popover-foreground: #e5e5e5;
 
-    /* ── Primary : fuchsia-500 (brighter in dark) ── */
-    --primary: #d946ef;
+    /* ── Primary : Blue France (lighter in dark) ── */
+    --primary: #5b7de8;
     --primary-foreground: #ffffff;
 
     /* ── Secondary ── */
-    --secondary: #1e293b;
-    --secondary-foreground: #e2e8f0;
+    --secondary: #2a2a2a;
+    --secondary-foreground: #e5e5e5;
 
     /* ── Muted ── */
-    --muted: #1e293b;
-    --muted-foreground: #94a3b8;
+    --muted: #2a2a2a;
+    --muted-foreground: #929292;
 
     /* ── Accent ── */
-    --accent: #1e1b4b;
-    --accent-foreground: #e2e8f0;
+    --accent: #1b1b35;
+    --accent-foreground: #e5e5e5;
 
-    --destructive: oklch(0.704 0.191 22.216);
+    --destructive: #e06670;
 
     /* ── Borders & inputs ── */
-    --border: rgba(255, 255, 255, 0.08);
-    --input: rgba(255, 255, 255, 0.1);
-    --ring: #d946ef;
+    --border: rgba(255, 255, 255, 0.1);
+    --input: rgba(255, 255, 255, 0.12);
+    --ring: #5b7de8;
 
     /* ── Charts ── */
-    --chart-1: #fb7185;
-    --chart-2: #d946ef;
-    --chart-3: #a5b4fc;
-    --chart-4: #818cf8;
-    --chart-5: #fbbf24;
+    --chart-1: #5b7de8;
+    --chart-2: #e06670;
+    --chart-3: #adadf9;
+    --chart-4: #6798ff;
+    --chart-5: #ff7a55;
 
     /* ── Sidebar ── */
-    --sidebar: #0f172a;
-    --sidebar-foreground: #e2e8f0;
-    --sidebar-primary: #d946ef;
+    --sidebar: #1e1e1e;
+    --sidebar-foreground: #e5e5e5;
+    --sidebar-primary: #5b7de8;
     --sidebar-primary-foreground: #ffffff;
-    --sidebar-accent: #1e1b4b;
-    --sidebar-accent-foreground: #e2e8f0;
-    --sidebar-border: rgba(255, 255, 255, 0.06);
-    --sidebar-ring: #d946ef;
+    --sidebar-accent: #1b1b35;
+    --sidebar-accent-foreground: #e5e5e5;
+    --sidebar-border: rgba(255, 255, 255, 0.08);
+    --sidebar-ring: #5b7de8;
 
-    /* ── Vibe 3 custom tokens (dark) ── */
-    --color-badge-bg: rgba(251, 191, 36, 0.15);
-    --color-badge-border: rgba(251, 191, 36, 0.3);
-    --color-badge-text: #fbbf24;
+    /* ── DSFR Tricolore custom tokens (dark) ── */
+    --color-badge-bg: rgba(133, 133, 246, 0.15);
+    --color-badge-border: rgba(133, 133, 246, 0.3);
+    --color-badge-text: #adadf9;
 
-    --color-badge-accent-bg: rgba(99, 102, 241, 0.15);
-    --color-badge-accent-border: rgba(99, 102, 241, 0.3);
-    --color-badge-accent-text: #a5b4fc;
+    --color-badge-accent-bg: rgba(133, 133, 246, 0.15);
+    --color-badge-accent-border: rgba(133, 133, 246, 0.3);
+    --color-badge-accent-text: #c1c1fb;
 
-    --color-badge-download-bg: rgba(244, 63, 94, 0.15);
-    --color-badge-download-border: rgba(244, 63, 94, 0.3);
-    --color-badge-download-text: #fb7185;
+    --color-badge-download-bg: rgba(249, 90, 92, 0.15);
+    --color-badge-download-border: rgba(249, 90, 92, 0.3);
+    --color-badge-download-text: #e06670;
 
-    --color-github-bg: linear-gradient(to bottom right, rgba(30, 27, 75, 0.5), #0f172a);
-    --color-github-border: rgba(99, 102, 241, 0.3);
-    --color-github-accent: #818cf8;
+    --color-github-bg: linear-gradient(to bottom right, rgba(27, 27, 53, 0.5), #1e1e1e);
+    --color-github-border: rgba(133, 133, 246, 0.3);
+    --color-github-accent: #5b7de8;
 
-    --color-ring-accent: rgba(99, 102, 241, 0.4);
-    --color-surface-subtle: #1e293b;
+    --color-ring-accent: rgba(133, 133, 246, 0.4);
+    --color-surface-subtle: #2a2a2a;
 }
 
 @theme inline {
@@ -239,7 +239,7 @@
 }
 
 /* ═══════════════════════════════════════════════════
-   UTILITY CLASSES — Vibe 3 Playful Gradient
+   UTILITY CLASSES — DSFR Tricolore
    ═══════════════════════════════════════════════════ */
 
 /* ── Gradient text (primary headline accent) ── */
@@ -289,13 +289,13 @@
 
 /* ── Primary button glow on hover (dark only) ── */
 .dark [data-slot="button"][data-variant="default"]:hover {
-  box-shadow: 0 0 20px rgba(217, 70, 239, 0.25);
+  box-shadow: 0 0 20px rgba(133, 133, 246, 0.25);
 }
 
 /* ── Cards hover glow (dark only) ── */
 .dark [data-slot="card"]:hover {
-  border-color: rgba(217, 70, 239, 0.15);
-  box-shadow: 0 0 30px rgba(217, 70, 239, 0.05);
+  border-color: rgba(133, 133, 246, 0.15);
+  box-shadow: 0 0 30px rgba(133, 133, 246, 0.05);
 }
 
 /* ── Smooth transitions for theme-aware elements ── */
