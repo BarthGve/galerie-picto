@@ -55,8 +55,8 @@ function getInitialPage(): Page {
   if (path === "/gallery") return "gallery";
   if (path === "/discover") return "discover";
   if (path === "/test-discover") return "test-discover";
-  // OAuth callback → go straight to gallery
-  if (new URLSearchParams(window.location.search).has("code")) return "gallery";
+  // OAuth callback → go straight to discover
+  if (new URLSearchParams(window.location.search).has("code")) return "discover";
   return "home";
 }
 

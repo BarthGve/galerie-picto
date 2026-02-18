@@ -394,7 +394,7 @@ export function DiscoverPage({
 
           {/* ── Tags populaires (compact dark, 2 cols) ── */}
           {topTags.length > 0 && (
-            <BentoCard className="md:col-span-2 lg:col-span-2 hover:!shadow-sm hover:!translate-y-0" style={{ backgroundColor: 'var(--dsfr-blue-france-975)' }}>
+            <BentoCard className="md:col-span-2 lg:col-span-2 hover:!shadow-sm hover:!translate-y-0 bg-[var(--dsfr-blue-france-975)] dark:bg-[var(--dsfr-blue-france-main)]/[0.08]">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded bg-primary/80 backdrop-blur-sm flex items-center justify-center text-primary-foreground shadow-lg ring-1 ring-primary/20">
                   <Tag className="w-5 h-5" />
