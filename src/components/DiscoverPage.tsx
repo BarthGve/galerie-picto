@@ -79,7 +79,7 @@ function SectionHeader({
     <div className="flex items-center justify-between mb-6">
       <div className="flex items-center gap-3">
         <div
-          className="w-10 h-10 rounded-2xl bg-[#c83f49] flex items-center justify-center text-white shadow-lg shrink-0"
+          className="w-10 h-10 rounded bg-primary/80 backdrop-blur-sm flex items-center justify-center text-primary-foreground shadow-lg ring-1 ring-primary/20 shrink-0"
         >
           <Icon className="w-5 h-5" />
         </div>
@@ -104,7 +104,7 @@ function BentoCard({
   return (
     <div
       onClick={onClick}
-      className={`group relative bg-card rounded-[2rem] p-6 md:p-8 shadow-sm transition-all duration-500 hover:shadow-xl overflow-hidden ${className}`}
+      className={`group relative bg-card rounded p-6 md:p-8 shadow-sm transition-all duration-500 hover:shadow-xl overflow-hidden ${className}`}
     >
       {children}
     </div>
@@ -227,7 +227,7 @@ export function DiscoverPage({
 
           {/* ── Derniers ajouts (large, 4 cols, 2 rows) ── */}
           {latestPictos.length > 0 && (
-            <BentoCard className="md:col-span-4 lg:col-span-4 lg:row-span-2">
+            <BentoCard className="md:col-span-4 lg:col-span-4 lg:row-span-2 hover:!shadow-sm hover:!translate-y-0">
               <SectionHeader
                 title="Derniers ajouts"
                 icon={Clock}
@@ -244,12 +244,12 @@ export function DiscoverPage({
                 {latestPictos.map((picto) => (
                   <div
                     key={picto.id}
-                    className="group/item relative rounded-2xl p-4 border border-border hover:bg-accent/30 transition-all duration-300 cursor-pointer"
+                    className="group/item relative rounded p-4 border border-border hover:bg-accent/30 transition-all duration-300 cursor-pointer"
                     onClick={() => setSelectedPicto(picto)}
                   >
                     {isAuthenticated && onToggleFavorite && isFavorite && (
                       <button
-                        className="absolute top-3 right-3 z-10 p-1.5 rounded-lg transition-all"
+                        className="absolute top-3 right-3 z-10 p-1.5 rounded transition-all"
                         onClick={(e) => {
                           e.stopPropagation();
                           onToggleFavorite(picto.id);
@@ -287,7 +287,7 @@ export function DiscoverPage({
 
           {/* ── Top téléchargés (vertical, 2 cols, 2 rows) ── */}
           {mostDownloaded.length > 0 && (
-            <BentoCard className="md:col-span-2 lg:col-span-2 lg:row-span-2 bg-accent">
+            <BentoCard className="md:col-span-2 lg:col-span-2 lg:row-span-2 bg-accent hover:!shadow-sm hover:!translate-y-0">
               <SectionHeader
                 title="Top téléchargés"
                 icon={TrendingUp}
@@ -296,10 +296,10 @@ export function DiscoverPage({
                 {mostDownloaded.map((picto, idx) => (
                   <div
                     key={picto.id}
-                    className="flex items-center gap-3 p-3 rounded-2xl bg-card/60 border border-border hover:shadow-lg transition-all cursor-pointer"
+                    className="flex items-center gap-3 p-3 rounded bg-card/60 border border-border hover:shadow-lg transition-all cursor-pointer"
                     onClick={() => setSelectedPicto(picto)}
                   >
-                    <div className="w-11 h-11 rounded-xl border border-border flex items-center justify-center p-1 shrink-0">
+                    <div className="w-11 h-11 rounded border border-border flex items-center justify-center p-1 shrink-0">
                       <DarkAwarePicto
                         pictogram={picto}
                         width={36}
@@ -324,19 +324,18 @@ export function DiscoverPage({
               </div>
               <button
                 onClick={() => onNavigateGallery()}
-                className="w-full mt-6 btn-cta group relative px-6 py-3 rounded-2xl bg-foreground text-background font-bold text-sm overflow-hidden shadow-lg transition-all hover:scale-[1.02] active:scale-95"
+                className="w-full mt-6 btn-cta group relative px-6 py-3 rounded bg-primary text-primary-foreground font-bold text-sm overflow-hidden shadow-lg transition-all hover:scale-[1.02] active:scale-95"
               >
                 <span className="relative z-10 flex items-center justify-center gap-2">
                   Voir tout <TrendingUp className="w-4 h-4" />
                 </span>
-                <div className="absolute inset-0 bg-gradient-to-r from-[#2845c1] to-[#6a6af4] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               </button>
             </BentoCard>
           )}
 
           {/* ── Collections à la une (wide, 4 cols) ── */}
           {featuredGalleries.length > 0 && (
-            <BentoCard className="md:col-span-4 lg:col-span-4">
+            <BentoCard className="md:col-span-4 lg:col-span-4 hover:!shadow-sm hover:!translate-y-0">
               <SectionHeader
                 title="Collections à la une"
                 icon={FolderOpen}
@@ -345,7 +344,7 @@ export function DiscoverPage({
                 {featuredGalleries.map((gallery) => (
                   <div
                     key={gallery.id}
-                    className="flex flex-col p-5 rounded-2xl border border-border hover:bg-accent/30 hover:shadow-lg transition-all cursor-pointer"
+                    className="flex flex-col p-5 rounded border border-border hover:bg-accent/30 hover:shadow-lg transition-all cursor-pointer"
                     onClick={() =>
                       onNavigateGallery({ galleryId: gallery.id })
                     }
@@ -370,7 +369,7 @@ export function DiscoverPage({
                       {galleryPreviewPictos(gallery).map((picto) => (
                         <div
                           key={picto.id}
-                          className="w-9 h-9 rounded-lg border border-border flex items-center justify-center p-0.5"
+                          className="w-9 h-9 rounded border border-border flex items-center justify-center p-0.5"
                         >
                           <DarkAwarePicto
                             pictogram={picto}
@@ -392,12 +391,12 @@ export function DiscoverPage({
 
           {/* ── Tags populaires (compact dark, 2 cols) ── */}
           {topTags.length > 0 && (
-            <BentoCard className="md:col-span-2 lg:col-span-2 bg-foreground text-background">
+            <BentoCard className="md:col-span-2 lg:col-span-2 hover:!shadow-sm hover:!translate-y-0" style={{ backgroundColor: 'var(--dsfr-blue-france-975)' }}>
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center text-white">
+                <div className="w-10 h-10 rounded bg-primary/80 backdrop-blur-sm flex items-center justify-center text-primary-foreground shadow-lg ring-1 ring-primary/20">
                   <Tag className="w-5 h-5" />
                 </div>
-                <h2 className="text-xl font-extrabold tracking-tight">
+                <h2 className="text-xl font-extrabold tracking-tight text-foreground">
                   Tags populaires
                 </h2>
               </div>
@@ -406,7 +405,7 @@ export function DiscoverPage({
                   <button
                     key={name}
                     onClick={() => onNavigateGallery({ search: name })}
-                    className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs font-bold hover:bg-primary hover:border-primary/40 transition-all cursor-pointer"
+                    className="px-3 py-1.5 rounded bg-background/60 border border-border text-xs font-bold text-foreground transition-all cursor-pointer" style={{ '--hover-bg': 'var(--dsfr-blue-france-850)' } as React.CSSProperties} onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'var(--dsfr-blue-france-850)'; e.currentTarget.style.borderColor = 'var(--dsfr-blue-france-850)'; }} onMouseLeave={e => { e.currentTarget.style.backgroundColor = ''; e.currentTarget.style.borderColor = ''; }}
                   >
                     {name}{" "}
                     <span className="opacity-40 ml-1">{count}</span>
@@ -483,7 +482,7 @@ export function DiscoverPage({
                     href={topContributorProfile.html_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="btn-cta shrink-0 px-6 py-3 rounded-2xl bg-foreground text-background font-bold text-sm shadow-xl transition-all hover:scale-105 active:scale-95"
+                    className="btn-cta shrink-0 px-6 py-3 rounded bg-foreground text-background font-bold text-sm shadow-xl transition-all hover:scale-105 active:scale-95"
                   >
                     <span className="flex items-center gap-2">
                       Profil GitHub

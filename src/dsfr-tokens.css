@@ -1,0 +1,272 @@
+/* ═══════════════════════════════════════════════════════════════
+   DSFR Color Tokens — Extracted from @gouvfr/dsfr v1.14.3
+
+   Usage : Tu peux me dire "utilise $blue-france-main-525" ou
+   "mets le fond en $green-emeraude-950" et je saurai quelle
+   couleur appliquer.
+
+   Convention des noms :
+   - Le 1er nombre = indice thème clair (975=très clair, 75=très foncé)
+   - Le 2ème nombre = indice thème sombre
+   - "sun" = couleur forte en thème clair
+   - "moon" = couleur forte en thème sombre
+   - "main" = couleur principale (identique dans les 2 thèmes)
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ══════════════════════════════════════
+     PRIMAIRES — Blue France
+     ══════════════════════════════════════ */
+  --dsfr-blue-france-975: #f5f5fe;    /* lightest */
+  --dsfr-blue-france-975-hover: #dcdcfc;
+  --dsfr-blue-france-975-active: #cbcbfa;
+  --dsfr-blue-france-950: #ececfe;    /* lighter */
+  --dsfr-blue-france-950-hover: #cecefc;
+  --dsfr-blue-france-950-active: #bbbbfc;
+  --dsfr-blue-france-925: #e3e3fd;    /* light */
+  --dsfr-blue-france-925-hover: #c1c1fb;
+  --dsfr-blue-france-925-active: #adadf9;
+  --dsfr-blue-france-850: #cacafb;    /* softest */
+  --dsfr-blue-france-850-hover: #a1a1f8;
+  --dsfr-blue-france-850-active: #8b8bf6;
+  --dsfr-blue-france-main: #6a6af4;   /* main-525 */
+  --dsfr-blue-france-main-hover: #9898f8;
+  --dsfr-blue-france-main-active: #aeaef9;
+  --dsfr-blue-france-sun: #000091;    /* sun-113 (strong light) */
+  --dsfr-blue-france-sun-hover: #1212ff;
+  --dsfr-blue-france-sun-active: #2323ff;
+  --dsfr-blue-france-inverted: #f5f5fe;
+
+  /* ══════════════════════════════════════
+     PRIMAIRES — Red Marianne
+     ══════════════════════════════════════ */
+  --dsfr-red-marianne-975: #fef4f4;   /* lightest */
+  --dsfr-red-marianne-950: #fee9e9;   /* lighter */
+  --dsfr-red-marianne-925: #fddede;   /* light */
+  --dsfr-red-marianne-850: #fcbfbf;   /* softest */
+  --dsfr-red-marianne-main: #e1000f;  /* main-472 */
+  --dsfr-red-marianne-sun: #c9191e;   /* sun/strong-425 (light) */
+  --dsfr-red-marianne-inverted: #f5f5fe;
+
+  /* ══════════════════════════════════════
+     NEUTRES — Grey
+     ══════════════════════════════════════ */
+  --dsfr-grey-0: #000;                /* absolute-black */
+  --dsfr-grey-50: #161616;            /* black */
+  --dsfr-grey-75: #1e1e1e;            /* darkest (dark value) */
+  --dsfr-grey-100: #242424;           /* darker (dark value) */
+  --dsfr-grey-125: #2a2a2a;           /* dark (dark value) */
+  --dsfr-grey-150: #2f2f2f;
+  --dsfr-grey-175: #353535;
+  --dsfr-grey-200: #3a3a3a;           /* strongest */
+  --dsfr-grey-425: #666;              /* strong (light) */
+  --dsfr-grey-625: #929292;           /* soft (light) / strong (dark) */
+  --dsfr-grey-850: #cecece;           /* softest */
+  --dsfr-grey-900: #ddd;              /* border */
+  --dsfr-grey-925: #e5e5e5;           /* light */
+  --dsfr-grey-950: #eee;              /* lighter */
+  --dsfr-grey-975: #f6f6f6;           /* lightest */
+  --dsfr-grey-1000: #fff;             /* white */
+
+  /* ══════════════════════════════════════
+     SYSTEME — Info
+     ══════════════════════════════════════ */
+  --dsfr-info-975: #f4f6ff;
+  --dsfr-info-950: #e8edff;
+  --dsfr-info-main: #0063cb;          /* main-525 (light) */
+  --dsfr-info-sun: #0063cb;
+
+  /* ══════════════════════════════════════
+     SYSTEME — Success
+     ══════════════════════════════════════ */
+  --dsfr-success-975: #dffee6;
+  --dsfr-success-950: #b8fec9;
+  --dsfr-success-main: #18753c;       /* strong (light) */
+  --dsfr-success-sun: #18753c;
+
+  /* ══════════════════════════════════════
+     SYSTEME — Warning
+     ══════════════════════════════════════ */
+  --dsfr-warning-975: #fff4f3;
+  --dsfr-warning-950: #ffe9e6;
+  --dsfr-warning-main: #b34000;       /* strong (light) */
+  --dsfr-warning-sun: #b34000;
+
+  /* ══════════════════════════════════════
+     SYSTEME — Error
+     ══════════════════════════════════════ */
+  --dsfr-error-975: #fff4f4;
+  --dsfr-error-950: #ffe9e9;
+  --dsfr-error-main: #ce0500;         /* strong (light) */
+  --dsfr-error-sun: #ce0500;
+
+  /* ══════════════════════════════════════
+     ILLUSTRATIVES — Green Tilleul Verveine
+     ══════════════════════════════════════ */
+  --dsfr-green-tilleul-verveine-975: #fef7da;
+  --dsfr-green-tilleul-verveine-950: #fceeac;
+  --dsfr-green-tilleul-verveine-925: #fbe769;
+  --dsfr-green-tilleul-verveine-850: #e2cf58;
+  --dsfr-green-tilleul-verveine-main: #b7a73f;  /* main-707 */
+  --dsfr-green-tilleul-verveine-sun: #66673d;   /* sun-418 */
+
+  /* ══════════════════════════════════════
+     ILLUSTRATIVES — Green Bourgeon
+     ══════════════════════════════════════ */
+  --dsfr-green-bourgeon-975: #e6feda;
+  --dsfr-green-bourgeon-950: #c9fcac;
+  --dsfr-green-bourgeon-925: #a9fb68;
+  --dsfr-green-bourgeon-850: #95e257;
+  --dsfr-green-bourgeon-main: #68a532;  /* main-640 */
+  --dsfr-green-bourgeon-sun: #447049;   /* sun-425 */
+
+  /* ══════════════════════════════════════
+     ILLUSTRATIVES — Green Emeraude
+     ══════════════════════════════════════ */
+  --dsfr-green-emeraude-975: #e3fdeb;
+  --dsfr-green-emeraude-950: #c3fad5;
+  --dsfr-green-emeraude-925: #9ef9be;
+  --dsfr-green-emeraude-850: #6fe49d;
+  --dsfr-green-emeraude-main: #00a95f;  /* main-632 */
+  --dsfr-green-emeraude-sun: #297254;   /* sun-425 */
+
+  /* ══════════════════════════════════════
+     ILLUSTRATIVES — Green Menthe
+     ══════════════════════════════════════ */
+  --dsfr-green-menthe-975: #dffdf7;
+  --dsfr-green-menthe-950: #bafaee;
+  --dsfr-green-menthe-925: #8bf8e7;
+  --dsfr-green-menthe-850: #73e0cf;
+  --dsfr-green-menthe-main: #009081;   /* main-548 */
+  --dsfr-green-menthe-sun: #37635f;    /* sun-373 */
+
+  /* ══════════════════════════════════════
+     ILLUSTRATIVES — Green Archipel
+     ══════════════════════════════════════ */
+  --dsfr-green-archipel-975: #e5fbfd;
+  --dsfr-green-archipel-950: #c7f6fc;
+  --dsfr-green-archipel-925: #a6f2fa;
+  --dsfr-green-archipel-850: #60e0eb;
+  --dsfr-green-archipel-main: #009099;  /* main-557 */
+  --dsfr-green-archipel-sun: #006a6f;   /* sun-391 */
+
+  /* ══════════════════════════════════════
+     ILLUSTRATIVES — Blue Ecume
+     ══════════════════════════════════════ */
+  --dsfr-blue-ecume-975: #f4f6fe;
+  --dsfr-blue-ecume-950: #e9edfe;
+  --dsfr-blue-ecume-925: #dee5fd;
+  --dsfr-blue-ecume-850: #bfccfb;
+  --dsfr-blue-ecume-main: #465f9d;     /* main-400 */
+  --dsfr-blue-ecume-sun: #2f4077;      /* sun-247 */
+
+  /* ══════════════════════════════════════
+     ILLUSTRATIVES — Blue Cumulus
+     ══════════════════════════════════════ */
+  --dsfr-blue-cumulus-975: #f3f6fe;
+  --dsfr-blue-cumulus-950: #e6eefe;
+  --dsfr-blue-cumulus-925: #dae6fd;
+  --dsfr-blue-cumulus-850: #b6cffb;
+  --dsfr-blue-cumulus-main: #417dc4;   /* main-526 */
+  --dsfr-blue-cumulus-sun: #3558a2;    /* sun-368 */
+
+  /* ══════════════════════════════════════
+     ILLUSTRATIVES — Purple Glycine
+     ══════════════════════════════════════ */
+  --dsfr-purple-glycine-975: #fef3fd;
+  --dsfr-purple-glycine-950: #fee7fc;
+  --dsfr-purple-glycine-925: #fddbfa;
+  --dsfr-purple-glycine-850: #fbb8f6;
+  --dsfr-purple-glycine-main: #a558a0;  /* main-494 */
+  --dsfr-purple-glycine-sun: #6e445a;   /* sun-319 */
+
+  /* ══════════════════════════════════════
+     ILLUSTRATIVES — Pink Macaron
+     ══════════════════════════════════════ */
+  --dsfr-pink-macaron-975: #fef4f2;
+  --dsfr-pink-macaron-950: #fee9e6;
+  --dsfr-pink-macaron-925: #fddfda;
+  --dsfr-pink-macaron-850: #fcc0b4;
+  --dsfr-pink-macaron-main: #e18b76;   /* main-689 */
+  --dsfr-pink-macaron-sun: #8d533e;    /* sun-406 */
+
+  /* ══════════════════════════════════════
+     ILLUSTRATIVES — Pink Tuile
+     ══════════════════════════════════════ */
+  --dsfr-pink-tuile-975: #fef4f3;
+  --dsfr-pink-tuile-950: #fee9e7;
+  --dsfr-pink-tuile-925: #fddfdb;
+  --dsfr-pink-tuile-850: #fcbfb7;
+  --dsfr-pink-tuile-main: #ce614a;     /* main-556 */
+  --dsfr-pink-tuile-sun: #a94645;      /* sun-425 */
+
+  /* ══════════════════════════════════════
+     ILLUSTRATIVES — Yellow Tournesol
+     ══════════════════════════════════════ */
+  --dsfr-yellow-tournesol-975: #fef6e3;
+  --dsfr-yellow-tournesol-950: #feecc2;
+  --dsfr-yellow-tournesol-925: #fde39c;
+  --dsfr-yellow-tournesol-850: #efcb3a;
+  --dsfr-yellow-tournesol-main: #c8aa39;  /* main-731 */
+  --dsfr-yellow-tournesol-sun: #716043;   /* sun-407 */
+
+  /* ══════════════════════════════════════
+     ILLUSTRATIVES — Yellow Moutarde
+     ══════════════════════════════════════ */
+  --dsfr-yellow-moutarde-975: #fef5e8;
+  --dsfr-yellow-moutarde-950: #feebd0;
+  --dsfr-yellow-moutarde-925: #fde2b5;
+  --dsfr-yellow-moutarde-850: #fcc63a;
+  --dsfr-yellow-moutarde-main: #c3992a;  /* main-679 */
+  --dsfr-yellow-moutarde-sun: #695240;   /* sun-348 */
+
+  /* ══════════════════════════════════════
+     ILLUSTRATIVES — Orange Terre Battue
+     ══════════════════════════════════════ */
+  --dsfr-orange-terre-battue-975: #fef4f2;
+  --dsfr-orange-terre-battue-950: #fee9e5;
+  --dsfr-orange-terre-battue-925: #fddfd8;
+  --dsfr-orange-terre-battue-850: #fcc0b0;
+  --dsfr-orange-terre-battue-main: #e4794a;  /* main-645 */
+  --dsfr-orange-terre-battue-sun: #755348;   /* sun-370 */
+
+  /* ══════════════════════════════════════
+     ILLUSTRATIVES — Brown Cafe Creme
+     ══════════════════════════════════════ */
+  --dsfr-brown-cafe-creme-975: #fbf6ed;
+  --dsfr-brown-cafe-creme-950: #f7ecdb;
+  --dsfr-brown-cafe-creme-925: #f4e3c7;
+  --dsfr-brown-cafe-creme-850: #e7ca8e;
+  --dsfr-brown-cafe-creme-main: #d1b781;  /* main-782 */
+  --dsfr-brown-cafe-creme-sun: #685c48;   /* sun-383 */
+
+  /* ══════════════════════════════════════
+     ILLUSTRATIVES — Brown Caramel
+     ══════════════════════════════════════ */
+  --dsfr-brown-caramel-975: #fbf5f2;
+  --dsfr-brown-caramel-950: #f7ebe5;
+  --dsfr-brown-caramel-925: #f3e2d9;
+  --dsfr-brown-caramel-850: #eac7b2;
+  --dsfr-brown-caramel-main: #c08c65;  /* main-648 */
+  --dsfr-brown-caramel-sun: #845d48;   /* sun-425 */
+
+  /* ══════════════════════════════════════
+     ILLUSTRATIVES — Brown Opera
+     ══════════════════════════════════════ */
+  --dsfr-brown-opera-975: #fbf5f2;
+  --dsfr-brown-opera-950: #f7ece4;
+  --dsfr-brown-opera-925: #f3e2d7;
+  --dsfr-brown-opera-850: #eac7ad;
+  --dsfr-brown-opera-main: #bd987a;    /* main-680 */
+  --dsfr-brown-opera-sun: #745b47;     /* sun-395 */
+
+  /* ══════════════════════════════════════
+     ILLUSTRATIVES — Beige Gris Galet
+     ══════════════════════════════════════ */
+  --dsfr-beige-gris-galet-975: #f9f6f2;
+  --dsfr-beige-gris-galet-950: #f3ede5;
+  --dsfr-beige-gris-galet-925: #eee4d9;
+  --dsfr-beige-gris-galet-850: #e0cab0;
+  --dsfr-beige-gris-galet-main: #aea397;  /* main-702 */
+  --dsfr-beige-gris-galet-sun: #6a6156;   /* sun-407 */
+}

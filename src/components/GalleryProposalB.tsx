@@ -407,11 +407,6 @@ export default function GalleryProposalB() {
                 <div className="text-xl font-black text-slate-900">48k+</div>
                 <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Downloads</div>
               </div>
-              <div className="w-[1px] h-8 bg-slate-100" />
-              <div className="text-center">
-                <div className="text-xl font-black text-slate-900">100%</div>
-                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Gratuit</div>
-              </div>
             </div>
           </div>
         </div>

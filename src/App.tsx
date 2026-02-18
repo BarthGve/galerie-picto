@@ -371,11 +371,11 @@ function App() {
         {/* ── Background orbs + dot grid (Proposition B) ── */}
         <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
           <div
-            className="absolute -top-[10%] -right-[5%] w-[40vw] h-[40vw] rounded-full bg-gradient-to-br from-[#e3e3fd] to-[#6a6af4] blur-3xl opacity-20 animate-pulse"
+            className="absolute -top-[10%] -right-[5%] w-[40vw] h-[40vw] rounded-full bg-gradient-to-br from-[#fddede] to-[#c83f49] blur-3xl opacity-8 animate-pulse"
             style={{ animationDuration: "15s" }}
           />
           <div
-            className="absolute -bottom-[10%] -left-[5%] w-[35vw] h-[35vw] rounded-full bg-gradient-to-tr from-[#fddede] to-[#c83f49] blur-3xl opacity-20 animate-pulse"
+            className="absolute -bottom-[10%] -left-[5%] w-[35vw] h-[35vw] rounded-full bg-gradient-to-tr from-[#e3e3fd] to-[#6a6af4] blur-3xl opacity-8 animate-pulse"
             style={{ animationDuration: "20s" }}
           />
           <div className="absolute inset-0 bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:32px_32px] opacity-[0.03]" />

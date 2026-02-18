@@ -103,7 +103,7 @@ export function PictoCard({
   return (
     <>
       <Card
-        className={`group relative overflow-hidden rounded-2xl border border-border bg-card transition-all duration-300 hover:-translate-y-1 hover:shadow-xl cursor-pointer ${compact ? "p-0" : ""}`}
+        className={`group relative overflow-hidden rounded border border-border bg-card transition-all duration-300 hover:-translate-y-1 hover:shadow-xl cursor-pointer ${compact ? "p-0" : ""}`}
         draggable
         onDragStart={(e) => {
           e.dataTransfer.setData("application/pictogram-id", pictogram.id);
@@ -122,7 +122,7 @@ export function PictoCard({
             height={128}
             className={`w-full h-full object-contain drop-shadow-sm transition-transform duration-200 group-hover:scale-110 ${compact ? "max-w-12 max-h-12" : "max-w-24 max-h-24"}`}
           />
-          <div className="absolute inset-4 bg-primary/10 blur-2xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+          <div className="absolute inset-4 bg-foreground/5 blur-2xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
           {displayedGalleries.length > 0 && (
             <div className="absolute bottom-1.5 left-1.5 flex gap-1">
               {displayedGalleries.map((g) => (

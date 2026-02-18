@@ -51,7 +51,7 @@ export function SiteHeader({
               placeholder={`Rechercher parmi ${totalCount} pictogrammes...`}
               value={query}
               onChange={handleChange}
-              className="w-full md:w-[400px] h-11 bg-white border border-border rounded-2xl pl-11 pr-4 text-sm font-medium focus:outline-none focus:ring-4 focus:ring-ring/10 focus:border-primary transition-all shadow-sm dark:bg-card"
+              className="w-full md:w-[400px] h-11 bg-white border border-border rounded pl-11 pr-4 text-sm font-medium focus:outline-none focus:ring-4 focus:ring-ring/10 focus:border-primary transition-all shadow-sm dark:bg-card"
             />
           </div>
         </div>

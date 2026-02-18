@@ -387,7 +387,7 @@ export function UploadDialog({
             onDragLeave={handleDrag}
             onDrop={handleDrop}
             onClick={() => !uploading && fileInputRef.current?.click()}
-            className={`relative border-2 border-dashed rounded-lg transition-colors cursor-pointer ${
+            className={`relative border-2 border-dashed rounded transition-colors cursor-pointer ${
               dragActive
                 ? "border-primary bg-primary/5"
                 : "border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/20"
@@ -424,7 +424,7 @@ export function UploadDialog({
                 onDragLeave={handleDrag}
                 onDrop={handleDrop}
                 onClick={() => !uploading && fileInputRef.current?.click()}
-                className={`relative flex items-center justify-center bg-muted/30 rounded-lg py-12 cursor-pointer transition-colors border-2 border-dashed border-transparent hover:border-primary/30 ${
+                className={`relative flex items-center justify-center bg-muted/30 rounded py-12 cursor-pointer transition-colors border-2 border-dashed border-transparent hover:border-primary/30 ${
                   dragActive ? "border-primary bg-primary/5" : ""
                 }`}
               >

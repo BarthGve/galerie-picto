@@ -433,7 +433,7 @@ export function PictoModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-y-auto rounded-3xl border-border">
+      <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-y-auto rounded border-border">
         <DialogHeader>
           <div className="flex items-center gap-2">
             {editingName ? (
@@ -531,7 +531,7 @@ export function PictoModal({
           {/* Left column - Preview + Color customization */}
           <div className="flex flex-col gap-4">
             {/* Live preview */}
-            <div className="flex items-center justify-center rounded-2xl py-12">
+            <div className="flex items-center justify-center rounded py-12">
               <img
                 src={previewBlobUrl || displayUrl}
                 alt={
@@ -543,7 +543,7 @@ export function PictoModal({
 
             {/* Contributor */}
             {pictogram.contributor ? (
-              <div className="flex items-center gap-3 p-3 bg-accent rounded-2xl border border-border">
+              <div className="flex items-center gap-3 p-3 bg-accent rounded border border-border">
                 <img
                   src={pictogram.contributor.githubAvatarUrl}
                   alt={pictogram.contributor.githubUsername}
@@ -573,7 +573,7 @@ export function PictoModal({
               <Button
                 variant="outline"
                 size="sm"
-                className="w-full rounded-xl"
+                className="w-full rounded"
                 disabled={savingContributor}
                 onClick={handleSetContributor}
               >
@@ -587,7 +587,7 @@ export function PictoModal({
           {/* Right column - Info & Actions */}
           <div className="flex flex-col gap-5">
             {/* Metadata */}
-            <div className="grid grid-cols-2 gap-3 text-sm bg-surface-subtle rounded-2xl border border-border p-4">
+            <div className="grid grid-cols-2 gap-3 text-sm bg-surface-subtle rounded border border-border p-4">
               <div>
                 <span className="text-xs text-muted-foreground">Fichier</span>
                 <p className="font-medium text-foreground truncate">{pictogram.filename}</p>
@@ -638,14 +638,14 @@ export function PictoModal({
                       value={tagInput}
                       onChange={(e) => setTagInput(e.target.value)}
                       onKeyDown={handleTagKeyDown}
-                      className="h-8 text-sm rounded-lg"
+                      className="h-8 text-sm rounded"
                     />
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={handleAddTag}
                       disabled={!tagInput.trim()}
-                      className="h-8 rounded-lg"
+                      className="h-8 rounded"
                     >
                       <Plus className="h-3 w-3" />
                     </Button>
@@ -670,7 +670,7 @@ export function PictoModal({
                       size="sm"
                       onClick={handleSaveTags}
                       disabled={savingTags}
-                      className="rounded-lg"
+                      className="rounded"
                     >
                       {savingTags ? "Enregistrement..." : "Enregistrer"}
                     </Button>
@@ -681,7 +681,7 @@ export function PictoModal({
                         setEditingTags(false);
                         setTags(pictogram.tags || []);
                       }}
-                      className="rounded-lg"
+                      className="rounded"
                     >
                       Annuler
                     </Button>
@@ -725,7 +725,7 @@ export function PictoModal({
                   onClick={() => setShowColorCustomizer(true)}
                   disabled={!svgLoaded}
                   size="sm"
-                  className="w-full rounded-xl border-border hover:bg-accent hover:text-primary"
+                  className="w-full rounded border-border hover:bg-accent hover:text-primary"
                 >
                   <Palette className="h-4 w-4 mr-2" />
                   {svgLoaded
@@ -738,7 +738,7 @@ export function PictoModal({
                 variant="outline"
                 onClick={() => setUpgradeGateOpen(true)}
                 size="sm"
-                className="w-full rounded-xl border-border"
+                className="w-full rounded border-border"
               >
                 <Lock className="h-4 w-4 mr-2" />
                 Personnaliser les couleurs
@@ -764,7 +764,7 @@ export function PictoModal({
                     <Button
                       onClick={handleDownloadSvg}
                       disabled={!svgLoaded}
-                      className="flex-1 rounded-xl btn-cta"
+                      className="flex-1 rounded btn-cta"
                     >
                       <Download className="h-4 w-4 mr-2" />
                       SVG
@@ -773,7 +773,7 @@ export function PictoModal({
                       onClick={handleCopy}
                       variant="outline"
                       disabled={!svgLoaded}
-                      className="flex-1 rounded-xl border-border"
+                      className="flex-1 rounded border-border"
                     >
                       {copied ? (
                         <>
@@ -793,7 +793,7 @@ export function PictoModal({
                     <select
                       value={pngSize}
                       onChange={(e) => setPngSize(Number(e.target.value))}
-                      className="flex h-10 w-24 items-center justify-between rounded-xl border border-border bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                      className="flex h-10 w-24 items-center justify-between rounded border border-border bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                     >
                       <option value={128}>128px</option>
                       <option value={256}>256px</option>
@@ -804,7 +804,7 @@ export function PictoModal({
                       onClick={handleDownloadPng}
                       variant="secondary"
                       disabled={!svgLoaded}
-                      className="flex-1 rounded-xl"
+                      className="flex-1 rounded"
                     >
                       <Download className="h-4 w-4 mr-2" />
                       PNG ({pngSize}px)
@@ -817,7 +817,7 @@ export function PictoModal({
                     <Button
                       onClick={() => setUpgradeGateOpen(true)}
                       variant="outline"
-                      className="flex-1 rounded-xl border-border"
+                      className="flex-1 rounded border-border"
                       disabled
                     >
                       <Lock className="h-4 w-4 mr-2" />
@@ -826,7 +826,7 @@ export function PictoModal({
                     <Button
                       onClick={() => setUpgradeGateOpen(true)}
                       variant="outline"
-                      className="flex-1 rounded-xl border-border"
+                      className="flex-1 rounded border-border"
                       disabled
                     >
                       <Lock className="h-4 w-4 mr-2" />
@@ -837,7 +837,7 @@ export function PictoModal({
                   <Button
                     onClick={handleDownloadPngAnonymous}
                     variant="secondary"
-                    className="w-full rounded-xl"
+                    className="w-full rounded"
                     disabled={anonDownloadsRemaining === 0}
                   >
                     <Download className="h-4 w-4 mr-2" />

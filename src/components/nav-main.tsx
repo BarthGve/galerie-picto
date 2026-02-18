@@ -35,18 +35,18 @@ export function NavMain({
   return (
     <SidebarGroup>
       <SidebarGroupContent className="flex flex-col gap-1">
-        {/* Label section */}
-        <div className="px-3 mb-1">
-          <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Navigation</span>
-        </div>
-
         {isAuthenticated && (
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton
                 tooltip="Ajouter un pictogramme"
                 onClick={onUploadClick}
-                className="bg-foreground text-background hover:opacity-90 hover:text-background active:opacity-90 active:text-background shadow-lg rounded-xl"
+                className="text-primary-foreground shadow-lg rounded hover:text-primary-foreground active:text-primary-foreground"
+                style={{ backgroundColor: 'var(--dsfr-blue-france-sun)' }}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--dsfr-blue-france-sun-hover)'}
+                onMouseLeave={e => e.currentTarget.style.backgroundColor = 'var(--dsfr-blue-france-sun)'}
+                onMouseDown={e => e.currentTarget.style.backgroundColor = 'var(--dsfr-blue-france-sun-active)'}
+                onMouseUp={e => e.currentTarget.style.backgroundColor = 'var(--dsfr-blue-france-sun-hover)'}
               >
                 <CirclePlus />
                 <span>Ajouter</span>
@@ -54,6 +54,13 @@ export function NavMain({
             </SidebarMenuItem>
           </SidebarMenu>
         )}
+
+        <div className="h-4" />
+
+        {/* Label section */}
+        <div className="px-3 mb-1">
+          <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Navigation</span>
+        </div>
 
         <SidebarMenu>
           <SidebarMenuItem>

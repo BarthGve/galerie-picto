@@ -4,7 +4,6 @@ import {
   LogOut,
   ArrowRight,
   Search,
-  Sparkles,
   Github,
   Heart,
   UploadCloud,
@@ -76,21 +75,21 @@ const FEATURES = [
     title: "Recherche rapide",
     description:
       "Trouvez instantanément le pictogramme dont vous avez besoin par nom, tag ou galerie.",
-    gradient: "from-amber-400 to-orange-500",
+    gradient: "from-[var(--dsfr-blue-france-sun)] to-[#1a1aff]",
   },
   {
     icon: Palette,
     title: "Personnalisation",
     description:
       "Changez les couleurs à la volée et téléchargez en SVG ou PNG selon vos besoins.",
-    gradient: "from-[#2845c1] to-[#6a6af4]",
+    gradient: "from-[var(--dsfr-grey-1000)] to-[var(--dsfr-grey-850)]",
   },
   {
     icon: FolderOpen,
     title: "Collections",
     description:
       "Organisez vos pictogrammes en collections thématiques pour vos projets.",
-    gradient: "from-[#c83f49] to-[#c83f49]",
+    gradient: "from-[var(--dsfr-red-marianne-sun)] to-[#f95c5e]",
   },
 ];
 
@@ -177,8 +176,8 @@ export function HomePage({
       />
 
       {/* Animated gradient blobs — decorative, kept as explicit gradients */}
-      <div className="fixed top-[-10%] right-[-5%] w-96 h-96 bg-gradient-to-tr from-[#e3e3fd] to-[#6a6af4] rounded-full blur-3xl -z-10 opacity-30 dark:opacity-15 animate-blob" />
-      <div className="fixed bottom-[-10%] left-[-5%] w-80 h-80 bg-gradient-to-tr from-[#fddede] to-[#c83f49] rounded-full blur-3xl -z-10 opacity-30 dark:opacity-15 animate-blob animation-delay-2000" />
+      <div className="fixed top-[-10%] right-[-5%] w-96 h-96 bg-gradient-to-tr from-[#fddede] to-[#c83f49] rounded-full blur-3xl -z-10 opacity-30 dark:opacity-15 animate-blob" />
+      <div className="fixed bottom-[-10%] left-[-5%] w-80 h-80 bg-gradient-to-tr from-[#e3e3fd] to-[#6a6af4] rounded-full blur-3xl -z-10 opacity-30 dark:opacity-15 animate-blob animation-delay-2000" />
       <div className="fixed top-[40%] left-[30%] w-64 h-64 bg-gradient-to-tr from-[#adadf9] to-[#2845c1] rounded-full blur-3xl -z-10 opacity-20 dark:opacity-10 animate-blob animation-delay-4000" />
 
       {/* Navbar */}
@@ -228,18 +227,14 @@ export function HomePage({
         <div className="mx-auto max-w-7xl px-6 py-16 md:py-24">
           <div className="grid gap-12 lg:grid-cols-2 lg:gap-8 items-center">
             <div className="flex flex-col gap-8 max-w-xl">
-              {/* Badge */}
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-badge-bg border border-badge-border text-badge-text font-bold text-sm tracking-wide uppercase w-fit">
-                <Sparkles className="w-4 h-4" />
-                100% Gratuit
-              </div>
-
               {/* Headline */}
               <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-foreground leading-[1.1]">
                 Vos pictogrammes,{" "}
                 <br className="hidden sm:block" />
-                <span className="text-gradient-primary italic inline-block pr-6">
-                  prêts à l'emploi
+                <span className="inline-block pr-6">
+                  <span style={{ color: 'var(--dsfr-blue-france-sun)' }}>prêts </span>
+                  <span className="text-white" style={{ WebkitTextStroke: '1.5px rgba(0,0,0,0.5)' }}>à l'</span>
+                  <span style={{ color: 'var(--dsfr-red-marianne-sun)' }}>emploi</span>
                 </span>
               </h1>
 
@@ -253,7 +248,7 @@ export function HomePage({
               <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
                 <button
                   onClick={onEnterGallery}
-                  className="btn-cta px-8 py-4 rounded-2xl bg-foreground text-background font-bold text-lg shadow-2xl transition-all hover:scale-105 active:scale-95"
+                  className="btn-cta px-8 py-4 rounded font-bold text-lg shadow-2xl transition-all hover:scale-105 active:scale-95" style={{ backgroundColor: 'var(--dsfr-blue-france-sun)', color: 'var(--dsfr-grey-1000)' }}
                 >
                   <span className="flex items-center gap-2">
                     Explorer la galerie
@@ -353,10 +348,7 @@ export function HomePage({
           <div className="mx-auto max-w-5xl px-6">
             <div className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground">
-                Aperçu de la{" "}
-                <span className="text-gradient-primary">
-                  collection
-                </span>
+                Aperçu de la collection
               </h2>
               <p className="mt-4 text-lg text-muted-foreground">
                 Quelques pictogrammes parmi les {totalCount}+ disponibles.
@@ -446,11 +438,7 @@ export function HomePage({
       <section className="py-16 md:py-24">
         <div className="mx-auto max-w-3xl px-6 text-center">
           <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground">
-            Prêt à{" "}
-            <span className="text-gradient-primary">
-              explorer
-            </span>{" "}
-            ?
+            Prêt à explorer ?
           </h2>
           <p className="mt-4 text-lg text-muted-foreground max-w-xl mx-auto font-medium">
             Accédez à l'ensemble des pictogrammes, filtrez par collection et
@@ -459,7 +447,7 @@ export function HomePage({
           <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
             <button
               onClick={onEnterGallery}
-              className="btn-cta px-8 py-4 rounded-2xl bg-foreground text-background font-bold text-lg shadow-2xl transition-all hover:scale-105 active:scale-95"
+              className="btn-cta px-8 py-4 rounded font-bold text-lg shadow-2xl transition-all hover:scale-105 active:scale-95" style={{ backgroundColor: 'var(--dsfr-blue-france-sun)', color: 'var(--dsfr-grey-1000)' }}
             >
               <span className="flex items-center gap-2 justify-center">
                 Ouvrir la galerie

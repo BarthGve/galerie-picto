@@ -2,6 +2,7 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/inter/standard.css";
+@import "./dsfr-tokens.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -12,38 +13,38 @@
 
 :root {
     /* ── Surfaces ── */
-    --background: #ffffff;
-    --foreground: #161616;
-    --card: #ffffff;
-    --card-foreground: #161616;
-    --popover: #ffffff;
-    --popover-foreground: #161616;
+    --background: var(--dsfr-grey-1000);
+    --foreground: var(--dsfr-grey-50);
+    --card: var(--dsfr-grey-1000);
+    --card-foreground: var(--dsfr-grey-50);
+    --popover: var(--dsfr-grey-1000);
+    --popover-foreground: var(--dsfr-grey-50);
 
-    /* ── Primary : Blue France ── */
-    --primary: #2845c1;
-    --primary-foreground: #ffffff;
+    /* ── Primary : Blue France Sun ── */
+    --primary: var(--dsfr-blue-france-sun);
+    --primary-foreground: var(--dsfr-grey-1000);
 
-    /* ── Secondary : DSFR grey-100 ── */
-    --secondary: #f6f6f6;
-    --secondary-foreground: #161616;
+    /* ── Secondary : DSFR grey-975 ── */
+    --secondary: var(--dsfr-grey-975);
+    --secondary-foreground: var(--dsfr-grey-50);
 
-    /* ── Muted : DSFR grey-50/100 ── */
-    --muted: #f6f6f6;
-    --muted-foreground: #666666;
+    /* ── Muted : DSFR grey-975/425 ── */
+    --muted: var(--dsfr-grey-975);
+    --muted-foreground: var(--dsfr-grey-425);
 
-    /* ── Accent : Blue France light ── */
-    --accent: #e3e3fd;
-    --accent-foreground: #161616;
+    /* ── Accent : Blue France 925 ── */
+    --accent: var(--dsfr-blue-france-925);
+    --accent-foreground: var(--dsfr-grey-50);
 
-    --destructive: #c83f49;
+    --destructive: var(--dsfr-red-marianne-sun);
 
     /* ── Borders & inputs ── */
-    --border: #dddddd;
-    --input: #dddddd;
-    --ring: #2845c1;
+    --border: var(--dsfr-grey-900);
+    --input: var(--dsfr-grey-900);
+    --ring: var(--dsfr-blue-france-sun);
 
     /* ── Charts (tricolore palette) ── */
-    --chart-1: #2845c1;
+    --chart-1: #6a6af4;
     --chart-2: #c83f49;
     --chart-3: #6a6af4;
     --chart-4: #0063cb;
@@ -52,41 +53,41 @@
     --radius: 0.75rem;
 
     /* ── Sidebar ── */
-    --sidebar: #ffffff;
-    --sidebar-foreground: #161616;
-    --sidebar-primary: #2845c1;
-    --sidebar-primary-foreground: #ffffff;
-    --sidebar-accent: #e3e3fd;
-    --sidebar-accent-foreground: #161616;
-    --sidebar-border: #eeeeee;
-    --sidebar-ring: #2845c1;
+    --sidebar: var(--dsfr-grey-1000);
+    --sidebar-foreground: var(--dsfr-grey-50);
+    --sidebar-primary: var(--dsfr-blue-france-main);
+    --sidebar-primary-foreground: var(--dsfr-grey-1000);
+    --sidebar-accent: var(--dsfr-blue-france-950);
+    --sidebar-accent-foreground: var(--dsfr-grey-50);
+    --sidebar-border: var(--dsfr-grey-950);
+    --sidebar-ring: var(--dsfr-blue-france-main);
 
     /* ── DSFR Tricolore custom tokens ── */
-    --gradient-primary: linear-gradient(to right, #2845c1, #7a6b9a, #c83f49);
-    --gradient-cta-hover: linear-gradient(to right, #2845c1, #2323ff);
+    --gradient-primary: linear-gradient(to right, #6a6af4, #7a6b9a, #c83f49);
+    --gradient-cta-hover: linear-gradient(to right, var(--dsfr-blue-france-sun-hover), var(--dsfr-blue-france-sun-active));
     --gradient-blob-warm: linear-gradient(to top right, #fddede, #c83f49);
     --gradient-blob-cool: linear-gradient(to top right, #e3e3fd, #6a6af4);
     --gradient-blob-mid: linear-gradient(to top right, #ececfe, #adadf9);
 
     /* Badge — Blue France light (default tags) */
-    --color-badge-bg: #ececfe;
-    --color-badge-border: #c1c1fb;
-    --color-badge-text: #2845c1;
+    --color-badge-bg: var(--dsfr-blue-france-950);
+    --color-badge-border: var(--dsfr-blue-france-850);
+    --color-badge-text: var(--dsfr-blue-france-main);
 
     /* Badge accent — Blue France (collections, counts) */
-    --color-badge-accent-bg: #e3e3fd;
+    --color-badge-accent-bg: var(--dsfr-blue-france-925);
     --color-badge-accent-border: #adadf9;
-    --color-badge-accent-text: #2845c1;
+    --color-badge-accent-text: var(--dsfr-blue-france-main);
 
     /* Badge download — Red Marianne */
-    --color-badge-download-bg: #fee9e9;
-    --color-badge-download-border: #fcbfbf;
-    --color-badge-download-text: #c83f49;
+    --color-badge-download-bg: var(--dsfr-red-marianne-950);
+    --color-badge-download-border: var(--dsfr-red-marianne-850);
+    --color-badge-download-text: var(--dsfr-red-marianne-sun);
 
     /* GitHub card */
-    --color-github-bg: linear-gradient(to bottom right, #e3e3fd, #ffffff);
+    --color-github-bg: linear-gradient(to bottom right, var(--dsfr-blue-france-925), var(--dsfr-grey-1000));
     --color-github-border: #adadf9;
-    --color-github-accent: #2845c1;
+    --color-github-accent: var(--dsfr-blue-france-main);
 
     /* Contributor ring */
     --color-ring-accent: #adadf9;
