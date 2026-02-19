@@ -1,0 +1,17 @@
+# Docker Compose pour le VPS OVH
+# Copier ce fichier sur le VPS : ~/galerie/docker-compose.yml
+# Créer également ~/galerie/.env avec les variables du backend
+
+services:
+  backend:
+    image: ghcr.io/barthgve/la-boite-a-pictos-backend:latest
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - db-data:/app/data
+    ports:
+      - "127.0.0.1:3004:3000"
+
+volumes:
+  db-data:
+    driver: local
