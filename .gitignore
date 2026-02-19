@@ -34,3 +34,8 @@ backend/data/
 *.njsproj
 *.sln
 *.sw?
+
+# Artefacts temporaires
+screenshot-*.png
+snapshot-gallery.txt
+package-lock.json

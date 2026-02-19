@@ -170,7 +170,7 @@ export function HomePage({
               <Palette className="size-5 text-background" />
             </div>
             <span className="text-xl font-black tracking-tighter">
-              Galerie Picto
+              La Boite à Pictos
             </span>
           </div>
           {user ? (
@@ -456,7 +456,7 @@ export function HomePage({
             <div className="flex items-center justify-center size-8 rounded-xl bg-foreground shadow-lg">
               <Palette className="size-5 text-background" />
             </div>
-            <span className="text-xl font-black tracking-tighter">Galerie Picto</span>
+            <span className="text-xl font-black tracking-tighter">La Boite à Pictos</span>
           </div>
           <div className="flex items-center gap-4">
             <span className="inline-flex items-center rounded-full border border-border bg-muted/50 px-2 py-0.5 text-[10px] font-mono text-muted-foreground/60 select-none">

@@ -103,7 +103,7 @@ export function AppSidebar({
                 <div className="flex items-center justify-center size-8 rounded-xl bg-foreground shadow-lg">
                   <Palette className="!size-5 text-background" />
                 </div>
-                <span className="text-xl font-black tracking-tighter">Galerie Picto</span>
+                <span className="text-xl font-black tracking-tighter">La Boite à Pictos</span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>

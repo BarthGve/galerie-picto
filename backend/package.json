@@ -1,7 +1,7 @@
 {
-  "name": "galerie-backend",
+  "name": "la-boite-a-picto-backend",
   "version": "0.0.1",
-  "description": "Backend API for Galerie Pictogrammes",
+  "description": "Backend API for La Boite à Pictos",
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",

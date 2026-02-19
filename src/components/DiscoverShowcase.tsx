@@ -565,7 +565,7 @@ function VariantCinematic() {
         <div className="absolute top-[20%] right-0 w-[250px] h-[250px] rounded-full bg-[var(--dsfr-blue-france-sun)]/10 blur-[80px]" />
 
         <div className="relative z-10 p-12 flex-1 flex flex-col justify-center">
-          <p className="text-xs font-bold text-primary uppercase tracking-[0.3em] mb-4">Galerie Picto</p>
+          <p className="text-xs font-bold text-primary uppercase tracking-[0.3em] mb-4">La Boite à Pictos</p>
           <h1 className="text-7xl xl:text-8xl font-black leading-[0.9] tracking-tight">
             <span className="bg-gradient-to-b from-foreground to-foreground/40 bg-clip-text text-transparent">Décou</span>
             <br />
