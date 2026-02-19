@@ -22,7 +22,7 @@ export function SiteHeader({
   };
 
   return (
-    <header className="sticky top-0 z-30 flex shrink-0 items-center gap-2 px-6 py-4">
+    <header className="sticky top-0 z-30 flex shrink-0 items-center justify-between gap-2 px-6 py-4">
       <div className="flex items-center gap-4">
         <SidebarTrigger className="-ml-1" />
         <Separator orientation="vertical" className="mx-1 h-4" />
@@ -39,6 +39,10 @@ export function SiteHeader({
           />
         </div>
       </div>
+
+      <span className="text-[11px] text-muted-foreground/50 font-mono select-none">
+        v{__APP_VERSION__}
+      </span>
     </header>
   );
 }
