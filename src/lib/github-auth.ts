@@ -3,7 +3,7 @@ import { API_URL } from "@/lib/config";
 const GITHUB_CLIENT_ID = import.meta.env.VITE_GITHUB_CLIENT_ID || "";
 const REDIRECT_URI = `${window.location.origin}${import.meta.env.BASE_URL}`;
 
-export const DEV_MODE = !GITHUB_CLIENT_ID;
+export const DEV_MODE = import.meta.env.DEV && !GITHUB_CLIENT_ID;
 
 const DEV_USER: GitHubUser = {
   login: "dev-user",
