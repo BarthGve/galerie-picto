@@ -1,3 +1,4 @@
+import { createHash } from "crypto";
 import { eq } from "drizzle-orm";
 import { db } from "../index.js";
 import { pictograms, galleryPictograms } from "../schema.js";
@@ -62,7 +63,7 @@ export function getManifestCached(): { json: string; etag: string } {
     totalCount: pictos.length,
   };
   const json = JSON.stringify(manifest);
-  const etag = `"${Date.now()}"`;
+  const etag = `"${createHash("sha256").update(json).digest("hex").slice(0, 32)}"`;
 
   cachedManifest = { json, etag, updatedAt: Date.now() };
   return { json, etag };

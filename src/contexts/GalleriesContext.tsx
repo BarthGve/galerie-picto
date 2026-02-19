@@ -1,33 +1,70 @@
-import { useState, useEffect, useCallback } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import { API_URL } from "@/lib/config";
 import type { Gallery } from "@/lib/types";
 import { toast } from "sonner";
 
-export function useGalleries() {
-  const [galleries, setGalleries] = useState<Gallery[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+interface GalleriesContextValue {
+  galleries: Gallery[];
+  galleriesLoading: boolean;
+  galleriesError: string | null;
+  refetchGalleries: () => Promise<void>;
+  createGallery: (data: {
+    name: string;
+    description?: string;
+    color?: string;
+  }) => Promise<Gallery | null>;
+  updateGallery: (
+    id: string,
+    data: { name?: string; description?: string; color?: string },
+  ) => Promise<Gallery | null>;
+  deleteGallery: (id: string) => Promise<boolean>;
+  addPictogramToGallery: (
+    galleryId: string,
+    pictogramId: string,
+  ) => Promise<boolean>;
+  removePictogramFromGallery: (
+    galleryId: string,
+    pictogramId: string,
+  ) => Promise<boolean>;
+}
 
-  const fetchGalleries = useCallback(async () => {
+const GalleriesContext = createContext<GalleriesContextValue | null>(null);
+
+export function GalleriesProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const [galleries, setGalleries] = useState<Gallery[]>([]);
+  const [galleriesLoading, setGalleriesLoading] = useState(true);
+  const [galleriesError, setGalleriesError] = useState<string | null>(null);
+
+  const refetchGalleries = useCallback(async () => {
     try {
-      setLoading(true);
+      setGalleriesLoading(true);
       const response = await fetch(`${API_URL}/api/galleries`);
       if (!response.ok) {
         throw new Error("Erreur lors du chargement des galeries");
       }
       const data = await response.json();
       setGalleries(data.galleries ?? []);
-      setError(null);
+      setGalleriesError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur inconnue");
+      setGalleriesError(err instanceof Error ? err.message : "Erreur inconnue");
     } finally {
-      setLoading(false);
+      setGalleriesLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchGalleries();
-  }, [fetchGalleries]);
+    refetchGalleries();
+  }, [refetchGalleries]);
 
   function getAuthHeaders(): HeadersInit {
     const token = localStorage.getItem("github_token");
@@ -60,7 +97,7 @@ export function useGalleries() {
       return gallery;
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Erreur inconnue";
-      setError(msg);
+      setGalleriesError(msg);
       toast.error(msg);
       return null;
     }
@@ -88,7 +125,7 @@ export function useGalleries() {
       return gallery;
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Erreur inconnue";
-      setError(msg);
+      setGalleriesError(msg);
       toast.error(msg);
       return null;
     }
@@ -110,7 +147,7 @@ export function useGalleries() {
       return true;
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Erreur inconnue";
-      setError(msg);
+      setGalleriesError(msg);
       toast.error(msg);
       return false;
     }
@@ -120,7 +157,6 @@ export function useGalleries() {
     galleryId: string,
     pictogramId: string,
   ): Promise<boolean> {
-    // Guard: skip if already in gallery
     const gallery = galleries.find((g) => g.id === galleryId);
     if (gallery?.pictogramIds.includes(pictogramId)) {
       return true;
@@ -162,7 +198,7 @@ export function useGalleries() {
         ),
       );
       const msg = err instanceof Error ? err.message : "Erreur inconnue";
-      setError(msg);
+      setGalleriesError(msg);
       toast.error(msg);
       return false;
     }
@@ -207,21 +243,35 @@ export function useGalleries() {
         ),
       );
       const msg = err instanceof Error ? err.message : "Erreur inconnue";
-      setError(msg);
+      setGalleriesError(msg);
       toast.error(msg);
       return false;
     }
   }
 
-  return {
-    galleries,
-    loading,
-    error,
-    refetch: fetchGalleries,
-    createGallery,
-    updateGallery,
-    deleteGallery,
-    addPictogramToGallery,
-    removePictogramFromGallery,
-  };
+  return (
+    <GalleriesContext.Provider
+      value={{
+        galleries,
+        galleriesLoading,
+        galleriesError,
+        refetchGalleries,
+        createGallery,
+        updateGallery,
+        deleteGallery,
+        addPictogramToGallery,
+        removePictogramFromGallery,
+      }}
+    >
+      {children}
+    </GalleriesContext.Provider>
+  );
+}
+
+export function useGalleriesCtx(): GalleriesContextValue {
+  const ctx = useContext(GalleriesContext);
+  if (!ctx) {
+    throw new Error("useGalleriesCtx must be used within a GalleriesProvider");
+  }
+  return ctx;
 }

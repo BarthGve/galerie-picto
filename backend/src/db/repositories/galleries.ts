@@ -1,3 +1,4 @@
+import { createHash } from "crypto";
 import { eq, and } from "drizzle-orm";
 import { db } from "../index.js";
 import { galleries, galleryPictograms } from "../schema.js";
@@ -50,7 +51,7 @@ export function getGalleriesCached(): { json: string; etag: string } {
     lastUpdated: new Date().toISOString(),
   };
   const json = JSON.stringify(data);
-  const etag = `"${Date.now()}"`;
+  const etag = `"${createHash("sha256").update(json).digest("hex").slice(0, 32)}"`;
 
   cachedGalleries = { json, etag, updatedAt: Date.now() };
   return { json, etag };

@@ -32,6 +32,8 @@ router.get("/", (req: Request, res: Response): void => {
     }
 
     res.set("ETag", etag);
+    res.set("Cache-Control", "public, max-age=25, must-revalidate");
+    res.set("Vary", "Accept-Encoding");
     res.set("Content-Type", "application/json");
     res.send(json);
   } catch {

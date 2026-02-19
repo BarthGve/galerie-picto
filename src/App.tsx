@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
-import { usePictograms } from "@/hooks/usePictograms";
-import { useGalleries } from "@/hooks/useGalleries";
+import { PictogramsProvider, usePictogramsCtx } from "@/contexts/PictogramsContext";
+import { GalleriesProvider, useGalleriesCtx } from "@/contexts/GalleriesContext";
 import { useUserCollections } from "@/hooks/useUserCollections";
 import { DownloadsContext, useDownloadsProvider } from "@/hooks/useDownloads";
 import { useFavorites } from "@/hooks/useFavorites";
@@ -63,26 +63,26 @@ function getInitialPage(): Page {
   return "home";
 }
 
-function App() {
+function AppInner() {
   const [page, setPage] = useState<Page>(getInitialPage);
 
   const {
     pictograms,
     loading,
     error,
-    refetch: refetchPictograms,
+    refetchPictograms,
     deletePictogram,
-  } = usePictograms();
+  } = usePictogramsCtx();
   const {
     galleries,
-    loading: galleriesLoading,
+    galleriesLoading,
     createGallery,
     updateGallery,
     deleteGallery,
     addPictogramToGallery,
     removePictogramFromGallery,
-    refetch: refetchGalleries,
-  } = useGalleries();
+    refetchGalleries,
+  } = useGalleriesCtx();
   const downloadsValue = useDownloadsProvider();
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -613,6 +613,16 @@ function App() {
       </div>
     </TooltipProvider>
     </DownloadsContext.Provider>
+  );
+}
+
+function App() {
+  return (
+    <PictogramsProvider>
+      <GalleriesProvider>
+        <AppInner />
+      </GalleriesProvider>
+    </PictogramsProvider>
   );
 }
 

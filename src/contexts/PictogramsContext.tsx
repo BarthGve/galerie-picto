@@ -1,25 +1,45 @@
-import { useState, useEffect, useCallback } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import { API_URL } from "@/lib/config";
 import { getStoredToken } from "@/lib/github-auth";
 import { toast } from "sonner";
 import type { Pictogram, PictogramManifest } from "@/lib/types";
 
-export function usePictograms() {
+interface PictogramsContextValue {
+  pictograms: Pictogram[];
+  loading: boolean;
+  error: string | null;
+  lastUpdated: string | null;
+  refetchPictograms: () => Promise<void>;
+  deletePictogram: (id: string) => Promise<boolean>;
+}
+
+const PictogramsContext = createContext<PictogramsContextValue | null>(null);
+
+export function PictogramsProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const [pictograms, setPictograms] = useState<Pictogram[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
 
-  const fetchManifest = useCallback(async () => {
+  const refetchPictograms = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(`${API_URL}/api/pictograms/manifest`);
       if (!response.ok) {
         throw new Error("Failed to fetch pictograms manifest");
       }
-
       const data: PictogramManifest = await response.json();
-      setPictograms(data.pictograms.filter(p => !p.filename.endsWith("_dark.svg")));
+      setPictograms(data.pictograms.filter((p) => !p.filename.endsWith("_dark.svg")));
       setLastUpdated(data.lastUpdated);
       setError(null);
     } catch (err) {
@@ -30,8 +50,8 @@ export function usePictograms() {
   }, []);
 
   useEffect(() => {
-    fetchManifest();
-  }, [fetchManifest]);
+    refetchPictograms();
+  }, [refetchPictograms]);
 
   const deletePictogram = useCallback(
     async (id: string): Promise<boolean> => {
@@ -44,7 +64,6 @@ export function usePictograms() {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },
         });
-
         if (!response.ok) {
           throw new Error("Failed to delete pictogram");
         }
@@ -58,12 +77,19 @@ export function usePictograms() {
     [pictograms],
   );
 
-  return {
-    pictograms,
-    loading,
-    error,
-    lastUpdated,
-    refetch: fetchManifest,
-    deletePictogram,
-  };
+  return (
+    <PictogramsContext.Provider
+      value={{ pictograms, loading, error, lastUpdated, refetchPictograms, deletePictogram }}
+    >
+      {children}
+    </PictogramsContext.Provider>
+  );
+}
+
+export function usePictogramsCtx(): PictogramsContextValue {
+  const ctx = useContext(PictogramsContext);
+  if (!ctx) {
+    throw new Error("usePictogramsCtx must be used within a PictogramsProvider");
+  }
+  return ctx;
 }
