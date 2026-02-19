@@ -70,7 +70,7 @@ function IssuesList({
           <p className="text-sm text-muted-foreground">
             Vous voyez un problème ou avez une idée ?
           </p>
-          <Button size="sm" onClick={onSignal}>
+          <Button size="sm" className="rounded" onClick={onSignal}>
             <Send className="size-3.5 mr-1.5" />
             Faire un signalement
           </Button>
@@ -294,12 +294,12 @@ function BugForm({ onSuccess }: { onSuccess: () => void }) {
       </Field>
 
       {error && (
-        <p className="text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2">
+        <p className="text-sm text-destructive bg-destructive/10 rounded px-3 py-2">
           {error}
         </p>
       )}
 
-      <Button type="submit" disabled={!canSubmit || loading} className="w-full">
+      <Button type="submit" disabled={!canSubmit || loading} className="w-full rounded">
         {loading ? (
           <span className="flex items-center gap-2">
             <span className="size-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
@@ -422,12 +422,12 @@ function ImprovementForm({ onSuccess }: { onSuccess: () => void }) {
       </Field>
 
       {error && (
-        <p className="text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2">
+        <p className="text-sm text-destructive bg-destructive/10 rounded px-3 py-2">
           {error}
         </p>
       )}
 
-      <Button type="submit" disabled={!canSubmit || loading} className="w-full">
+      <Button type="submit" disabled={!canSubmit || loading} className="w-full rounded">
         {loading ? (
           <span className="flex items-center gap-2">
             <span className="size-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
@@ -471,6 +471,7 @@ function FormView({ onBack }: { onBack: () => void }) {
           <Button
             variant="outline"
             size="sm"
+            className="rounded"
             onClick={() => {
               setSuccess(false);
               setFormType(null);
@@ -478,7 +479,7 @@ function FormView({ onBack }: { onBack: () => void }) {
           >
             Faire un autre signalement
           </Button>
-          <Button size="sm" onClick={onBack}>
+          <Button size="sm" className="rounded" onClick={onBack}>
             Voir tous les signalements
           </Button>
         </div>
@@ -501,7 +502,7 @@ function FormView({ onBack }: { onBack: () => void }) {
         <button
           type="button"
           onClick={() => setFormType("bug")}
-          className={`rounded-xl border-2 p-4 text-left transition-all ${
+          className={`rounded border-2 p-4 text-left transition-all ${
             formType === "bug"
               ? "border-orange-400 bg-orange-50"
               : "border-border hover:border-orange-300 hover:bg-orange-50/40"
@@ -521,7 +522,7 @@ function FormView({ onBack }: { onBack: () => void }) {
         <button
           type="button"
           onClick={() => setFormType("improvement")}
-          className={`rounded-xl border-2 p-4 text-left transition-all ${
+          className={`rounded border-2 p-4 text-left transition-all ${
             formType === "improvement"
               ? "border-[#6a6af4] bg-[#e3e3fd]/40"
               : "border-border hover:border-[#6a6af4]/50 hover:bg-[#e3e3fd]/20"
@@ -552,9 +553,9 @@ function FormView({ onBack }: { onBack: () => void }) {
 // ─── Shared field wrapper ─────────────────────────────────────────────────────
 
 const inputCls =
-  "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring/30 focus:border-primary transition-all";
+  "w-full rounded border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring/30 focus:border-primary transition-all";
 const textareaCls =
-  "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring/30 focus:border-primary transition-all";
+  "w-full rounded border border-border bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring/30 focus:border-primary transition-all";
 
 function Field({
   label,
