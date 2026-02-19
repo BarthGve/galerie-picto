@@ -359,7 +359,7 @@ export function HomePage({
       {!user && (
         <section className="py-16 md:py-24">
           <div className="mx-auto max-w-4xl px-6">
-            <div className="relative p-8 md:p-12 rounded-[2rem] bg-accent border border-github-border shadow-xl overflow-hidden">
+            <div className="relative p-8 md:p-12 rounded-[4px] bg-accent border border-github-border shadow-xl overflow-hidden">
               {/* Background decoration */}
               <div className="absolute top-0 right-0 p-8 opacity-[0.07]">
                 <Github className="w-48 h-48 rotate-12" />
