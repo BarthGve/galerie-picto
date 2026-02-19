@@ -453,13 +453,11 @@ export function HomePage({
       {/* Footer */}
       <footer className="py-8">
         <div className="mx-auto max-w-7xl px-6 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#2845c1] to-[#6a6af4] flex items-center justify-center">
-              <Palette className="size-3 text-primary-foreground" />
+          <div className="flex items-center gap-2.5 text-muted-foreground">
+            <div className="flex items-center justify-center size-8 rounded-xl bg-foreground shadow-lg">
+              <Palette className="size-5 text-background" />
             </div>
-            <span>
-              Galerie Picto — Libre et open source
-            </span>
+            <span className="text-xl font-black tracking-tighter">Galerie Picto</span>
           </div>
           <div className="flex items-center gap-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">
             <Download className="w-3.5 h-3.5 inline" />
