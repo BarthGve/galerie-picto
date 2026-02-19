@@ -385,7 +385,7 @@ export function HomePage({
                   </p>
                   <button
                     onClick={onLogin}
-                    className="inline-flex items-center gap-2 px-6 py-3 rounded bg-primary text-primary-foreground font-bold hover:opacity-90 transition-all hover:scale-105 active:scale-95 shadow-lg"
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded bg-github-accent text-primary-foreground font-bold hover:opacity-90 transition-all hover:scale-105 active:scale-95 shadow-lg"
                   >
                     <Github className="w-4 h-4" />
                     Se connecter avec GitHub

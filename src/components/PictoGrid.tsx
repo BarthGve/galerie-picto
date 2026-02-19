@@ -124,16 +124,11 @@ export function PictoGrid({
           </div>
           <button
             onClick={() => { setActiveTag(null); onPageChange(1); }}
-            className={`px-3 py-1 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+            className={`px-3 py-1 rounded-xl text-xs font-bold transition-all whitespace-nowrap border ${
               !activeTag
-                ? ""
-                : "bg-accent text-muted-foreground hover:text-foreground"
+                ? "bg-accent text-primary border-primary/30"
+                : "bg-accent text-muted-foreground border-transparent hover:text-foreground"
             }`}
-            style={!activeTag ? {
-              backgroundColor: "var(--accent)",
-              color: "var(--primary)",
-              border: "1px solid color-mix(in srgb, var(--primary) 30%, transparent)",
-            } : {}}
           >
             Tous
           </button>
@@ -141,16 +136,11 @@ export function PictoGrid({
             <button
               key={tag}
               onClick={() => { setActiveTag(activeTag === tag ? null : tag); onPageChange(1); }}
-              className={`px-3 py-1 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+              className={`px-3 py-1 rounded-xl text-xs font-bold transition-all whitespace-nowrap border ${
                 activeTag === tag
-                  ? ""
-                  : "bg-accent text-muted-foreground hover:text-foreground"
+                  ? "bg-accent text-primary border-primary/30"
+                  : "bg-accent text-muted-foreground border-transparent hover:text-foreground"
               }`}
-              style={activeTag === tag ? {
-                backgroundColor: "var(--accent)",
-                color: "var(--primary)",
-                border: "1px solid color-mix(in srgb, var(--primary) 30%, transparent)",
-              } : {}}
             >
               {tag}
             </button>

@@ -53,7 +53,7 @@ export function SiteHeader({
   }
 
   return (
-    <header className="sticky top-0 z-10 flex shrink-0 items-center justify-between gap-2 px-6 py-4">
+    <header className="sticky top-0 z-30 flex shrink-0 items-center justify-between gap-2 px-6 py-4">
       <div className="flex items-center gap-4">
         <SidebarTrigger className="-ml-1" />
         <Separator orientation="vertical" className="mx-1 h-4" />
