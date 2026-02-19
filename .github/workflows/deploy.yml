@@ -7,7 +7,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository_owner }}/la-boite-a-pictos-backend
+  IMAGE_NAME: barthgve/la-boite-a-pictos-backend
 
 jobs:
   deploy:
