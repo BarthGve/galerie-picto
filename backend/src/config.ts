@@ -9,6 +9,12 @@ export const config = {
     repo: process.env.GITHUB_REPO || "",
   },
 
+  feedback: {
+    token: process.env.GITHUB_FEEDBACK_TOKEN || "",
+    repo: process.env.GITHUB_FEEDBACK_REPO || "",
+    webhookSecret: process.env.GITHUB_WEBHOOK_SECRET || "",
+  },
+
   minio: {
     endpoint: process.env.MINIO_ENDPOINT || "",
     accessKey: process.env.MINIO_ACCESS_KEY || "",

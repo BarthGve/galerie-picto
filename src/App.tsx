@@ -5,6 +5,7 @@ import { useUserCollections } from "@/hooks/useUserCollections";
 import { DownloadsContext, useDownloadsProvider } from "@/hooks/useDownloads";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useLikes } from "@/hooks/useLikes";
+import { useFeedbackNotifications } from "@/hooks/useFeedbackNotifications";
 import { PictoGrid } from "@/components/PictoGrid";
 import { AppSidebar } from "@/components/Sidebar";
 import { SiteHeader } from "@/components/site-header";
@@ -49,7 +50,10 @@ const DiscoverShowcase = lazy(() =>
 );
 const GalleryProposalA = lazy(() => import("@/components/GalleryProposalA"));
 const GalleryProposalB = lazy(() => import("@/components/GalleryProposalB"));
-type Page = "home" | "discover" | "gallery" | "test-discover" | "gallery-a" | "gallery-b";
+const FeedbackPage = lazy(() =>
+  import("@/components/FeedbackPage").then((m) => ({ default: m.FeedbackPage })),
+);
+type Page = "home" | "discover" | "gallery" | "test-discover" | "gallery-a" | "gallery-b" | "feedback";
 
 function getInitialPage(): Page {
   const path = window.location.pathname;
@@ -57,6 +61,7 @@ function getInitialPage(): Page {
   if (path === "/gallery-b") return "gallery-b";
   if (path === "/gallery") return "gallery";
   if (path === "/discover") return "discover";
+  if (path === "/feedback") return "feedback";
   if (path === "/test-discover") return "test-discover";
   // OAuth callback → go straight to discover
   if (new URLSearchParams(window.location.search).has("code")) return "discover";
@@ -99,6 +104,8 @@ function AppInner() {
   const [selectedUserCollectionId, setSelectedUserCollectionId] = useState<string | null>(null);
   const { isFavorite, toggleFavorite, favoritesCount } = useFavorites(!!user);
   const { getLikeCount, hasLiked, toggleLike } = useLikes(!!user);
+  const { notifications, unreadCount, markAsRead, markAllAsRead } =
+    useFeedbackNotifications(!!user);
   const {
     collections: userCollections,
     create: createUserCollection,
@@ -114,6 +121,7 @@ function AppInner() {
       const path = window.location.pathname;
       if (path === "/gallery") setPage("gallery");
       else if (path === "/discover") setPage("discover");
+      else if (path === "/feedback") setPage("feedback");
       else setPage("home");
     };
     window.addEventListener("popstate", onPopState);
@@ -126,9 +134,11 @@ function AppInner() {
         ? "/gallery"
         : target === "discover"
           ? "/discover"
-          : target === "test-discover"
-            ? "/test-discover"
-            : "/";
+          : target === "feedback"
+            ? "/feedback"
+            : target === "test-discover"
+              ? "/test-discover"
+              : "/";
     window.history.pushState(null, "", path);
     setPage(target);
     if (target === "discover" || target === "home") {
@@ -367,6 +377,15 @@ function AppInner() {
     );
   }
 
+  // Feedback page — public, no need to wait for pictograms
+  if (page === "feedback") {
+    return (
+      <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" /></div>}>
+        <FeedbackPage user={user} onLogin={handleLogin} />
+      </Suspense>
+    );
+  }
+
   // Test Discover Showcase page
   if (page === "test-discover") {
     return (
@@ -451,6 +470,7 @@ function AppInner() {
           onAddToGallery={addPictogramToGallery}
           onGoHome={() => navigateTo("home")}
           onGoDiscover={() => navigateTo("discover")}
+          onGoFeedback={() => navigateTo("feedback")}
           currentPage={page}
           favoritesCount={favoritesCount}
           showFavoritesOnly={showFavoritesOnly}
@@ -476,6 +496,12 @@ function AppInner() {
               if (page === "discover") navigateTo("gallery");
             }}
             totalCount={pictograms.length}
+            isAuthenticated={!!user}
+            notifications={notifications}
+            unreadCount={unreadCount}
+            onMarkRead={markAsRead}
+            onMarkAllRead={markAllAsRead}
+            onGoFeedback={() => navigateTo("feedback")}
           />
           <div className="flex flex-1 flex-col">
             <div className="@container/main flex flex-1 flex-col gap-2">

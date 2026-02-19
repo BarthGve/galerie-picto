@@ -1,21 +1,36 @@
-import { Moon, Search, Sun } from "lucide-react";
+import { Moon, Search, Sun, Bell, Bug, Sparkles, CheckCircle2 } from "lucide-react";
 import { useRef, useState } from "react";
 
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useTheme } from "@/hooks/use-theme";
+import type { FeedbackNotification } from "@/hooks/useFeedbackNotifications";
 
 export function SiteHeader({
   onSearch,
   totalCount,
+  notifications,
+  unreadCount,
+  onMarkRead,
+  onMarkAllRead,
+  onGoFeedback,
+  isAuthenticated,
 }: {
   onSearch: (query: string) => void;
   totalCount: number;
+  notifications?: FeedbackNotification[];
+  unreadCount?: number;
+  onMarkRead?: (id: number) => void;
+  onMarkAllRead?: () => void;
+  onGoFeedback?: () => void;
+  isAuthenticated?: boolean;
 }) {
   const [query, setQuery] = useState("");
   const timerRef = useRef<ReturnType<typeof setTimeout>>(null);
   const { theme, setTheme } = useTheme();
   const isDark = theme === "dark";
+  const [bellOpen, setBellOpen] = useState(false);
+  const bellRef = useRef<HTMLDivElement>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -23,6 +38,19 @@ export function SiteHeader({
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => onSearch(value), 250);
   };
+
+  const hasNotifs = (unreadCount ?? 0) > 0;
+  const notifList = notifications ?? [];
+
+  function handleBellClick() {
+    setBellOpen((v) => !v);
+  }
+
+  function handleNotifClick(n: FeedbackNotification) {
+    onMarkRead?.(n.id);
+    setBellOpen(false);
+    onGoFeedback?.();
+  }
 
   return (
     <header className="sticky top-0 z-30 flex shrink-0 items-center justify-between gap-2 px-6 py-4">
@@ -44,6 +72,97 @@ export function SiteHeader({
       </div>
 
       <div className="flex items-center gap-3">
+        {/* Bell — only for authenticated users */}
+        {isAuthenticated && (
+          <div className="relative" ref={bellRef}>
+            <button
+              onClick={handleBellClick}
+              className="relative p-2 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="Notifications"
+            >
+              <Bell className="size-4" />
+              {hasNotifs && (
+                <span className="absolute -top-0.5 -right-0.5 size-4 rounded-full bg-destructive text-[10px] font-bold text-white flex items-center justify-center leading-none">
+                  {(unreadCount ?? 0) > 9 ? "9+" : unreadCount}
+                </span>
+              )}
+            </button>
+
+            {/* Notification panel */}
+            {bellOpen && (
+              <>
+                {/* Backdrop */}
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setBellOpen(false)}
+                />
+                <div className="absolute right-0 top-full mt-2 z-50 w-80 rounded-2xl border border-border bg-popover shadow-xl overflow-hidden">
+                  {/* Header */}
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+                    <span className="font-semibold text-sm">Notifications</span>
+                    {notifList.length > 0 && (
+                      <button
+                        onClick={() => {
+                          onMarkAllRead?.();
+                        }}
+                        className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        Tout marquer comme lu
+                      </button>
+                    )}
+                  </div>
+
+                  {/* List */}
+                  <div className="max-h-80 overflow-y-auto">
+                    {notifList.length === 0 ? (
+                      <p className="text-sm text-muted-foreground text-center py-8 px-4">
+                        Pas de nouvelle pour le moment. On vous prévient dès
+                        qu'un de vos signalements est traité.
+                      </p>
+                    ) : (
+                      notifList.map((n) => (
+                        <button
+                          key={n.id}
+                          onClick={() => handleNotifClick(n)}
+                          className="w-full text-left px-4 py-3 hover:bg-accent/60 transition-colors border-b border-border/50 last:border-0"
+                        >
+                          <div className="flex items-start gap-2.5">
+                            <div className="mt-0.5 shrink-0">
+                              {n.type === "bug" ? (
+                                <Bug className="size-3.5 text-orange-500" />
+                              ) : (
+                                <Sparkles className="size-3.5 text-[#6a6af4]" />
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1.5">
+                                <p className="text-sm font-medium truncate">
+                                  {n.type === "bug"
+                                    ? "Bug résolu"
+                                    : "Amélioration déployée"}
+                                </p>
+                                <CheckCircle2 className="size-3.5 text-emerald-500 shrink-0" />
+                              </div>
+                              <p className="text-xs text-muted-foreground truncate mt-0.5">
+                                {n.title}
+                              </p>
+                              {n.resolution && (
+                                <p className="text-xs text-muted-foreground/80 mt-1 line-clamp-2">
+                                  {n.resolution}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
         <button
           onClick={() => setTheme(isDark ? "light" : "dark")}
           className="p-2 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"

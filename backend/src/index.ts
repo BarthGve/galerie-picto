@@ -22,6 +22,7 @@ import downloadsRoutes from "./routes/downloads.js";
 import favoritesRoutes from "./routes/favorites.js";
 import userCollectionsRoutes from "./routes/user-collections.js";
 import likesRoutes from "./routes/likes.js";
+import feedbackRoutes from "./routes/feedback.js";
 
 const app = express();
 
@@ -40,13 +41,24 @@ app.use(
 app.use(compression());
 
 // CORS
+const corsOriginValue =
+  process.env.NODE_ENV !== "production"
+    ? /^http:\/\/localhost:\d+$/
+    : config.corsOrigin;
 app.use(
   cors({
-    origin: config.corsOrigin,
+    origin: corsOriginValue,
     credentials: true,
   }),
 );
-app.use(express.json({ limit: "2mb" }));
+app.use(
+  express.json({
+    limit: "2mb",
+    verify: (req: express.Request & { rawBody?: Buffer }, _res, buf) => {
+      req.rawBody = buf;
+    },
+  }),
+);
 
 // Rate limiting
 const apiLimiter = rateLimit({
@@ -102,6 +114,7 @@ app.use("/api/github/profile", githubProfileRoutes);
 app.use("/api/user", favoritesRoutes);
 app.use("/api/user", userCollectionsRoutes);
 app.use("/api/pictograms", likesRoutes);
+app.use("/api/feedback", feedbackRoutes);
 
 // Run migrations then start server
 runMigrations();

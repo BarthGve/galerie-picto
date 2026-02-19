@@ -1,4 +1,4 @@
-import { Palette, Plus, Github, ArrowRight } from "lucide-react";
+import { Palette, Plus, Github, ArrowRight, MessageCircleWarning, LayoutList } from "lucide-react";
 
 import { NavGalleries } from "@/components/nav-galleries";
 import { NavContributors } from "@/components/nav-contributors";
@@ -48,6 +48,7 @@ export function AppSidebar({
   onUpdateUserCollection,
   onRemoveUserCollection,
   onAddToUserCollection,
+  onGoFeedback,
   ...props
 }: React.ComponentProps<typeof Sidebar> & {
   galleries: Gallery[];
@@ -78,6 +79,7 @@ export function AppSidebar({
   onUpdateUserCollection?: (id: string, data: { name?: string; color?: string | null }) => Promise<void>;
   onRemoveUserCollection?: (id: string) => Promise<void>;
   onAddToUserCollection?: (collectionId: string, pictogramId: string) => Promise<boolean>;
+  onGoFeedback?: () => void;
 }) {
   return (
     <Sidebar collapsible="offcanvas" {...props}>
@@ -208,6 +210,30 @@ export function AppSidebar({
 
       {/* ── Footer : user ── */}
       <SidebarFooter className="border-t border-sidebar-border pt-2">
+        {/* Signalements — visible pour tous */}
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              onClick={onGoFeedback}
+              className="text-muted-foreground hover:text-foreground hover:bg-accent/60"
+            >
+              <LayoutList className="size-4" />
+              <span>Signalements</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          {/* Signaler — visible seulement si connecté */}
+          {!!user && (
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                onClick={onGoFeedback}
+                className="text-muted-foreground hover:text-foreground hover:bg-accent/60"
+              >
+                <MessageCircleWarning className="size-4" />
+                <span>Signaler</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          )}
+        </SidebarMenu>
         <div className="flex items-center px-2 py-1">
           <NavUser user={user} onLogin={onLogin} onLogout={onLogout} />
         </div>
