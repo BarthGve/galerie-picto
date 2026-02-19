@@ -48,17 +48,13 @@ const DiscoverShowcase = lazy(() =>
     default: m.DiscoverShowcase,
   })),
 );
-const GalleryProposalA = lazy(() => import("@/components/GalleryProposalA"));
-const GalleryProposalB = lazy(() => import("@/components/GalleryProposalB"));
 const FeedbackPage = lazy(() =>
   import("@/components/FeedbackPage").then((m) => ({ default: m.FeedbackPage })),
 );
-type Page = "home" | "discover" | "gallery" | "test-discover" | "gallery-a" | "gallery-b" | "feedback";
+type Page = "home" | "discover" | "gallery" | "test-discover" | "feedback";
 
 function getInitialPage(): Page {
   const path = window.location.pathname;
-  if (path === "/gallery-a") return "gallery-a";
-  if (path === "/gallery-b") return "gallery-b";
   if (path === "/gallery") return "gallery";
   if (path === "/discover") return "discover";
   if (path === "/feedback") return "feedback";
@@ -358,21 +354,6 @@ function AppInner() {
           onLogin={handleLogin}
           onLogout={logout}
         />
-      </Suspense>
-    );
-  }
-
-  // Gallery proposals preview
-  if (page === "gallery-a" || page === "gallery-b") {
-    return (
-      <Suspense
-        fallback={
-          <div className="min-h-screen flex items-center justify-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
-          </div>
-        }
-      >
-        {page === "gallery-a" ? <GalleryProposalA /> : <GalleryProposalB />}
       </Suspense>
     );
   }
