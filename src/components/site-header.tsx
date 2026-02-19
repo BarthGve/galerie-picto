@@ -96,7 +96,7 @@ export function SiteHeader({
                   className="fixed inset-0 z-40"
                   onClick={() => setBellOpen(false)}
                 />
-                <div className="absolute right-0 top-full mt-2 z-50 w-80 rounded-2xl border border-border bg-popover shadow-xl overflow-hidden">
+                <div className="absolute right-0 top-full mt-2 z-50 w-80 rounded border border-border bg-popover shadow-xl overflow-hidden">
                   {/* Header */}
                   <div className="flex items-center justify-between px-4 py-3 border-b border-border">
                     <span className="font-semibold text-sm">Notifications</span>
