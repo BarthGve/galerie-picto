@@ -29,6 +29,30 @@ const DSFR_LIGHT_TO_DARK: Record<string, string> = {
 };
 
 /**
+ * Cache module-level : url → promise du SVG text transformé (dark).
+ * Partagé entre toutes les instances pour éviter 50 fetches simultanés.
+ * En cas d'erreur, la promise est supprimée pour permettre un retry.
+ */
+const darkSvgCache = new Map<string, Promise<string>>();
+
+function getDarkSvgText(url: string): Promise<string> {
+  if (!darkSvgCache.has(url)) {
+    const promise = fetchSvgText(url)
+      .then((svgText) => {
+        const normalized = replaceSvgColors(svgText, NORMALIZE_TO_DSFR);
+        return replaceSvgColors(normalized, DSFR_LIGHT_TO_DARK);
+      })
+      .catch((err) => {
+        // Supprimer du cache pour permettre un retry au prochain appel
+        darkSvgCache.delete(url);
+        throw err;
+      });
+    darkSvgCache.set(url, promise);
+  }
+  return darkSvgCache.get(url)!;
+}
+
+/**
  * Retourne l'URL du pictogramme adaptée au thème courant.
  * En dark mode → fetch le SVG, normalise les couleurs, et applique le remap DSFR dark.
  * En light mode → URL d'origine.
@@ -46,6 +70,7 @@ export function usePictogramUrl(pictogram: Pictogram): string {
         URL.revokeObjectURL(blobUrlRef.current);
         blobUrlRef.current = null;
       }
+      setBlobUrl(null);
       return;
     }
 
@@ -54,15 +79,19 @@ export function usePictogramUrl(pictogram: Pictogram): string {
 
     let cancelled = false;
 
-    fetchSvgText(pictogram.url).then((svgText) => {
-      if (cancelled) return;
-      const normalized = replaceSvgColors(svgText, NORMALIZE_TO_DSFR);
-      const darkSvg = replaceSvgColors(normalized, DSFR_LIGHT_TO_DARK);
-      const blob = new Blob([darkSvg], { type: "image/svg+xml" });
-      const objectUrl = URL.createObjectURL(blob);
-      blobUrlRef.current = objectUrl;
-      setBlobUrl(objectUrl);
-    });
+    getDarkSvgText(pictogram.url)
+      .then((darkSvg) => {
+        if (cancelled) return;
+        const blob = new Blob([darkSvg], { type: "image/svg+xml" });
+        const objectUrl = URL.createObjectURL(blob);
+        blobUrlRef.current = objectUrl;
+        setBlobUrl(objectUrl);
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          console.warn(`[usePictogramUrl] Dark transform failed for ${pictogram.url}:`, err);
+        }
+      });
 
     return () => {
       cancelled = true;
