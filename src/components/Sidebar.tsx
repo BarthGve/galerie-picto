@@ -210,29 +210,20 @@ export function AppSidebar({
 
       {/* ── Footer : user ── */}
       <SidebarFooter className="border-t border-sidebar-border pt-2">
-        {/* Signalements — visible pour tous */}
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
               onClick={onGoFeedback}
               className="text-muted-foreground hover:text-foreground hover:bg-accent/60"
             >
-              <LayoutList className="size-4" />
-              <span>Signalements</span>
+              {!!user ? (
+                <MessageCircleWarning className="size-4" />
+              ) : (
+                <LayoutList className="size-4" />
+              )}
+              <span>{!!user ? "Signaler" : "Signalements"}</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
-          {/* Signaler — visible seulement si connecté */}
-          {!!user && (
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                onClick={onGoFeedback}
-                className="text-muted-foreground hover:text-foreground hover:bg-accent/60"
-              >
-                <MessageCircleWarning className="size-4" />
-                <span>Signaler</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          )}
         </SidebarMenu>
         <div className="flex items-center px-2 py-1">
           <NavUser user={user} onLogin={onLogin} onLogout={onLogout} />
