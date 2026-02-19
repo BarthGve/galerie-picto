@@ -63,8 +63,11 @@ export function useFeedbackNotifications(isAuthenticated: boolean) {
 
     fetchNotifications();
 
+    // Poll every 60s as fallback (dev: no webhook, prod: redundancy)
+    const pollInterval = setInterval(fetchNotifications, 60_000);
+
     const token = getStoredToken();
-    if (!token) return;
+    if (!token) return () => clearInterval(pollInterval);
 
     let active = true;
     const controller = new AbortController();
@@ -124,6 +127,7 @@ export function useFeedbackNotifications(isAuthenticated: boolean) {
     return () => {
       active = false;
       controller.abort();
+      clearInterval(pollInterval);
     };
   }, [isAuthenticated, fetchNotifications, refreshUnread]);
 
