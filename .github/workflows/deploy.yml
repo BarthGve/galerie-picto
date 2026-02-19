@@ -5,17 +5,12 @@ on:
     branches: [main]
   workflow_dispatch:
 
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: barthgve/la-boite-a-pictos-backend
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
     environment: "Galerie Picto / production"
     permissions:
       contents: read
-      packages: write
 
     steps:
       - name: Checkout
@@ -40,20 +35,6 @@ jobs:
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
         run: pnpm build
 
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push backend image
-        uses: docker/build-push-action@v6
-        with:
-          context: ./backend
-          push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-
       - name: Setup SSH
         env:
           SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_KEY }}
@@ -74,22 +55,30 @@ jobs:
           rsync -avz --delete \
             -e "ssh -i ~/.ssh/deploy_key -p $VPS_SSH_PORT" \
             dist/ \
-            "$VPS_USER@$VPS_HOST:/var/www/laboiteapictos/"
+            "$VPS_USER@$VPS_HOST:/home/$VPS_USER/galerie-picto/dist/"
 
-      - name: Deploy backend on VPS
-        uses: appleboy/ssh-action@v1
+      - name: Deploy backend source via rsync
         env:
-          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GHCR_USER: ${{ github.actor }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_SSH_PORT: ${{ secrets.VPS_SSH_PORT || '22' }}
+        run: |
+          rsync -avz --delete \
+            --exclude='node_modules' \
+            --exclude='dist' \
+            --exclude='data' \
+            --exclude='.env' \
+            -e "ssh -i ~/.ssh/deploy_key -p $VPS_SSH_PORT" \
+            backend/ \
+            "$VPS_USER@$VPS_HOST:/home/$VPS_USER/galerie-picto/backend/"
+
+      - name: Rebuild and restart backend
+        uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_SSH_PORT || '22' }}
-          envs: GHCR_TOKEN,GHCR_USER
           script: |
-            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
-            cd ~/galerie
-            docker compose pull
-            docker compose up -d
+            docker compose -f ~/docker-compose.yml up -d --build galerie-backend
             docker image prune -f
