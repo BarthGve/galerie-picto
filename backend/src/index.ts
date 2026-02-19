@@ -5,7 +5,8 @@ import helmet from "helmet";
 import compression from "compression";
 import rateLimit from "express-rate-limit";
 import { config } from "./config.js";
-import { readFileSync } from "fs";
+import { readFileSync, existsSync, createReadStream } from "fs";
+import { resolve } from "path";
 import { runMigrations, closeDb } from "./db/index.js";
 import { autoSeedIfEmpty } from "./db/seed-from-minio.js";
 
@@ -115,6 +116,23 @@ app.use("/api/user", favoritesRoutes);
 app.use("/api/user", userCollectionsRoutes);
 app.use("/api/pictograms", likesRoutes);
 app.use("/api/feedback", feedbackRoutes);
+
+// TEMP: route d'export DB - à supprimer après migration
+app.get("/admin/export-db", (req, res) => {
+  const secret = process.env.ADMIN_EXPORT_SECRET;
+  if (!secret || req.headers["x-admin-secret"] !== secret) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  const dbPath = resolve(process.env.DATABASE_PATH || "./data/galerie.db");
+  if (!existsSync(dbPath)) {
+    res.status(404).json({ error: "Database file not found" });
+    return;
+  }
+  res.setHeader("Content-Type", "application/octet-stream");
+  res.setHeader("Content-Disposition", "attachment; filename=galerie.db");
+  createReadStream(dbPath).pipe(res);
+});
 
 // Run migrations then start server
 runMigrations();
