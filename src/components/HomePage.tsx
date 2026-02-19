@@ -461,9 +461,12 @@ export function HomePage({
               Galerie Picto — Libre et open source
             </span>
           </div>
-          <div className="flex gap-6 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+          <div className="flex items-center gap-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">
             <Download className="w-3.5 h-3.5 inline" />
             <span>SVG & PNG</span>
+            <span className="inline-flex items-center rounded-full border border-border bg-muted/50 px-2 py-0.5 text-[10px] font-mono text-muted-foreground/60 select-none normal-case tracking-normal font-normal">
+              v{__APP_VERSION__}
+            </span>
           </div>
         </div>
       </footer>
