@@ -5,9 +5,8 @@ import helmet from "helmet";
 import compression from "compression";
 import rateLimit from "express-rate-limit";
 import { config } from "./config.js";
-import { readFileSync, existsSync, createReadStream } from "fs";
-import { resolve } from "path";
-import { runMigrations, closeDb } from "./db/index.js";
+import { readFileSync } from "fs";
+import { runMigrations, closeDb, sqlite } from "./db/index.js";
 import { autoSeedIfEmpty } from "./db/seed-from-minio.js";
 
 const pkg = JSON.parse(
@@ -118,20 +117,17 @@ app.use("/api/pictograms", likesRoutes);
 app.use("/api/feedback", feedbackRoutes);
 
 // TEMP: route d'export DB - à supprimer après migration
-app.get("/admin/export-db", (req, res) => {
+app.get("/admin/export-db", async (req, res) => {
   const secret = process.env.ADMIN_EXPORT_SECRET;
   if (!secret || req.headers["x-admin-secret"] !== secret) {
     res.status(401).json({ error: "Unauthorized" });
     return;
   }
-  const dbPath = resolve(process.env.DATABASE_PATH || "./data/galerie.db");
-  if (!existsSync(dbPath)) {
-    res.status(404).json({ error: "Database file not found" });
-    return;
-  }
+  const backupPath = "/tmp/galerie-backup.db";
+  await sqlite.backup(backupPath);
   res.setHeader("Content-Type", "application/octet-stream");
   res.setHeader("Content-Disposition", "attachment; filename=galerie.db");
-  createReadStream(dbPath).pipe(res);
+  res.sendFile(backupPath);
 });
 
 // Run migrations then start server
