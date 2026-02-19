@@ -465,6 +465,15 @@ export function HomePage({
             <span className="inline-flex items-center rounded-full border border-border bg-muted/50 px-2 py-0.5 text-[10px] font-mono text-muted-foreground/60 select-none normal-case tracking-normal font-normal">
               v{__APP_VERSION__}
             </span>
+            <a
+              href="https://github.com/BarthGve/galerie-picto"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-muted-foreground/40 hover:text-muted-foreground transition-colors normal-case"
+              title="Voir le code source"
+            >
+              <Github className="w-4 h-4" />
+            </a>
           </div>
         </div>
       </footer>
