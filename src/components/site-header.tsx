@@ -1,8 +1,9 @@
-import { Search } from "lucide-react";
+import { Moon, Search, Sun } from "lucide-react";
 import { useRef, useState } from "react";
 
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { useTheme } from "@/hooks/use-theme";
 
 export function SiteHeader({
   onSearch,
@@ -13,6 +14,8 @@ export function SiteHeader({
 }) {
   const [query, setQuery] = useState("");
   const timerRef = useRef<ReturnType<typeof setTimeout>>(null);
+  const { theme, setTheme } = useTheme();
+  const isDark = theme === "dark";
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -40,9 +43,17 @@ export function SiteHeader({
         </div>
       </div>
 
-      <span className="text-[11px] text-muted-foreground/50 font-mono select-none">
-        v{__APP_VERSION__}
-      </span>
+      <div className="flex items-center gap-3">
+        <button
+          onClick={() => setTheme(isDark ? "light" : "dark")}
+          className="p-2 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+        >
+          {isDark ? <Sun className="size-4" /> : <Moon className="size-4" />}
+        </button>
+        <span className="text-[11px] text-muted-foreground/50 font-mono select-none">
+          v{__APP_VERSION__}
+        </span>
+      </div>
     </header>
   );
 }

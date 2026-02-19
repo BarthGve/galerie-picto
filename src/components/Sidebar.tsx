@@ -1,4 +1,4 @@
-import { Moon, Palette, Plus, Sun, Github, ArrowRight } from "lucide-react";
+import { Palette, Plus, Github, ArrowRight } from "lucide-react";
 
 import { NavGalleries } from "@/components/nav-galleries";
 import { NavContributors } from "@/components/nav-contributors";
@@ -18,7 +18,6 @@ import {
 } from "@/components/ui/sidebar";
 import type { Gallery, Pictogram, UserCollection } from "@/lib/types";
 import type { GitHubUser } from "@/lib/github-auth";
-import { useTheme } from "@/hooks/use-theme";
 
 export function AppSidebar({
   galleries,
@@ -80,9 +79,6 @@ export function AppSidebar({
   onRemoveUserCollection?: (id: string) => Promise<void>;
   onAddToUserCollection?: (collectionId: string, pictogramId: string) => Promise<boolean>;
 }) {
-  const { theme, setTheme } = useTheme();
-  const isDark = theme === "dark";
-
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       {/* ── Header : Logo compact style B ── */}
@@ -210,16 +206,10 @@ export function AppSidebar({
         )}
       </SidebarContent>
 
-      {/* ── Footer : user + theme toggle inline style B ── */}
+      {/* ── Footer : user ── */}
       <SidebarFooter className="border-t border-sidebar-border pt-2">
-<div className="flex items-center justify-between px-2 py-1">
+        <div className="flex items-center px-2 py-1">
           <NavUser user={user} onLogin={onLogin} onLogout={onLogout} />
-          <button
-            onClick={() => setTheme(isDark ? "light" : "dark")}
-            className="p-2 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors shrink-0"
-          >
-            {isDark ? <Sun className="size-4" /> : <Moon className="size-4" />}
-          </button>
         </div>
       </SidebarFooter>
     </Sidebar>
