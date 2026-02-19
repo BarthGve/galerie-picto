@@ -6,7 +6,7 @@ import compression from "compression";
 import rateLimit from "express-rate-limit";
 import { config } from "./config.js";
 import { readFileSync } from "fs";
-import { runMigrations, closeDb, sqlite } from "./db/index.js";
+import { runMigrations, closeDb } from "./db/index.js";
 import { autoSeedIfEmpty } from "./db/seed-from-minio.js";
 
 const pkg = JSON.parse(
@@ -115,20 +115,6 @@ app.use("/api/user", favoritesRoutes);
 app.use("/api/user", userCollectionsRoutes);
 app.use("/api/pictograms", likesRoutes);
 app.use("/api/feedback", feedbackRoutes);
-
-// TEMP: route d'export DB - à supprimer après migration
-app.get("/admin/export-db", async (req, res) => {
-  const secret = process.env.ADMIN_EXPORT_SECRET;
-  if (!secret || req.headers["x-admin-secret"] !== secret) {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
-  }
-  const backupPath = "/tmp/galerie-backup.db";
-  await sqlite.backup(backupPath);
-  res.setHeader("Content-Type", "application/octet-stream");
-  res.setHeader("Content-Disposition", "attachment; filename=galerie.db");
-  res.sendFile(backupPath);
-});
 
 // Run migrations then start server
 runMigrations();
