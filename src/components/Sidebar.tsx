@@ -212,6 +212,11 @@ export function AppSidebar({
 
       {/* ── Footer : user + theme toggle inline style B ── */}
       <SidebarFooter className="border-t border-sidebar-border pt-2">
+        <div className="px-3 pb-1">
+          <span className="text-[10px] text-muted-foreground/50 font-mono select-none">
+            v{__APP_VERSION__}
+          </span>
+        </div>
         <div className="flex items-center justify-between px-2 py-1">
           <NavUser user={user} onLogin={onLogin} onLogout={onLogout} />
           <button
