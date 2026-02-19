@@ -215,8 +215,7 @@ export function HomePage({
                 Vos pictogrammes,{" "}
                 <br className="hidden sm:block" />
                 <span className="inline-block pr-6">
-                  <span style={{ color: 'var(--dsfr-blue-france-sun)' }}>prêt</span>
-                  <span className="text-white" style={{ WebkitTextStroke: '1.5px rgba(0,0,0,0.5)' }}>s </span>
+                  <span style={{ color: 'var(--dsfr-blue-france-sun)' }}>prêts </span>
                   <span className="text-white" style={{ WebkitTextStroke: '1.5px rgba(0,0,0,0.5)' }}>à l'</span>
                   <span style={{ color: 'var(--dsfr-red-marianne-sun)' }}>emploi</span>
                 </span>
