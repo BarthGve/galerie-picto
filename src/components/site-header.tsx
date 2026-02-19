@@ -50,7 +50,7 @@ export function SiteHeader({
         >
           {isDark ? <Sun className="size-4" /> : <Moon className="size-4" />}
         </button>
-        <span className="text-[11px] text-muted-foreground/50 font-mono select-none">
+        <span className="inline-flex items-center rounded-full border border-border bg-muted/50 px-2 py-0.5 text-[10px] font-mono text-muted-foreground/60 select-none">
           v{__APP_VERSION__}
         </span>
       </div>
