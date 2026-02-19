@@ -377,15 +377,6 @@ function AppInner() {
     );
   }
 
-  // Feedback page — public, no need to wait for pictograms
-  if (page === "feedback") {
-    return (
-      <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" /></div>}>
-        <FeedbackPage user={user} onLogin={handleLogin} />
-      </Suspense>
-    );
-  }
-
   // Test Discover Showcase page
   if (page === "test-discover") {
     return (
@@ -505,7 +496,11 @@ function AppInner() {
           />
           <div className="flex flex-1 flex-col">
             <div className="@container/main flex flex-1 flex-col gap-2">
-              {page === "discover" ? (
+              {page === "feedback" ? (
+                <Suspense fallback={null}>
+                  <FeedbackPage user={user} onLogin={handleLogin} />
+                </Suspense>
+              ) : page === "discover" ? (
                 <Suspense fallback={null}>
                   <DiscoverPage
                     pictograms={pictograms}
