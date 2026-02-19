@@ -164,7 +164,7 @@ export function HomePage({
       <div className="fixed top-[40%] left-[30%] w-64 h-64 bg-gradient-to-tr from-[#adadf9] to-[#2845c1] rounded-full blur-3xl -z-10 opacity-20 dark:opacity-10 animate-blob animation-delay-4000" />
 
       {/* Navbar */}
-      <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
+      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl">
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-6">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded bg-gradient-to-br from-[#2845c1] to-[#6a6af4] flex items-center justify-center shadow-lg shadow-[#2845c1]/20">
