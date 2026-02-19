@@ -167,10 +167,10 @@ export function HomePage({
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl">
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-6">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded bg-gradient-to-br from-[#2845c1] to-[#6a6af4] flex items-center justify-center shadow-lg shadow-[#2845c1]/20">
-              <Palette className="size-4 text-primary-foreground" />
+            <div className="flex items-center justify-center size-8 rounded-xl bg-foreground shadow-lg">
+              <Palette className="size-5 text-background" />
             </div>
-            <span className="text-base font-bold text-foreground">
+            <span className="text-xl font-black tracking-tighter">
               Galerie Picto
             </span>
           </div>
