@@ -130,9 +130,9 @@ export function PictoGrid({
                 : "bg-accent text-muted-foreground hover:text-foreground"
             }`}
             style={!activeTag ? {
-              backgroundColor: "var(--dsfr-blue-france-975)",
-              color: "var(--dsfr-blue-france-main)",
-              border: "1px solid var(--dsfr-blue-france-850)",
+              backgroundColor: "var(--accent)",
+              color: "var(--primary)",
+              border: "1px solid color-mix(in srgb, var(--primary) 30%, transparent)",
             } : {}}
           >
             Tous
@@ -147,9 +147,9 @@ export function PictoGrid({
                   : "bg-accent text-muted-foreground hover:text-foreground"
               }`}
               style={activeTag === tag ? {
-                backgroundColor: "var(--dsfr-blue-france-975)",
-                color: "var(--dsfr-blue-france-main)",
-                border: "1px solid var(--dsfr-blue-france-850)",
+                backgroundColor: "var(--accent)",
+                color: "var(--primary)",
+                border: "1px solid color-mix(in srgb, var(--primary) 30%, transparent)",
               } : {}}
             >
               {tag}

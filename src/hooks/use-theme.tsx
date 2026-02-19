@@ -30,7 +30,9 @@ function applyTheme(theme: Theme) {
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(() => {
-    return (localStorage.getItem("theme") as Theme) || "system";
+    const stored = (localStorage.getItem("theme") as Theme) || "system";
+    applyTheme(stored);
+    return stored;
   });
   const [systemTheme, setSystemTheme] = useState<"light" | "dark">(
     getSystemTheme,

@@ -15,6 +15,7 @@ import {
   SidebarMenuItem,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarSeparator,
 } from "@/components/ui/sidebar";
 import type { Gallery, Pictogram, UserCollection } from "@/lib/types";
 import type { GitHubUser } from "@/lib/github-auth";
@@ -141,15 +142,6 @@ export function AppSidebar({
           onDeleteGallery={user ? onDeleteGallery : undefined}
           onAddToGallery={user ? onAddToGallery : undefined}
         />
-        <NavContributors
-          pictograms={pictograms}
-          selectedContributor={selectedContributor}
-          onSelectContributor={(login) => {
-            onSelectContributor(login);
-            if (login) onSelectGallery(null);
-          }}
-        />
-
         {!!user && (
           <NavUserCollections
             collections={userCollections ?? []}
@@ -161,6 +153,15 @@ export function AppSidebar({
             onAddPictogram={onAddToUserCollection ?? (async () => false)}
           />
         )}
+
+        <NavContributors
+          pictograms={pictograms}
+          selectedContributor={selectedContributor}
+          onSelectContributor={(login) => {
+            onSelectContributor(login);
+            if (login) onSelectGallery(null);
+          }}
+        />
 
         {/* Nouvelle galerie — style dashed B */}
         {!!user && (
@@ -184,21 +185,21 @@ export function AppSidebar({
         {/* ── GitHub Bonus Card (non-connecté) ── */}
         {!user && (
           <SidebarGroup className="group-data-[collapsible=icon]:hidden mt-auto">
-            <div className="relative p-5 rounded-3xl bg-gradient-to-br from-[#e3e3fd] to-white border border-[#adadf9] shadow-lg overflow-hidden group mb-6">
+            <div className="relative p-5 rounded-3xl bg-gradient-to-br from-primary/10 to-background border border-primary/25 shadow-lg overflow-hidden group mb-6">
               <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                 <Github className="w-16 h-16 rotate-12" />
               </div>
               <div className="relative z-10 space-y-2">
-                <div className="flex items-center gap-2 text-[#2845c1] font-bold text-xs">
+                <div className="flex items-center gap-2 text-primary font-bold text-xs">
                   <Github className="w-4 h-4" />
                   Bonus GitHub
                 </div>
                 <p className="text-muted-foreground text-[11px] font-medium leading-relaxed">
-                  Connectez-vous pour débloquer <span className="text-[#2845c1]">favoris</span> et <span className="text-[#2845c1]">collections</span>.
+                  Connectez-vous pour débloquer <span className="text-primary">favoris</span> et <span className="text-primary">collections</span>.
                 </p>
                 <button
                   onClick={onLogin}
-                  className="text-[11px] font-bold text-[#2845c1] flex items-center gap-1 hover:gap-2 transition-all"
+                  className="text-[11px] font-bold text-primary flex items-center gap-1 hover:gap-2 transition-all"
                 >
                   Se connecter <ArrowRight className="w-3 h-3" />
                 </button>
@@ -208,8 +209,8 @@ export function AppSidebar({
         )}
       </SidebarContent>
 
-      {/* ── Footer : user ── */}
-      <SidebarFooter className="border-t border-sidebar-border pt-2">
+      {/* ── Footer : Signaler + user ── */}
+      <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
@@ -225,6 +226,7 @@ export function AppSidebar({
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
+        <SidebarSeparator className="mx-0 w-full" />
         <div className="flex items-center px-2 py-1">
           <NavUser user={user} onLogin={onLogin} onLogout={onLogout} />
         </div>
