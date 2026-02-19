@@ -2,13 +2,8 @@ import "dotenv/config";
 import { sql } from "drizzle-orm";
 import { config } from "../config.js";
 import { db, runMigrations } from "./index.js";
-import {
-  pictograms,
-  galleries,
-  galleryPictograms,
-  downloads,
-} from "./schema.js";
-import type { PictogramManifest, GalleriesFile } from "../types.js";
+import { pictograms, downloads } from "./schema.js";
+import type { PictogramManifest } from "../types.js";
 
 function buildUrl(key: string): string {
   return `${config.minio.endpoint}/${config.minio.bucket}/${key}`;
@@ -58,43 +53,7 @@ async function seedData() {
     console.log("[seed] No pictograms found in Minio.");
   }
 
-  // 2. Seed galleries
-  console.log("[seed] Reading galleries.json from Minio...");
-  const galleriesFile = await readJsonFromMinio<GalleriesFile>(
-    `${prefix}galleries.json`,
-  );
-
-  if (galleriesFile && galleriesFile.galleries.length > 0) {
-    console.log(
-      `[seed] Inserting ${galleriesFile.galleries.length} galleries...`,
-    );
-    for (const g of galleriesFile.galleries) {
-      db.insert(galleries)
-        .values({
-          id: g.id,
-          name: g.name,
-          description: g.description || null,
-          color: g.color || null,
-          createdAt: g.createdAt,
-          updatedAt: g.updatedAt,
-        })
-        .onConflictDoNothing()
-        .run();
-
-      // Insert gallery-pictogram associations
-      for (const pictoId of g.pictogramIds) {
-        db.insert(galleryPictograms)
-          .values({ galleryId: g.id, pictogramId: pictoId })
-          .onConflictDoNothing()
-          .run();
-      }
-    }
-    console.log("[seed] Galleries inserted.");
-  } else {
-    console.log("[seed] No galleries found in Minio.");
-  }
-
-  // 3. Seed downloads
+  // 2. Seed downloads
   console.log("[seed] Reading downloads.json from Minio...");
   const downloadsData = await readJsonFromMinio<Record<string, number>>(
     `${prefix}downloads.json`,
