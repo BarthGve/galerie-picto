@@ -127,10 +127,10 @@ export function ColorCustomizer({ svgText, onModifiedSvgChange }: ColorCustomize
                       style={{
                         backgroundColor: c.hex,
                         borderColor: isSelected
-                          ? "var(--dsfr-blue-france-main)"
+                          ? "var(--primary)"
                           : "var(--border)",
                         boxShadow: isSelected
-                          ? "0 0 0 2px var(--dsfr-blue-france-main)"
+                          ? "0 0 0 2px var(--primary)"
                           : undefined,
                       }}
                     />

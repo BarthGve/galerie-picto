@@ -45,12 +45,7 @@ export function NavMain({
               <SidebarMenuButton
                 tooltip="Ajouter un pictogramme"
                 onClick={onUploadClick}
-                className="text-primary-foreground shadow-lg rounded hover:text-primary-foreground active:text-primary-foreground"
-                style={{ backgroundColor: 'var(--dsfr-blue-france-sun)' }}
-                onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--dsfr-blue-france-sun-hover)'}
-                onMouseLeave={e => e.currentTarget.style.backgroundColor = 'var(--dsfr-blue-france-sun)'}
-                onMouseDown={e => e.currentTarget.style.backgroundColor = 'var(--dsfr-blue-france-sun-active)'}
-                onMouseUp={e => e.currentTarget.style.backgroundColor = 'var(--dsfr-blue-france-sun-hover)'}
+                className="bg-primary text-primary-foreground shadow-lg rounded hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/80 active:text-primary-foreground"
               >
                 <CirclePlus />
                 <span>Ajouter</span>
@@ -106,8 +101,8 @@ export function NavMain({
                 <Heart
                   className="transition-colors"
                   style={showFavoritesOnly ? {
-                    color: "var(--dsfr-red-marianne-main)",
-                    fill: "var(--dsfr-red-marianne-main)",
+                    color: "var(--destructive)",
+                    fill: "var(--destructive)",
                   } : {}}
                 />
                 <span>Mes favoris</span>

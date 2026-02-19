@@ -498,7 +498,7 @@ const handleDownloadSvg = () => {
                   <AlertDialogFooter>
                     <AlertDialogCancel>Annuler</AlertDialogCancel>
                     <AlertDialogAction
-                      variant="destructive"
+                      className="bg-destructive text-white hover:bg-destructive/90"
                       onClick={async () => {
                         const success = await onDeletePictogram(pictogram.id);
                         if (success) {
@@ -724,8 +724,7 @@ const handleDownloadSvg = () => {
                   <button
                     onClick={handleDownloadSvg}
                     disabled={!svgLoaded}
-                    className="h-9 flex-1 flex items-center justify-center gap-2 rounded-[4px] text-xs font-bold text-white transition-all hover:opacity-90 disabled:opacity-50"
-                    style={{ backgroundColor: "var(--dsfr-blue-france-main)" }}
+                    className="h-9 flex-1 flex items-center justify-center gap-2 rounded-[4px] text-xs font-bold text-primary-foreground transition-all hover:opacity-90 disabled:opacity-50 bg-primary"
                   >
                     <Download className="w-3.5 h-3.5" />
                     SVG
@@ -745,8 +744,7 @@ const handleDownloadSvg = () => {
                   <button
                     onClick={handleDownloadPng}
                     disabled={!svgLoaded}
-                    className="h-9 flex-1 flex items-center justify-center gap-2 rounded-[4px] text-xs font-bold text-white transition-all hover:opacity-90 disabled:opacity-50"
-                    style={{ backgroundColor: "var(--dsfr-blue-france-main)" }}
+                    className="h-9 flex-1 flex items-center justify-center gap-2 rounded-[4px] text-xs font-bold text-primary-foreground transition-all hover:opacity-90 disabled:opacity-50 bg-primary"
                   >
                     <Download className="w-3.5 h-3.5" />
                     PNG
@@ -758,8 +756,7 @@ const handleDownloadSvg = () => {
                     {/* SVG verrouillé */}
                     <button
                       onClick={() => setUpgradeGateOpen(true)}
-                      className="h-9 flex-1 flex items-center justify-center gap-2 rounded-[4px] text-xs font-bold text-white opacity-60 hover:opacity-80 transition-opacity"
-                      style={{ backgroundColor: "var(--dsfr-blue-france-main)" }}
+                      className="h-9 flex-1 flex items-center justify-center gap-2 rounded-[4px] text-xs font-bold text-primary-foreground opacity-60 hover:opacity-80 transition-opacity bg-primary"
                     >
                       <Lock className="w-3.5 h-3.5" />
                       SVG
@@ -768,8 +765,7 @@ const handleDownloadSvg = () => {
                     <button
                       onClick={handleDownloadPngAnonymous}
                       disabled={anonDownloadsRemaining === 0}
-                      className="h-9 flex-1 flex items-center justify-center gap-2 rounded-[4px] text-xs font-bold text-white transition-all hover:opacity-90 disabled:opacity-50 ml-2"
-                      style={{ backgroundColor: "var(--dsfr-blue-france-main)" }}
+                      className="h-9 flex-1 flex items-center justify-center gap-2 rounded-[4px] text-xs font-bold text-primary-foreground transition-all hover:opacity-90 disabled:opacity-50 ml-2 bg-primary"
                     >
                       <Download className="w-3.5 h-3.5" />
                       PNG (256 px)

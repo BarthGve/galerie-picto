@@ -75,13 +75,15 @@ const FEATURES = [
     description:
       "Trouvez instantanément le pictogramme dont vous avez besoin par nom, tag ou galerie.",
     gradient: "from-[var(--dsfr-blue-france-sun)] to-[#1a1aff]",
+    glass: false,
   },
   {
     icon: Palette,
     title: "Personnalisation",
     description:
       "Changez les couleurs à la volée et téléchargez en SVG ou PNG selon vos besoins.",
-    gradient: "from-[var(--dsfr-grey-1000)] to-[var(--dsfr-grey-850)]",
+    gradient: "",
+    glass: true,
   },
   {
     icon: FolderOpen,
@@ -89,6 +91,7 @@ const FEATURES = [
     description:
       "Organisez vos pictogrammes en collections thématiques pour vos projets.",
     gradient: "from-[var(--dsfr-red-marianne-sun)] to-[#f95c5e]",
+    glass: false,
   },
 ];
 
@@ -152,7 +155,7 @@ export function HomePage({
       <div
         className="fixed inset-0 -z-20 opacity-[0.03] pointer-events-none"
         style={{
-          backgroundImage: "radial-gradient(#000 1px, transparent 1px)",
+          backgroundImage: "radial-gradient(currentColor 1px, transparent 1px)",
           backgroundSize: "32px 32px",
         }}
       />
@@ -214,9 +217,9 @@ export function HomePage({
                 Vos pictogrammes,{" "}
                 <br className="hidden sm:block" />
                 <span className="inline-block pr-6">
-                  <span style={{ color: 'var(--dsfr-blue-france-sun)' }}>prêts </span>
+                  <span style={{ color: 'var(--primary)' }}>prêts </span>
                   <span className="text-white" style={{ WebkitTextStroke: '1.5px rgba(0,0,0,0.5)' }}>à l'</span>
-                  <span style={{ color: 'var(--dsfr-red-marianne-sun)' }}>emploi</span>
+                  <span style={{ color: 'var(--destructive)' }}>emploi</span>
                 </span>
               </h1>
 
@@ -230,7 +233,7 @@ export function HomePage({
               <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
                 <button
                   onClick={onEnterGallery}
-                  className="btn-cta px-8 py-4 rounded font-bold text-lg shadow-2xl transition-all hover:scale-105 active:scale-95" style={{ backgroundColor: 'var(--dsfr-blue-france-sun)', color: 'var(--dsfr-grey-1000)' }}
+                  className="btn-cta px-8 py-4 rounded font-bold text-lg shadow-2xl transition-all hover:scale-105 active:scale-95 bg-primary text-primary-foreground"
                 >
                   <span className="flex items-center gap-2">
                     Explorer la galerie
@@ -307,7 +310,7 @@ export function HomePage({
               >
                 <div className="relative mb-5">
                   <div
-                    className={`w-14 h-14 rounded bg-gradient-to-br ${feature.gradient} flex items-center justify-center text-primary-foreground shadow-lg transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3`}
+                    className={`w-14 h-14 rounded flex items-center justify-center shadow-lg transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3 ${feature.glass ? "glass text-foreground" : `bg-gradient-to-br ${feature.gradient} text-primary-foreground`}`}
                   >
                     <feature.icon className="w-6 h-6" />
                   </div>
@@ -429,7 +432,7 @@ export function HomePage({
           <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
             <button
               onClick={onEnterGallery}
-              className="btn-cta px-8 py-4 rounded font-bold text-lg shadow-2xl transition-all hover:scale-105 active:scale-95" style={{ backgroundColor: 'var(--dsfr-blue-france-sun)', color: 'var(--dsfr-grey-1000)' }}
+              className="btn-cta px-8 py-4 rounded font-bold text-lg shadow-2xl transition-all hover:scale-105 active:scale-95 bg-primary text-primary-foreground"
             >
               <span className="flex items-center gap-2 justify-center">
                 Ouvrir la galerie

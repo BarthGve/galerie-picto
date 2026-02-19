@@ -76,9 +76,9 @@ function IssuesList({
           </Button>
         </div>
       ) : (
-        <div className="rounded-2xl border border-[#adadf9] bg-gradient-to-br from-[#e3e3fd] to-white px-5 py-5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+        <div className="rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/10 to-background px-5 py-5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
           <div className="flex-1 space-y-1">
-            <p className="font-semibold text-[#2845c1] text-sm flex items-center gap-1.5">
+            <p className="font-semibold text-primary text-sm flex items-center gap-1.5">
               <Github className="size-4" />
               Participez au projet !
             </p>
@@ -89,7 +89,7 @@ function IssuesList({
           </div>
           <button
             onClick={onLogin}
-            className="text-sm font-bold text-[#2845c1] flex items-center gap-1.5 hover:gap-2.5 transition-all shrink-0"
+            className="text-sm font-bold text-primary flex items-center gap-1.5 hover:gap-2.5 transition-all shrink-0"
           >
             Se connecter <ArrowRight className="size-4" />
           </button>
@@ -128,7 +128,7 @@ function IssuesList({
               href={item.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="block rounded-xl border border-border bg-card px-4 py-4 hover:border-primary/40 hover:shadow-sm transition-all group"
+              className="block rounded border border-border bg-card px-4 py-4 hover:border-primary/40 hover:shadow-sm transition-all group"
             >
               <div className="flex items-start gap-3">
                 <div className="mt-0.5 shrink-0">
@@ -165,8 +165,8 @@ function IssuesList({
                     {formatDate(item.createdAt)}
                   </p>
                   {item.status === "resolved" && item.resolution && (
-                    <p className="text-xs text-emerald-700 mt-2 line-clamp-2 bg-emerald-50 rounded px-2 py-1.5 border border-emerald-100">
-                      <span className="font-medium">Résolution :</span>{" "}
+                    <p className="text-xs text-muted-foreground mt-2 line-clamp-2">
+                      <span className="font-medium text-foreground">Résolution :</span>{" "}
                       {item.resolution}
                     </p>
                   )}

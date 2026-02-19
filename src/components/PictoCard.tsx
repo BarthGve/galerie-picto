@@ -218,8 +218,8 @@ export function PictoCard({
             <Heart
               className="h-5 w-5 transition-colors"
               style={isFavorite ? {
-                color: "var(--dsfr-red-marianne-main)",
-                fill: "var(--dsfr-red-marianne-main)",
+                color: "var(--destructive)",
+                fill: "var(--destructive)",
               } : {
                 color: "var(--muted-foreground)",
               }}
@@ -284,19 +284,19 @@ export function PictoCard({
                   disabled={!isAuthenticated}
                   className={`flex items-center gap-0.5 text-[10px] shrink-0 transition-colors ${
                     hasLiked
-                      ? "text-[var(--dsfr-blue-france-main)]"
-                      : "text-muted-foreground hover:text-[var(--dsfr-blue-france-main)]"
+                      ? "text-primary"
+                      : "text-muted-foreground hover:text-primary"
                   } disabled:cursor-default disabled:hover:text-muted-foreground`}
                   title={isAuthenticated ? (hasLiked ? "Retirer mon like" : "Liker") : undefined}
                 >
-                  <ThumbsUp className={`size-2.5 ${hasLiked ? "fill-[var(--dsfr-blue-france-main)]" : ""}`} />
+                  <ThumbsUp className={`size-2.5 ${hasLiked ? "fill-primary" : ""}`} />
                   {likeCount > 0 && <span>{likeCount}</span>}
                 </button>
               )}
             </div>
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <div className="flex items-center gap-1.5">
-                <Badge variant="outline" className="text-[10px] h-5 px-1.5 rounded-[4px]" style={{ backgroundColor: 'var(--dsfr-green-tilleul-verveine-975)', borderColor: 'var(--dsfr-green-tilleul-verveine-850)', color: 'var(--dsfr-green-tilleul-verveine-sun)' }}>
+                <Badge variant="outline" className="text-[10px] h-5 px-1.5 rounded-[4px] bg-muted text-muted-foreground border-border">
                   {formatFileSize(pictogram.size)}
                 </Badge>
                 {downloadCount > 0 && (
