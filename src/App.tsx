@@ -14,6 +14,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
 import {
+  DEV_MODE,
   devLogin,
   initiateGitHubLogin,
   handleGitHubCallback,
@@ -211,9 +212,7 @@ function AppInner() {
   }, []);
 
   const handleLogin = () => {
-    // Check directly — no reliance on cached module constants
-    if (!import.meta.env.VITE_GITHUB_CLIENT_ID) {
-      console.log("[DEV] Fake login activated — no VITE_GITHUB_CLIENT_ID");
+    if (DEV_MODE) {
       const fakeUser = devLogin();
       setUser(fakeUser);
       navigateTo("discover");
