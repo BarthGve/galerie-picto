@@ -451,7 +451,7 @@ export function HomePage({
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border py-8">
+      <footer className="py-8">
         <div className="mx-auto max-w-7xl px-6 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#2845c1] to-[#6a6af4] flex items-center justify-center">
