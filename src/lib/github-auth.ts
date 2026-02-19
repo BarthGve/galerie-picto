@@ -96,6 +96,12 @@ export async function getGitHubUser(token: string): Promise<GitHubUser | null> {
     return DEV_USER;
   }
 
+  // Token de dev invalide en production — purger silencieusement
+  if (token === "dev-token") {
+    localStorage.removeItem("github_token");
+    return null;
+  }
+
   try {
     const response = await fetch("https://api.github.com/user", {
       headers: {
@@ -103,6 +109,12 @@ export async function getGitHubUser(token: string): Promise<GitHubUser | null> {
         Accept: "application/vnd.github.v3+json",
       },
     });
+
+    if (response.status === 401) {
+      // Token expiré ou révoqué — déconnecter proprement
+      localStorage.removeItem("github_token");
+      return null;
+    }
 
     if (!response.ok) {
       throw new Error("Failed to fetch user info");
