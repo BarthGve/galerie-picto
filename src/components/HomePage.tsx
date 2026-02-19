@@ -8,7 +8,6 @@ import {
   Heart,
   UploadCloud,
   FolderOpen,
-  Download,
 } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { PictoMosaic } from "@/components/PictoMosaic";
@@ -459,17 +458,15 @@ export function HomePage({
             </div>
             <span className="text-xl font-black tracking-tighter">Galerie Picto</span>
           </div>
-          <div className="flex items-center gap-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-            <Download className="w-3.5 h-3.5 inline" />
-            <span>SVG & PNG</span>
-            <span className="inline-flex items-center rounded-full border border-border bg-muted/50 px-2 py-0.5 text-[10px] font-mono text-muted-foreground/60 select-none normal-case tracking-normal font-normal">
+          <div className="flex items-center gap-4">
+            <span className="inline-flex items-center rounded-full border border-border bg-muted/50 px-2 py-0.5 text-[10px] font-mono text-muted-foreground/60 select-none">
               v{__APP_VERSION__}
             </span>
             <a
               href="https://github.com/BarthGve/galerie-picto"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-muted-foreground/40 hover:text-muted-foreground transition-colors normal-case"
+              className="text-muted-foreground/40 hover:text-muted-foreground transition-colors"
               title="Voir le code source"
             >
               <Github className="w-4 h-4" />
