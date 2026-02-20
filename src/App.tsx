@@ -284,11 +284,7 @@ function AppInner() {
       const gallery = galleries.find((g) => g.id === selectedGalleryId);
       if (gallery) {
         const pictoIdsInGallery = new Set(gallery.pictogramIds);
-        result = result.filter(
-          (picto) =>
-            pictoIdsInGallery.has(picto.id) ||
-            picto.galleryIds?.includes(selectedGalleryId),
-        );
+        result = result.filter((picto) => pictoIdsInGallery.has(picto.id));
       }
     }
 
