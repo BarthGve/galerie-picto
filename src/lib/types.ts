@@ -56,7 +56,6 @@ export interface UserPictogram {
   ownerLogin: string;
   name: string;
   filename: string;
-  minioKey: string;
   size: number;
   tags: string[];
   createdAt: string | null;

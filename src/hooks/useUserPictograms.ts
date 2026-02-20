@@ -18,20 +18,23 @@ export function useUserPictograms(isAuthenticated: boolean) {
     const token = getStoredToken();
     if (!token || pictos.length === 0) return;
 
-    const results = await Promise.allSettled(
-      pictos.map(async (p) => {
-        // Réutilise l'URL déjà chargée si elle existe
-        if (blobUrlsRef.current.has(p.id)) return;
-        const res = await fetch(`${API_URL}/api/user/pictograms/${p.id}/file`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) return;
-        const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
-        blobUrlsRef.current.set(p.id, url);
-      }),
-    );
-    void results;
+    const toFetch = pictos.filter((p) => !blobUrlsRef.current.has(p.id));
+    const CONCURRENCY = 6;
+
+    for (let i = 0; i < toFetch.length; i += CONCURRENCY) {
+      const batch = toFetch.slice(i, i + CONCURRENCY);
+      await Promise.allSettled(
+        batch.map(async (p) => {
+          const res = await fetch(`${API_URL}/api/user/pictograms/${p.id}/file`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (!res.ok) return;
+          const blob = await res.blob();
+          blobUrlsRef.current.set(p.id, URL.createObjectURL(blob));
+        }),
+      );
+    }
+
     setBlobUrls(new Map(blobUrlsRef.current));
   }, []);
 

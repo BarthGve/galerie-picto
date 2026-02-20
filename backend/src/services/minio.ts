@@ -53,16 +53,6 @@ export async function deleteFile(key: string): Promise<void> {
   await s3Client.send(command);
 }
 
-const privateS3Client = new S3Client({
-  endpoint: config.minio.endpoint,
-  region: "us-east-1",
-  credentials: {
-    accessKeyId: config.minio.accessKey,
-    secretAccessKey: config.minio.secretKey,
-  },
-  forcePathStyle: true,
-});
-
 export async function writePrivateSvgFile(
   key: string,
   svgContent: string,
@@ -74,7 +64,7 @@ export async function writePrivateSvgFile(
     ContentType: "image/svg+xml",
     CacheControl: "private",
   });
-  await privateS3Client.send(command);
+  await s3Client.send(command);
 }
 
 export async function deletePrivateFile(key: string): Promise<void> {
@@ -82,7 +72,7 @@ export async function deletePrivateFile(key: string): Promise<void> {
     Bucket: config.minio.privateBucket,
     Key: key,
   });
-  await privateS3Client.send(command);
+  await s3Client.send(command);
 }
 
 export async function readPrivateFileAsText(
@@ -93,7 +83,7 @@ export async function readPrivateFileAsText(
       Bucket: config.minio.privateBucket,
       Key: key,
     });
-    const response = await privateS3Client.send(command);
+    const response = await s3Client.send(command);
     if (!response.Body) return null;
     return await response.Body.transformToString();
   } catch {

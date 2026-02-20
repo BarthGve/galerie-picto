@@ -23,6 +23,7 @@ import {
   removeUserPictogramFromCollection,
   USER_STORAGE_QUOTA,
 } from "../db/repositories/user-pictograms.js";
+import { getCollectionById } from "../db/repositories/user-collections.js";
 
 const router = Router();
 
@@ -59,14 +60,40 @@ router.post(
       return;
     }
 
-    const contentSize = Buffer.byteLength(content, "utf8");
-    const storageUsed = getUserStorageUsed(login);
-    if (storageUsed + contentSize > USER_STORAGE_QUOTA) {
-      res.status(507).json({ error: "Storage quota exceeded (5 MB)" });
+    // Validate tags before any I/O
+    if (Array.isArray(tags)) {
+      if (tags.length > 30) {
+        res.status(400).json({ error: "Max 30 tags" });
+        return;
+      }
+      if (
+        tags.some(
+          (t) =>
+            typeof t !== "string" || t.trim().length === 0 || t.length > 50,
+        )
+      ) {
+        res
+          .status(400)
+          .json({ error: "Tags must be non-empty strings of max 50 chars" });
+        return;
+      }
+    }
+
+    // Check collection exists and belongs to user BEFORE writing to Minio
+    const collection = getCollectionById(collectionId, login);
+    if (!collection) {
+      res.status(404).json({ error: "Collection not found" });
       return;
     }
 
     const sanitized = sanitizeSvg(content);
+    const sanitizedSize = Buffer.byteLength(sanitized, "utf8");
+    const storageUsed = getUserStorageUsed(login);
+    if (storageUsed + sanitizedSize > USER_STORAGE_QUOTA) {
+      res.status(507).json({ error: "Storage quota exceeded (5 MB)" });
+      return;
+    }
+
     const id = crypto.randomUUID();
     const minioKey = `${config.minio.privatePrefix}${login}/${crypto.randomUUID()}-${filename}`;
 
@@ -75,20 +102,27 @@ router.post(
     const userPictogram = insertUserPictogram({
       id,
       ownerLogin: login,
-      name,
+      name: name.trim(),
       filename,
       minioKey,
-      size: contentSize,
+      size: sanitizedSize,
       tags: Array.isArray(tags) ? tags : undefined,
     });
 
-    const result = addUserPictogramToCollection(collectionId, login, id);
-    if (result === "not_found") {
-      res.status(404).json({ error: "Collection not found" });
-      return;
-    }
+    addUserPictogramToCollection(collectionId, login, id);
 
-    res.status(201).json({ userPictogram });
+    res.status(201).json({
+      userPictogram: {
+        id: userPictogram.id,
+        ownerLogin: userPictogram.ownerLogin,
+        name: userPictogram.name,
+        filename: userPictogram.filename,
+        size: userPictogram.size,
+        tags: userPictogram.tags,
+        createdAt: userPictogram.createdAt,
+        updatedAt: userPictogram.updatedAt,
+      },
+    });
   },
 );
 
@@ -98,7 +132,27 @@ router.get(
   authAnyUser,
   (req: AuthenticatedRequest, res: Response): void => {
     const login = req.user!.login;
-    const userPictograms = getUserPictograms(login);
+    const userPictograms = getUserPictograms(login).map(
+      ({
+        id,
+        ownerLogin,
+        name,
+        filename,
+        size,
+        tags,
+        createdAt,
+        updatedAt,
+      }) => ({
+        id,
+        ownerLogin,
+        name,
+        filename,
+        size,
+        tags,
+        createdAt,
+        updatedAt,
+      }),
+    );
     res.json({ userPictograms });
   },
 );
@@ -138,20 +192,36 @@ router.patch(
     const id = String(req.params.id);
     const { name } = req.body as { name?: string };
 
-    if (!name || typeof name !== "string" || name.length > 100) {
+    const trimmedName = name?.trim();
+    if (
+      !trimmedName ||
+      typeof trimmedName !== "string" ||
+      trimmedName.length > 100
+    ) {
       res
         .status(400)
         .json({ error: "Invalid or missing name (max 100 chars)" });
       return;
     }
 
-    const userPictogram = updateUserPictogramName(id, login, name);
+    const userPictogram = updateUserPictogramName(id, login, trimmedName);
     if (!userPictogram) {
       res.status(404).json({ error: "Not found" });
       return;
     }
 
-    res.json({ userPictogram });
+    res.json({
+      userPictogram: {
+        id: userPictogram.id,
+        ownerLogin: userPictogram.ownerLogin,
+        name: userPictogram.name,
+        filename: userPictogram.filename,
+        size: userPictogram.size,
+        tags: userPictogram.tags,
+        createdAt: userPictogram.createdAt,
+        updatedAt: userPictogram.updatedAt,
+      },
+    });
   },
 );
 

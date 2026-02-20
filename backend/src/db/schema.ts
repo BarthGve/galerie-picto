@@ -3,6 +3,7 @@ import {
   text,
   integer,
   primaryKey,
+  index,
 } from "drizzle-orm/sqlite-core";
 
 export const pictograms = sqliteTable("pictograms", {
@@ -129,19 +130,23 @@ export const anonymousDownloads = sqliteTable(
   (table) => [primaryKey({ columns: [table.ip, table.downloadDate] })],
 );
 
-export const userPictograms = sqliteTable("user_pictograms", {
-  id: text("id").primaryKey(),
-  ownerLogin: text("owner_login")
-    .notNull()
-    .references(() => users.githubLogin, { onDelete: "cascade" }),
-  name: text("name").notNull(),
-  filename: text("filename").notNull(),
-  minioKey: text("minio_key").notNull(),
-  size: integer("size").notNull(),
-  tags: text("tags"), // JSON array sérialisé
-  createdAt: text("created_at").$defaultFn(() => new Date().toISOString()),
-  updatedAt: text("updated_at").$defaultFn(() => new Date().toISOString()),
-});
+export const userPictograms = sqliteTable(
+  "user_pictograms",
+  {
+    id: text("id").primaryKey(),
+    ownerLogin: text("owner_login")
+      .notNull()
+      .references(() => users.githubLogin, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    filename: text("filename").notNull(),
+    minioKey: text("minio_key").notNull(),
+    size: integer("size").notNull(),
+    tags: text("tags"), // JSON array sérialisé
+    createdAt: text("created_at").$defaultFn(() => new Date().toISOString()),
+    updatedAt: text("updated_at").$defaultFn(() => new Date().toISOString()),
+  },
+  (table) => [index("up_owner_login_idx").on(table.ownerLogin)],
+);
 
 export const userCollectionUserPictograms = sqliteTable(
   "user_collection_user_pictograms",
@@ -157,5 +162,6 @@ export const userCollectionUserPictograms = sqliteTable(
   },
   (table) => [
     primaryKey({ columns: [table.collectionId, table.userPictogramId] }),
+    index("ucup_user_pictogram_id_idx").on(table.userPictogramId),
   ],
 );

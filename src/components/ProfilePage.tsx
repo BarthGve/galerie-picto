@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 import { API_URL } from "@/lib/config";
 
 interface UserProfile {
@@ -52,12 +53,22 @@ export function ProfilePage({ onDeleted }: ProfilePageProps) {
   async function handleDelete() {
     if (!profile || confirmInput !== profile.githubLogin) return;
     setDeleting(true);
-    const token = localStorage.getItem("github_token");
-    await fetch(`${API_URL}/api/user/me`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    onDeleted();
+    try {
+      const token = localStorage.getItem("github_token");
+      const res = await fetch(`${API_URL}/api/user/me`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        toast.error("Erreur lors de la suppression du compte");
+        return;
+      }
+      onDeleted();
+    } catch {
+      toast.error("Erreur réseau");
+    } finally {
+      setDeleting(false);
+    }
   }
 
   const canDelete = profile && confirmInput === profile.githubLogin;
