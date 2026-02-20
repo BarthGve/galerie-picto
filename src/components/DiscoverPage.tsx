@@ -181,6 +181,13 @@ export function DiscoverPage({
   const [selectedPicto, setSelectedPicto] = useState<Pictogram | null>(null);
   const { getCount } = useDownloads();
 
+  // Sync selectedPicto quand pictograms se met à jour (ex : après un refetch)
+  useEffect(() => {
+    if (!selectedPicto) return;
+    const updated = pictograms.find((p) => p.id === selectedPicto.id);
+    if (updated) setSelectedPicto(updated);
+  }, [pictograms]);
+
   const latestPictos = useMemo(() => {
     return [...pictograms]
       .sort(
