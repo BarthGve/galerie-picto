@@ -786,11 +786,18 @@ const handleDownloadSvg = () => {
                             <li
                               key={suggestion}
                               onMouseDown={() => {
-                                // Remplace le dernier segment après ";" par la suggestion
+                                // Traite tous les segments + la suggestion et sauvegarde
                                 const parts = tagInput.split(";");
                                 parts[parts.length - 1] = suggestion;
-                                const next = parts.join(";");
-                                setTagInput(next);
+                                const newItems = parts
+                                  .map((t) => t.trim())
+                                  .filter((t) => t && !tags.includes(t));
+                                if (newItems.length > 0) {
+                                  const newTags = [...tags, ...newItems];
+                                  setTags(newTags);
+                                  saveTags(newTags);
+                                }
+                                setTagInput("");
                                 setShowSuggestions(false);
                               }}
                               className="px-3 py-1.5 cursor-pointer hover:bg-accent"
