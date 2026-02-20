@@ -107,9 +107,16 @@ router.post("/svg-batch", async (req, res) => {
     }
   }
 
-  // Fetch tous les SVGs en parallèle côté serveur (pas de limite de connexions)
-  const settled = await Promise.allSettled(
-    validatedUrls.map(async (url) => {
+  // Fetch les SVGs avec une concurrence limitée pour ne pas saturer le CDN
+  const CONCURRENCY = 6;
+  const settled: PromiseSettledResult<{ url: string; svgText: string }>[] =
+    new Array(validatedUrls.length);
+  let idx = 0;
+
+  async function worker() {
+    while (idx < validatedUrls.length) {
+      const i = idx++;
+      const url = validatedUrls[i];
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 10_000);
       try {
@@ -121,11 +128,16 @@ router.post("/svg-batch", async (req, res) => {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const svgText = await response.text();
         if (svgText.length > 2_097_152) throw new Error("Too large");
-        return { url, svgText };
-      } finally {
+        settled[i] = { status: "fulfilled", value: { url, svgText } };
+      } catch (reason) {
         clearTimeout(timeout);
+        settled[i] = { status: "rejected", reason };
       }
-    }),
+    }
+  }
+
+  await Promise.all(
+    Array.from({ length: Math.min(CONCURRENCY, validatedUrls.length) }, worker),
   );
 
   const results = settled.map((result, i) => {
