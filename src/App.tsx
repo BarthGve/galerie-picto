@@ -433,7 +433,12 @@ function AppInner() {
   }
 
   // Discover / Gallery pages (both need data loaded)
-  if (loading || authLoading || galleriesLoading) {
+  // Only block rendering on initial load (no data yet), not on background refetches
+  if (
+    (loading && pictograms.length === 0) ||
+    authLoading ||
+    (galleriesLoading && galleries.length === 0)
+  ) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">

@@ -3,6 +3,7 @@ import {
   Suspense,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -10,6 +11,7 @@ import {
   Download,
   Check,
   Lock,
+  Loader2,
   Palette,
   Pencil,
   X,
@@ -49,6 +51,10 @@ const ColorCustomizer = lazy(() =>
 import { API_URL } from "@/lib/config";
 import { getStoredToken } from "@/lib/github-auth";
 import { useDownloads } from "@/hooks/useDownloads";
+import { usePictogramsCtx } from "@/contexts/PictogramsContext";
+
+// Session-level cache: team members don't change during a session
+let teamMembersCache: { login: string; avatar_url: string }[] | null = null;
 
 interface PictoModalProps {
   pictogram: Pictogram;
@@ -80,6 +86,7 @@ export function PictoModal({
   onDeletePictogram,
   onLogin,
 }: PictoModalProps) {
+  const { pictograms: allPictograms } = usePictogramsCtx();
   const [pngSize, setPngSize] = useState(512);
   const svgCacheRef = useRef<string | null>(null);
   const [svgLoaded, setSvgLoaded] = useState(false);
@@ -90,10 +97,32 @@ export function PictoModal({
   const [previewBlobUrl, setPreviewBlobUrl] = useState<string | null>(null);
 
   // Tag editing state
-  const [editingTags, setEditingTags] = useState(false);
   const [tags, setTags] = useState<string[]>(pictogram.tags || []);
   const [tagInput, setTagInput] = useState("");
   const [savingTags, setSavingTags] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  // Tous les tags existants dans la base (pour les suggestions)
+  const allExistingTags = useMemo(() => {
+    const set = new Set<string>();
+    for (const p of allPictograms) {
+      for (const tag of p.tags ?? []) set.add(tag);
+    }
+    return Array.from(set);
+  }, [allPictograms]);
+
+  const normalize = (s: string) =>
+    s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+  const tagSuggestions = useMemo(() => {
+    const raw = tagInput.split(";").pop() ?? "";
+    const term = raw.trim();
+    if (!term) return [];
+    const normTerm = normalize(term);
+    return allExistingTags
+      .filter((t) => !tags.includes(t) && normalize(t).includes(normTerm))
+      .slice(0, 6);
+  }, [tagInput, allExistingTags, tags]);
 
   // Name editing state
   const [editingName, setEditingName] = useState(false);
@@ -104,6 +133,10 @@ export function PictoModal({
 
   // Contributor editing state
   const [savingContributor, setSavingContributor] = useState(false);
+  const [editingContributor, setEditingContributor] = useState(false);
+  const [localContributor, setLocalContributor] = useState(pictogram.contributor ?? null);
+  const [teamMembers, setTeamMembers] = useState<{ login: string; avatar_url: string }[]>([]);
+  const [loadingTeam, setLoadingTeam] = useState(false);
 
   // Downloads tracking
   const { trackDownload, getCount } = useDownloads();
@@ -168,28 +201,51 @@ export function PictoModal({
   };
 
   useEffect(() => {
+    if (isOpen && isAuthenticated) {
+      if (teamMembersCache !== null) {
+        setTeamMembers(teamMembersCache);
+        return;
+      }
+      const token = getStoredToken();
+      if (!token) return;
+      setLoadingTeam(true);
+      fetch(`${API_URL}/api/auth/team`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((r) => (r.ok ? r.json() : []))
+        .then((data) => {
+          const members = Array.isArray(data) ? data : [];
+          teamMembersCache = members;
+          setTeamMembers(members);
+        })
+        .catch(() => {})
+        .finally(() => setLoadingTeam(false));
+    }
+  }, [isOpen, isAuthenticated]);
+
+  // Reset state only when the modal opens or a different pictogram is shown.
+  // Do NOT add pictogram.tags/name/contributor to deps — they change on every
+  // background refetch and would discard in-progress edits and close the modal.
+  useEffect(() => {
     if (isOpen) {
       svgCacheRef.current = null;
       setSvgLoaded(false);
       setShowColorDialog(false);
       setModifiedSvg(null);
       setPreviewBlobUrl(null);
-      setEditingTags(false);
       setTags(pictogram.tags || []);
+      setTagInput("");
       setEditingName(false);
+      setEditingContributor(false);
+      setLocalContributor(pictogram.contributor ?? null);
       setName(pictogram.name || pictogram.filename.replace(/\.svg$/i, ""));
       fetchSvgText(pictogram.url).then((text) => {
         svgCacheRef.current = text;
         setSvgLoaded(true);
       });
     }
-  }, [
-    isOpen,
-    pictogram.url,
-    pictogram.tags,
-    pictogram.name,
-    pictogram.filename,
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, pictogram.id]);
 
   // Update blob URL when modifiedSvg changes for safe preview via <img>
   useEffect(() => {
@@ -307,47 +363,21 @@ const handleDownloadSvg = () => {
     }
   };
 
-  // Tag editing handlers
-  const handleAddTag = () => {
-    const trimmed = tagInput.trim();
-    if (trimmed && !tags.includes(trimmed)) {
-      setTags([...tags, trimmed]);
-    }
-    setTagInput("");
-  };
-
-  const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      handleAddTag();
-    }
-  };
-
-  const handleRemoveTag = (tag: string) => {
-    setTags(tags.filter((t) => t !== tag));
-  };
-
-  const handleSaveTags = async () => {
+  // Tag editing handlers — chaque modification persiste immédiatement en base
+  const saveTags = async (newTags: string[]) => {
     const token = getStoredToken();
     if (!token) return;
-
     setSavingTags(true);
     try {
-      const response = await fetch(
-        `${API_URL}/api/pictograms/${pictogram.id}`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ tags }),
+      const response = await fetch(`${API_URL}/api/pictograms/${pictogram.id}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
-      );
-
+        body: JSON.stringify({ tags: newTags }),
+      });
       if (response.ok) {
-        toast.success("Tags mis à jour");
-        setEditingTags(false);
         onPictogramUpdated?.();
       } else {
         toast.error("Erreur lors de la mise à jour des tags");
@@ -359,8 +389,37 @@ const handleDownloadSvg = () => {
     }
   };
 
-  const handleSetContributor = async () => {
-    if (!user) return;
+  const handleAddTag = () => {
+    const newItems = tagInput
+      .split(";")
+      .map((t) => t.trim())
+      .filter((t) => t && !tags.includes(t));
+    if (newItems.length === 0) {
+      setTagInput("");
+      return;
+    }
+    const newTags = [...tags, ...newItems];
+    setTags(newTags);
+    setTagInput("");
+    saveTags(newTags);
+  };
+
+  const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleAddTag();
+    }
+  };
+
+  const handleRemoveTag = (tag: string) => {
+    const newTags = tags.filter((t) => t !== tag);
+    setTags(newTags);
+    saveTags(newTags);
+  };
+
+  const handleSetContributor = async (
+    member: { login: string; avatar_url: string } | null,
+  ) => {
     const token = getStoredToken();
     if (!token) return;
 
@@ -375,16 +434,21 @@ const handleDownloadSvg = () => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            contributor: {
-              githubUsername: user.login,
-              githubAvatarUrl: user.avatar_url,
-            },
+            contributor: member
+              ? { githubUsername: member.login, githubAvatarUrl: member.avatar_url }
+              : null,
           }),
         },
       );
 
       if (response.ok) {
-        toast.success("Contributeur mis à jour");
+        toast.success(member ? "Contributeur mis à jour" : "Contributeur retiré");
+        setLocalContributor(
+          member
+            ? { githubUsername: member.login, githubAvatarUrl: member.avatar_url }
+            : null,
+        );
+        setEditingContributor(false);
         onPictogramUpdated?.();
       } else {
         toast.error("Erreur lors de la mise à jour du contributeur");
@@ -419,6 +483,128 @@ const handleDownloadSvg = () => {
     galleries.length > 0 &&
     onAddToGallery &&
     onRemoveFromGallery;
+
+  const allMembers = user
+    ? [user, ...teamMembers.filter((m) => m.login !== user.login)]
+    : teamMembers;
+
+  const renderContributorSection = () => {
+    if (isAuthenticated && user) {
+      if (editingContributor) {
+        return (
+          <div className="space-y-2">
+            <p className="text-xs text-muted-foreground">Contributeur</p>
+            {loadingTeam ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground py-1">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Chargement...
+              </div>
+            ) : (
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  disabled={savingContributor}
+                  onClick={() => handleSetContributor(null)}
+                  className={`flex items-center justify-center w-9 h-9 rounded-full border-2 text-xs font-bold transition-all ${
+                    !localContributor
+                      ? "border-primary text-primary bg-primary/10"
+                      : "border-border text-muted-foreground opacity-50 hover:opacity-100"
+                  }`}
+                  title="Aucun contributeur"
+                >
+                  —
+                </button>
+                {allMembers.map((member) => (
+                  <button
+                    key={member.login}
+                    type="button"
+                    disabled={savingContributor}
+                    onClick={() => handleSetContributor(member)}
+                    className={`relative rounded-full transition-all ${
+                      localContributor?.githubUsername === member.login
+                        ? "ring-2 ring-primary ring-offset-2 ring-offset-background"
+                        : "opacity-50 hover:opacity-100 hover:ring-2 hover:ring-muted-foreground/30 hover:ring-offset-1 hover:ring-offset-background"
+                    }`}
+                    title={member.login}
+                  >
+                    <img
+                      src={member.avatar_url}
+                      alt={member.login}
+                      className="w-9 h-9 rounded-full"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
+            {savingContributor && (
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Enregistrement...
+              </div>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => setEditingContributor(false)}
+              disabled={savingContributor}
+            >
+              Annuler
+            </Button>
+          </div>
+        );
+      }
+
+      return localContributor ? (
+        <div className="flex items-center gap-3 p-2">
+          <img
+            src={localContributor.githubAvatarUrl}
+            alt={localContributor.githubUsername}
+            className="w-8 h-8 rounded-full ring-2 ring-ring-accent"
+          />
+          <div className="flex-1">
+            <p className="text-xs text-muted-foreground">Contributeur</p>
+            <p className="text-sm font-medium text-foreground">
+              {localContributor.githubUsername}
+            </p>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 text-xs hover:text-primary"
+            onClick={() => setEditingContributor(true)}
+          >
+            Modifier
+          </Button>
+        </div>
+      ) : (
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full rounded"
+          onClick={() => setEditingContributor(true)}
+        >
+          Définir un contributeur
+        </Button>
+      );
+    }
+
+    return localContributor ? (
+      <div className="flex items-center gap-3 p-2">
+        <img
+          src={localContributor.githubAvatarUrl}
+          alt={localContributor.githubUsername}
+          className="w-8 h-8 rounded-full ring-2 ring-ring-accent"
+        />
+        <div className="flex-1">
+          <p className="text-xs text-muted-foreground">Contributeur</p>
+          <p className="text-sm font-medium text-foreground">
+            {localContributor.githubUsername}
+          </p>
+        </div>
+      </div>
+    ) : null;
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -540,46 +726,7 @@ const handleDownloadSvg = () => {
             </div>
 
             {/* Contributor */}
-            {pictogram.contributor ? (
-              <div className="flex items-center gap-3 p-2">
-                <img
-                  src={pictogram.contributor.githubAvatarUrl}
-                  alt={pictogram.contributor.githubUsername}
-                  className="w-8 h-8 rounded-full ring-2 ring-ring-accent"
-                />
-                <div className="flex-1">
-                  <p className="text-xs text-muted-foreground">Contributeur</p>
-                  <p className="text-sm font-medium text-foreground">
-                    {pictogram.contributor.githubUsername}
-                  </p>
-                </div>
-                {isAuthenticated &&
-                  user &&
-                  pictogram.contributor.githubUsername !== user.login && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 text-xs hover:text-primary"
-                      disabled={savingContributor}
-                      onClick={handleSetContributor}
-                    >
-                      Me définir
-                    </Button>
-                  )}
-              </div>
-            ) : isAuthenticated && user ? (
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full rounded"
-                disabled={savingContributor}
-                onClick={handleSetContributor}
-              >
-                {savingContributor
-                  ? "Enregistrement..."
-                  : "Me définir comme contributeur"}
-              </Button>
-            ) : null}
+            {renderContributorSection()}
           </div>
 
           {/* Right column - Info & Actions */}
@@ -614,48 +761,77 @@ const handleDownloadSvg = () => {
 
             {/* Tags */}
             <div>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-sm text-muted-foreground">Tags</span>
-                {isAuthenticated && !editingTags && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 w-6 p-0"
-                    onClick={() => setEditingTags(true)}
-                  >
-                    <Pencil className="h-3 w-3" />
-                  </Button>
-                )}
-              </div>
-
-              {editingTags ? (
+              <label className="block text-xs text-muted-foreground mb-1">
+                Tags / Mots-clés
+              </label>
+              {isAuthenticated ? (
                 <div className="space-y-2">
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Ajouter un tag..."
-                      value={tagInput}
-                      onChange={(e) => setTagInput(e.target.value)}
-                      onKeyDown={handleTagKeyDown}
-                      className="h-8 text-sm rounded"
-                    />
+                  <div className="relative flex gap-2">
+                    <div className="relative flex-1">
+                      <Input
+                        placeholder="Ajouter un tag… ou plusieurs séparés par ;"
+                        value={tagInput}
+                        onChange={(e) => {
+                          setTagInput(e.target.value);
+                          setShowSuggestions(true);
+                        }}
+                        onKeyDown={handleTagKeyDown}
+                        onFocus={() => setShowSuggestions(true)}
+                        onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+                        disabled={savingTags}
+                      />
+                      {showSuggestions && tagSuggestions.length > 0 && (
+                        <ul className="absolute z-50 top-full left-0 right-0 mt-1 bg-popover border border-border rounded shadow-md overflow-hidden text-sm">
+                          {tagSuggestions.map((suggestion) => (
+                            <li
+                              key={suggestion}
+                              onMouseDown={() => {
+                                // Traite tous les segments + la suggestion et sauvegarde
+                                const parts = tagInput.split(";");
+                                parts[parts.length - 1] = suggestion;
+                                const newItems = parts
+                                  .map((t) => t.trim())
+                                  .filter((t) => t && !tags.includes(t));
+                                if (newItems.length > 0) {
+                                  const newTags = [...tags, ...newItems];
+                                  setTags(newTags);
+                                  saveTags(newTags);
+                                }
+                                setTagInput("");
+                                setShowSuggestions(false);
+                              }}
+                              className="px-3 py-1.5 cursor-pointer hover:bg-accent"
+                            >
+                              {suggestion}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
                     <Button
+                      type="button"
                       variant="outline"
                       size="sm"
                       onClick={handleAddTag}
-                      disabled={!tagInput.trim()}
-                      className="h-8 rounded"
+                      disabled={savingTags || !tagInput.trim()}
+                      className="shrink-0 h-9"
                     >
-                      <Plus className="h-3 w-3" />
+                      <Plus className="h-4 w-4" />
                     </Button>
                   </div>
                   {tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5">
+                    <div className="flex flex-wrap gap-1.5 mt-1">
                       {tags.map((tag) => (
-                        <Badge key={tag} variant="outline" className="bg-accent text-muted-foreground border-transparent rounded-xl px-3 py-1 text-xs font-bold gap-1">
+                        <Badge key={tag} variant="secondary" className="cursor-pointer gap-1">
+                          {savingTags ? (
+                            <Loader2 className="h-2.5 w-2.5 animate-spin" />
+                          ) : null}
                           {tag}
                           <button
+                            type="button"
                             onClick={() => handleRemoveTag(tag)}
-                            className="hover:text-destructive"
+                            disabled={savingTags}
+                            className="ml-0.5 hover:text-destructive"
                           >
                             <X className="h-3 w-3" />
                           </button>
@@ -663,33 +839,12 @@ const handleDownloadSvg = () => {
                       ))}
                     </div>
                   )}
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      onClick={handleSaveTags}
-                      disabled={savingTags}
-                      className="rounded"
-                    >
-                      {savingTags ? "Enregistrement..." : "Enregistrer"}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => {
-                        setEditingTags(false);
-                        setTags(pictogram.tags || []);
-                      }}
-                      className="rounded"
-                    >
-                      Annuler
-                    </Button>
-                  </div>
                 </div>
               ) : (
                 <div className="flex flex-wrap gap-1.5">
                   {(pictogram.tags?.length ?? 0) > 0 ? (
                     pictogram.tags!.map((tag) => (
-                      <Badge key={tag} variant="outline" className="bg-accent text-muted-foreground border-transparent rounded-xl px-3 py-1 text-xs font-bold">
+                      <Badge key={tag} variant="secondary">
                         {tag}
                       </Badge>
                     ))
