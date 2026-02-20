@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import {
   Palette,
   LogOut,
@@ -12,6 +12,7 @@ import {
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { PictoMosaic } from "@/components/PictoMosaic";
 import { DarkAwarePicto } from "@/components/DarkAwarePicto";
+import { useDarkPrefetch } from "@/hooks/useDarkPrefetch";
 import { API_URL } from "@/lib/config";
 import type { Pictogram, PictogramManifest, GalleriesFile } from "@/lib/types";
 import type { GitHubUser } from "@/lib/github-auth";
@@ -110,6 +111,10 @@ export function HomePage({
   const [mosaicPictos, setMosaicPictos] = useState<Pictogram[]>([]);
   const [previewPictos, setPreviewPictos] = useState<Pictogram[]>([]);
   const [totalCount, setTotalCount] = useState(0);
+
+  // Prefetch batch des SVGs dark pour les pictos d'aperçu de collection
+  const previewUrls = useMemo(() => previewPictos.map((p) => p.url), [previewPictos]);
+  useDarkPrefetch(previewUrls);
   const [collections, setCollections] = useState(0);
   const [, setContributors] = useState(0);
   const [loading, setLoading] = useState(true);
