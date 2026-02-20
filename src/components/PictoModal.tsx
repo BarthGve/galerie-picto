@@ -94,7 +94,6 @@ export function PictoModal({
   const [previewBlobUrl, setPreviewBlobUrl] = useState<string | null>(null);
 
   // Tag editing state
-  const [editingTags, setEditingTags] = useState(false);
   const [tags, setTags] = useState<string[]>(pictogram.tags || []);
   const [tagInput, setTagInput] = useState("");
   const [savingTags, setSavingTags] = useState(false);
@@ -208,8 +207,8 @@ export function PictoModal({
       setShowColorDialog(false);
       setModifiedSvg(null);
       setPreviewBlobUrl(null);
-      setEditingTags(false);
       setTags(pictogram.tags || []);
+      setTagInput("");
       setEditingName(false);
       setEditingContributor(false);
       setLocalContributor(pictogram.contributor ?? null);
@@ -378,7 +377,6 @@ const handleDownloadSvg = () => {
 
       if (response.ok) {
         toast.success("Tags mis à jour");
-        setEditingTags(false);
         onPictogramUpdated?.();
       } else {
         toast.error("Erreur lors de la mise à jour des tags");
@@ -734,21 +732,10 @@ const handleDownloadSvg = () => {
 
             {/* Tags */}
             <div>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-sm text-muted-foreground">Tags</span>
-                {isAuthenticated && !editingTags && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 w-6 p-0"
-                    onClick={() => setEditingTags(true)}
-                  >
-                    <Pencil className="h-3 w-3" />
-                  </Button>
-                )}
-              </div>
-
-              {editingTags ? (
+              <label className="block text-xs text-muted-foreground mb-1">
+                Tags / Mots-clés
+              </label>
+              {isAuthenticated ? (
                 <div className="space-y-2">
                   <div className="flex gap-2">
                     <Input
@@ -756,26 +743,29 @@ const handleDownloadSvg = () => {
                       value={tagInput}
                       onChange={(e) => setTagInput(e.target.value)}
                       onKeyDown={handleTagKeyDown}
-                      className="h-8 text-sm rounded"
+                      disabled={savingTags}
                     />
                     <Button
+                      type="button"
                       variant="outline"
                       size="sm"
                       onClick={handleAddTag}
-                      disabled={!tagInput.trim()}
-                      className="h-8 rounded"
+                      disabled={savingTags || !tagInput.trim()}
+                      className="shrink-0 h-9"
                     >
-                      <Plus className="h-3 w-3" />
+                      <Plus className="h-4 w-4" />
                     </Button>
                   </div>
                   {tags.length > 0 && (
                     <div className="flex flex-wrap gap-1.5">
                       {tags.map((tag) => (
-                        <Badge key={tag} variant="outline" className="bg-accent text-muted-foreground border-transparent rounded-xl px-3 py-1 text-xs font-bold gap-1">
+                        <Badge key={tag} variant="secondary" className="cursor-pointer gap-1">
                           {tag}
                           <button
+                            type="button"
                             onClick={() => handleRemoveTag(tag)}
-                            className="hover:text-destructive"
+                            disabled={savingTags}
+                            className="ml-0.5 hover:text-destructive"
                           >
                             <X className="h-3 w-3" />
                           </button>
@@ -783,33 +773,25 @@ const handleDownloadSvg = () => {
                       ))}
                     </div>
                   )}
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      onClick={handleSaveTags}
-                      disabled={savingTags}
-                      className="rounded"
-                    >
-                      {savingTags ? "Enregistrement..." : "Enregistrer"}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => {
-                        setEditingTags(false);
-                        setTags(pictogram.tags || []);
-                      }}
-                      className="rounded"
-                    >
-                      Annuler
-                    </Button>
-                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={handleSaveTags}
+                    disabled={savingTags}
+                    className="rounded"
+                  >
+                    {savingTags ? (
+                      <><Loader2 className="h-3 w-3 animate-spin mr-1" />Enregistrement...</>
+                    ) : (
+                      "Enregistrer les tags"
+                    )}
+                  </Button>
                 </div>
               ) : (
                 <div className="flex flex-wrap gap-1.5">
                   {(pictogram.tags?.length ?? 0) > 0 ? (
                     pictogram.tags!.map((tag) => (
-                      <Badge key={tag} variant="outline" className="bg-accent text-muted-foreground border-transparent rounded-xl px-3 py-1 text-xs font-bold">
+                      <Badge key={tag} variant="secondary">
                         {tag}
                       </Badge>
                     ))
