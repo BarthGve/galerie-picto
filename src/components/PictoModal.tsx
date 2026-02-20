@@ -51,6 +51,9 @@ import { API_URL } from "@/lib/config";
 import { getStoredToken } from "@/lib/github-auth";
 import { useDownloads } from "@/hooks/useDownloads";
 
+// Session-level cache: team members don't change during a session
+let teamMembersCache: { login: string; avatar_url: string }[] | null = null;
+
 interface PictoModalProps {
   pictogram: Pictogram;
   isOpen: boolean;
@@ -174,6 +177,10 @@ export function PictoModal({
 
   useEffect(() => {
     if (isOpen && isAuthenticated) {
+      if (teamMembersCache !== null) {
+        setTeamMembers(teamMembersCache);
+        return;
+      }
       const token = getStoredToken();
       if (!token) return;
       setLoadingTeam(true);
@@ -181,7 +188,11 @@ export function PictoModal({
         headers: { Authorization: `Bearer ${token}` },
       })
         .then((r) => (r.ok ? r.json() : []))
-        .then((data) => setTeamMembers(Array.isArray(data) ? data : []))
+        .then((data) => {
+          const members = Array.isArray(data) ? data : [];
+          teamMembersCache = members;
+          setTeamMembers(members);
+        })
         .catch(() => {})
         .finally(() => setLoadingTeam(false));
     }
@@ -446,6 +457,128 @@ const handleDownloadSvg = () => {
     onAddToGallery &&
     onRemoveFromGallery;
 
+  const allMembers = user
+    ? [user, ...teamMembers.filter((m) => m.login !== user.login)]
+    : teamMembers;
+
+  const renderContributorSection = () => {
+    if (isAuthenticated && user) {
+      if (editingContributor) {
+        return (
+          <div className="space-y-2">
+            <p className="text-xs text-muted-foreground">Contributeur</p>
+            {loadingTeam ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground py-1">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Chargement...
+              </div>
+            ) : (
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  disabled={savingContributor}
+                  onClick={() => handleSetContributor(null)}
+                  className={`flex items-center justify-center w-9 h-9 rounded-full border-2 text-xs font-bold transition-all ${
+                    !localContributor
+                      ? "border-primary text-primary bg-primary/10"
+                      : "border-border text-muted-foreground opacity-50 hover:opacity-100"
+                  }`}
+                  title="Aucun contributeur"
+                >
+                  —
+                </button>
+                {allMembers.map((member) => (
+                  <button
+                    key={member.login}
+                    type="button"
+                    disabled={savingContributor}
+                    onClick={() => handleSetContributor(member)}
+                    className={`relative rounded-full transition-all ${
+                      localContributor?.githubUsername === member.login
+                        ? "ring-2 ring-primary ring-offset-2 ring-offset-background"
+                        : "opacity-50 hover:opacity-100 hover:ring-2 hover:ring-muted-foreground/30 hover:ring-offset-1 hover:ring-offset-background"
+                    }`}
+                    title={member.login}
+                  >
+                    <img
+                      src={member.avatar_url}
+                      alt={member.login}
+                      className="w-9 h-9 rounded-full"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
+            {savingContributor && (
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Enregistrement...
+              </div>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => setEditingContributor(false)}
+              disabled={savingContributor}
+            >
+              Annuler
+            </Button>
+          </div>
+        );
+      }
+
+      return localContributor ? (
+        <div className="flex items-center gap-3 p-2">
+          <img
+            src={localContributor.githubAvatarUrl}
+            alt={localContributor.githubUsername}
+            className="w-8 h-8 rounded-full ring-2 ring-ring-accent"
+          />
+          <div className="flex-1">
+            <p className="text-xs text-muted-foreground">Contributeur</p>
+            <p className="text-sm font-medium text-foreground">
+              {localContributor.githubUsername}
+            </p>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 text-xs hover:text-primary"
+            onClick={() => setEditingContributor(true)}
+          >
+            Modifier
+          </Button>
+        </div>
+      ) : (
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full rounded"
+          onClick={() => setEditingContributor(true)}
+        >
+          Définir un contributeur
+        </Button>
+      );
+    }
+
+    return localContributor ? (
+      <div className="flex items-center gap-3 p-2">
+        <img
+          src={localContributor.githubAvatarUrl}
+          alt={localContributor.githubUsername}
+          className="w-8 h-8 rounded-full ring-2 ring-ring-accent"
+        />
+        <div className="flex-1">
+          <p className="text-xs text-muted-foreground">Contributeur</p>
+          <p className="text-sm font-medium text-foreground">
+            {localContributor.githubUsername}
+          </p>
+        </div>
+      </div>
+    ) : null;
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-y-auto rounded border-border" aria-describedby={undefined}>
@@ -566,120 +699,7 @@ const handleDownloadSvg = () => {
             </div>
 
             {/* Contributor */}
-            {isAuthenticated && user ? (() => {
-              // Liste complète : user connecté + membres d'équipe (dédupliqués)
-              const allMembers = [
-                user,
-                ...teamMembers.filter((m) => m.login !== user.login),
-              ];
-
-              if (editingContributor) {
-                return (
-                  <div className="space-y-2">
-                    <p className="text-xs text-muted-foreground">Contributeur</p>
-                    {loadingTeam ? (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground py-1">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Chargement...
-                      </div>
-                    ) : (
-                      <div className="flex flex-wrap items-center gap-2">
-                        {/* Option Aucun */}
-                        <button
-                          type="button"
-                          disabled={savingContributor}
-                          onClick={() => handleSetContributor(null)}
-                          className={`flex items-center justify-center w-9 h-9 rounded-full border-2 text-xs font-bold transition-all ${
-                            !localContributor
-                              ? "border-primary text-primary bg-primary/10"
-                              : "border-border text-muted-foreground opacity-50 hover:opacity-100"
-                          }`}
-                          title="Aucun contributeur"
-                        >
-                          —
-                        </button>
-                        {allMembers.map((member) => (
-                          <button
-                            key={member.login}
-                            type="button"
-                            disabled={savingContributor}
-                            onClick={() => handleSetContributor(member)}
-                            className={`relative rounded-full transition-all ${
-                              localContributor?.githubUsername === member.login
-                                ? "ring-2 ring-primary ring-offset-2 ring-offset-background"
-                                : "opacity-50 hover:opacity-100 hover:ring-2 hover:ring-muted-foreground/30 hover:ring-offset-1 hover:ring-offset-background"
-                            }`}
-                            title={member.login}
-                          >
-                            <img
-                              src={member.avatar_url}
-                              alt={member.login}
-                              className="w-9 h-9 rounded-full"
-                            />
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 text-xs"
-                      onClick={() => setEditingContributor(false)}
-                      disabled={savingContributor}
-                    >
-                      Annuler
-                    </Button>
-                  </div>
-                );
-              }
-
-              return localContributor ? (
-                <div className="flex items-center gap-3 p-2">
-                  <img
-                    src={localContributor.githubAvatarUrl}
-                    alt={localContributor.githubUsername}
-                    className="w-8 h-8 rounded-full ring-2 ring-ring-accent"
-                  />
-                  <div className="flex-1">
-                    <p className="text-xs text-muted-foreground">Contributeur</p>
-                    <p className="text-sm font-medium text-foreground">
-                      {localContributor.githubUsername}
-                    </p>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 text-xs hover:text-primary"
-                    onClick={() => setEditingContributor(true)}
-                  >
-                    Modifier
-                  </Button>
-                </div>
-              ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full rounded"
-                  onClick={() => setEditingContributor(true)}
-                >
-                  Définir un contributeur
-                </Button>
-              );
-            })() : localContributor ? (
-              <div className="flex items-center gap-3 p-2">
-                <img
-                  src={localContributor.githubAvatarUrl}
-                  alt={localContributor.githubUsername}
-                  className="w-8 h-8 rounded-full ring-2 ring-ring-accent"
-                />
-                <div className="flex-1">
-                  <p className="text-xs text-muted-foreground">Contributeur</p>
-                  <p className="text-sm font-medium text-foreground">
-                    {localContributor.githubUsername}
-                  </p>
-                </div>
-              </div>
-            ) : null}
+            {renderContributorSection()}
           </div>
 
           {/* Right column - Info & Actions */}
