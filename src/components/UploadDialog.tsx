@@ -85,13 +85,6 @@ export function UploadDialog({
     }
   }, [open]);
 
-  // Auto-select current user as contributor
-  useEffect(() => {
-    if (open && user && !contributorUsername) {
-      setContributorUsername(user.login);
-      setContributorAvatar(user.avatar_url);
-    }
-  }, [open, user, contributorUsername]);
 
   const fetchGalleries = async () => {
     setLoadingGalleries(true);
@@ -467,64 +460,55 @@ export function UploadDialog({
               {/* Contributor */}
               <div>
                 <label className="block text-xs text-muted-foreground mb-2">
-                  Contributeur
+                  Contributeur <span className="italic">(optionnel)</span>
                 </label>
                 {loadingTeam ? (
                   <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
                     <Loader2 className="h-4 w-4 animate-spin" />
                     Chargement...
                   </div>
-                ) : teamMembers.length === 0 ? (
-                  contributorUsername && contributorAvatar ? (
-                    <div className="flex items-center gap-2">
-                      <img
-                        src={contributorAvatar}
-                        alt={contributorUsername}
-                        className="w-8 h-8 rounded-full ring-2 ring-primary ring-offset-2 ring-offset-background"
-                      />
-                      <span className="text-sm font-medium">
-                        {contributorUsername}
-                      </span>
+                ) : (() => {
+                  // Construire la liste complète : user connecté + membres d'équipe (dédupliqués)
+                  const allMembers = user
+                    ? [user, ...teamMembers.filter((m) => m.login !== user.login)]
+                    : teamMembers;
+                  if (allMembers.length === 0) return null;
+                  return (
+                    <div className="flex flex-wrap items-center gap-2">
+                      {allMembers.map((member) => (
+                        <button
+                          key={member.login}
+                          type="button"
+                          onClick={() =>
+                            handleSelectContributor(member.login, member.avatar_url)
+                          }
+                          disabled={uploading}
+                          className={`relative rounded-full transition-all ${
+                            contributorUsername === member.login
+                              ? "ring-2 ring-primary ring-offset-2 ring-offset-background"
+                              : "opacity-50 hover:opacity-100 hover:ring-2 hover:ring-muted-foreground/30 hover:ring-offset-1 hover:ring-offset-background"
+                          }`}
+                          title={member.login}
+                        >
+                          <img
+                            src={member.avatar_url}
+                            alt={member.login}
+                            className="w-9 h-9 rounded-full"
+                          />
+                        </button>
+                      ))}
+                      {contributorUsername ? (
+                        <span className="text-xs text-muted-foreground">
+                          {contributorUsername}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground italic">
+                          Aucun sélectionné — cliquer pour choisir
+                        </span>
+                      )}
                     </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">
-                      Aucun collaborateur trouvé
-                    </p>
-                  )
-                ) : (
-                  <div className="flex flex-wrap items-center gap-2">
-                    {teamMembers.map((member) => (
-                      <button
-                        key={member.login}
-                        type="button"
-                        onClick={() =>
-                          handleSelectContributor(
-                            member.login,
-                            member.avatar_url,
-                          )
-                        }
-                        disabled={uploading}
-                        className={`relative rounded-full transition-all ${
-                          contributorUsername === member.login
-                            ? "ring-2 ring-primary ring-offset-2 ring-offset-background"
-                            : "hover:ring-2 hover:ring-muted-foreground/30 hover:ring-offset-1 hover:ring-offset-background opacity-50 hover:opacity-100"
-                        }`}
-                        title={member.login}
-                      >
-                        <img
-                          src={member.avatar_url}
-                          alt={member.login}
-                          className="w-9 h-9 rounded-full"
-                        />
-                      </button>
-                    ))}
-                    {contributorUsername && (
-                      <span className="text-xs text-muted-foreground">
-                        {contributorUsername}
-                      </span>
-                    )}
-                  </div>
-                )}
+                  );
+                })()}
               </div>
             </div>
 

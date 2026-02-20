@@ -10,6 +10,7 @@ import {
   Download,
   Check,
   Lock,
+  Loader2,
   Palette,
   Pencil,
   X,
@@ -104,6 +105,9 @@ export function PictoModal({
 
   // Contributor editing state
   const [savingContributor, setSavingContributor] = useState(false);
+  const [editingContributor, setEditingContributor] = useState(false);
+  const [teamMembers, setTeamMembers] = useState<{ login: string; avatar_url: string }[]>([]);
+  const [loadingTeam, setLoadingTeam] = useState(false);
 
   // Downloads tracking
   const { trackDownload, getCount } = useDownloads();
@@ -168,6 +172,21 @@ export function PictoModal({
   };
 
   useEffect(() => {
+    if (isOpen && isAuthenticated) {
+      const token = getStoredToken();
+      if (!token) return;
+      setLoadingTeam(true);
+      fetch(`${API_URL}/api/auth/team`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((r) => (r.ok ? r.json() : []))
+        .then((data) => setTeamMembers(Array.isArray(data) ? data : []))
+        .catch(() => {})
+        .finally(() => setLoadingTeam(false));
+    }
+  }, [isOpen, isAuthenticated]);
+
+  useEffect(() => {
     if (isOpen) {
       svgCacheRef.current = null;
       setSvgLoaded(false);
@@ -177,6 +196,7 @@ export function PictoModal({
       setEditingTags(false);
       setTags(pictogram.tags || []);
       setEditingName(false);
+      setEditingContributor(false);
       setName(pictogram.name || pictogram.filename.replace(/\.svg$/i, ""));
       fetchSvgText(pictogram.url).then((text) => {
         svgCacheRef.current = text;
@@ -359,8 +379,9 @@ const handleDownloadSvg = () => {
     }
   };
 
-  const handleSetContributor = async () => {
-    if (!user) return;
+  const handleSetContributor = async (
+    member: { login: string; avatar_url: string } | null,
+  ) => {
     const token = getStoredToken();
     if (!token) return;
 
@@ -375,16 +396,16 @@ const handleDownloadSvg = () => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            contributor: {
-              githubUsername: user.login,
-              githubAvatarUrl: user.avatar_url,
-            },
+            contributor: member
+              ? { githubUsername: member.login, githubAvatarUrl: member.avatar_url }
+              : null,
           }),
         },
       );
 
       if (response.ok) {
-        toast.success("Contributeur mis à jour");
+        toast.success(member ? "Contributeur mis à jour" : "Contributeur retiré");
+        setEditingContributor(false);
         onPictogramUpdated?.();
       } else {
         toast.error("Erreur lors de la mise à jour du contributeur");
@@ -540,7 +561,106 @@ const handleDownloadSvg = () => {
             </div>
 
             {/* Contributor */}
-            {pictogram.contributor ? (
+            {isAuthenticated && user ? (() => {
+              // Liste complète : user connecté + membres d'équipe (dédupliqués)
+              const allMembers = [
+                user,
+                ...teamMembers.filter((m) => m.login !== user.login),
+              ];
+
+              if (editingContributor) {
+                return (
+                  <div className="space-y-2">
+                    <p className="text-xs text-muted-foreground">Contributeur</p>
+                    {loadingTeam ? (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground py-1">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Chargement...
+                      </div>
+                    ) : (
+                      <div className="flex flex-wrap items-center gap-2">
+                        {/* Option Aucun */}
+                        <button
+                          type="button"
+                          disabled={savingContributor}
+                          onClick={() => handleSetContributor(null)}
+                          className={`flex items-center justify-center w-9 h-9 rounded-full border-2 text-xs font-bold transition-all ${
+                            !pictogram.contributor
+                              ? "border-primary text-primary bg-primary/10"
+                              : "border-border text-muted-foreground opacity-50 hover:opacity-100"
+                          }`}
+                          title="Aucun contributeur"
+                        >
+                          —
+                        </button>
+                        {allMembers.map((member) => (
+                          <button
+                            key={member.login}
+                            type="button"
+                            disabled={savingContributor}
+                            onClick={() => handleSetContributor(member)}
+                            className={`relative rounded-full transition-all ${
+                              pictogram.contributor?.githubUsername === member.login
+                                ? "ring-2 ring-primary ring-offset-2 ring-offset-background"
+                                : "opacity-50 hover:opacity-100 hover:ring-2 hover:ring-muted-foreground/30 hover:ring-offset-1 hover:ring-offset-background"
+                            }`}
+                            title={member.login}
+                          >
+                            <img
+                              src={member.avatar_url}
+                              alt={member.login}
+                              className="w-9 h-9 rounded-full"
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => setEditingContributor(false)}
+                      disabled={savingContributor}
+                    >
+                      Annuler
+                    </Button>
+                  </div>
+                );
+              }
+
+              return pictogram.contributor ? (
+                <div className="flex items-center gap-3 p-2">
+                  <img
+                    src={pictogram.contributor.githubAvatarUrl}
+                    alt={pictogram.contributor.githubUsername}
+                    className="w-8 h-8 rounded-full ring-2 ring-ring-accent"
+                  />
+                  <div className="flex-1">
+                    <p className="text-xs text-muted-foreground">Contributeur</p>
+                    <p className="text-sm font-medium text-foreground">
+                      {pictogram.contributor.githubUsername}
+                    </p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-xs hover:text-primary"
+                    onClick={() => setEditingContributor(true)}
+                  >
+                    Modifier
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full rounded"
+                  onClick={() => setEditingContributor(true)}
+                >
+                  Définir un contributeur
+                </Button>
+              );
+            })() : pictogram.contributor ? (
               <div className="flex items-center gap-3 p-2">
                 <img
                   src={pictogram.contributor.githubAvatarUrl}
@@ -553,32 +673,7 @@ const handleDownloadSvg = () => {
                     {pictogram.contributor.githubUsername}
                   </p>
                 </div>
-                {isAuthenticated &&
-                  user &&
-                  pictogram.contributor.githubUsername !== user.login && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 text-xs hover:text-primary"
-                      disabled={savingContributor}
-                      onClick={handleSetContributor}
-                    >
-                      Me définir
-                    </Button>
-                  )}
               </div>
-            ) : isAuthenticated && user ? (
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full rounded"
-                disabled={savingContributor}
-                onClick={handleSetContributor}
-              >
-                {savingContributor
-                  ? "Enregistrement..."
-                  : "Me définir comme contributeur"}
-              </Button>
             ) : null}
           </div>
 
