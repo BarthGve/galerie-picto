@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import type { Pictogram, Gallery, UserCollection } from "@/lib/types";
 import { PictoCard } from "./PictoCard";
+import { useDarkPrefetch } from "@/hooks/useDarkPrefetch";
 
 const PAGE_SIZE = 50;
 
@@ -103,6 +104,13 @@ export function PictoGrid({
     () => sorted.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE),
     [sorted, safePage],
   );
+
+  // Prefetch batch des SVGs dark pour tous les pictos visibles
+  const visibleUrls = useMemo(
+    () => visiblePictograms.map((p) => p.url),
+    [visiblePictograms],
+  );
+  useDarkPrefetch(visibleUrls);
 
   const cycleSortKey = () => {
     setSortKey((prev) =>
