@@ -5,6 +5,12 @@ import { API_URL } from "@/lib/config";
  * pour contourner le double header CORS du CDN
  */
 export async function fetchSvgText(svgUrl: string): Promise<string> {
+  // Les blob URLs sont déjà locales (pictos privés) — pas besoin du proxy
+  if (svgUrl.startsWith("blob:")) {
+    const response = await fetch(svgUrl);
+    if (!response.ok) throw new Error(`Fetch failed: ${response.status}`);
+    return response.text();
+  }
   const proxyUrl = `${API_URL}/api/proxy/svg?url=${encodeURIComponent(svgUrl)}`;
   const response = await fetch(proxyUrl);
   if (!response.ok) {

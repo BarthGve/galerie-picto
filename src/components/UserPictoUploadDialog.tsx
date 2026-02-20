@@ -151,7 +151,7 @@ export function UserPictoUploadDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-lg rounded-[4px] border-border">
+      <DialogContent className="sm:max-w-lg rounded-[4px] border-border" aria-describedby={undefined}>
         <DialogHeader>
           <DialogTitle>
             Ajouter un SVG perso
