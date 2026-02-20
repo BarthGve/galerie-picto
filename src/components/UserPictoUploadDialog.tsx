@@ -13,13 +13,15 @@ import { toast } from "sonner";
 import { getStoredToken } from "@/lib/github-auth";
 import { validateSvgFile } from "@/lib/svg-metadata";
 import { API_URL } from "@/lib/config";
+import { useTheme } from "@/hooks/use-theme";
+import { transformSvgToDark } from "@/lib/svg-dark-transform";
 
 interface UserPictoUploadDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   collectionId: string;
   collectionName: string;
-  onUploadSuccess: () => void;
+  onUploadSuccess: () => Promise<void>;
 }
 
 export function UserPictoUploadDialog({
@@ -29,8 +31,11 @@ export function UserPictoUploadDialog({
   collectionName,
   onUploadSuccess,
 }: UserPictoUploadDialogProps) {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [darkPreviewUrl, setDarkPreviewUrl] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
@@ -48,6 +53,11 @@ export function UserPictoUploadDialog({
     const url = URL.createObjectURL(selectedFile);
     setPreviewUrl(url);
     setName(selectedFile.name.replace(/\.svg$/i, ""));
+    // Préparation de la preview dark mode
+    selectedFile.text().then((svgText) => {
+      const darkBlob = new Blob([transformSvgToDark(svgText)], { type: "image/svg+xml" });
+      setDarkPreviewUrl((prev) => { if (prev) URL.revokeObjectURL(prev); return URL.createObjectURL(darkBlob); });
+    }).catch(() => { /* silently fail — light preview reste disponible */ });
   }, []);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -127,7 +137,7 @@ export function UserPictoUploadDialog({
       toast.success(`SVG ajouté à « ${collectionName} »`);
       onOpenChange(false);
       resetForm();
-      onUploadSuccess();
+      await onUploadSuccess();
     } catch {
       toast.error("Erreur réseau");
     } finally {
@@ -137,8 +147,10 @@ export function UserPictoUploadDialog({
 
   const resetForm = () => {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
+    if (darkPreviewUrl) URL.revokeObjectURL(darkPreviewUrl);
     setFile(null);
     setPreviewUrl(null);
+    setDarkPreviewUrl(null);
     setName("");
     setTags([]);
     setTagInput("");
@@ -202,7 +214,7 @@ export function UserPictoUploadDialog({
                 className="hidden"
               />
               <img
-                src={previewUrl!}
+                src={(isDark && darkPreviewUrl) ? darkPreviewUrl : previewUrl!}
                 alt="Aperçu"
                 className="w-14 h-14 object-contain shrink-0"
               />

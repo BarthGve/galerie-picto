@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { PictogramsProvider, usePictogramsCtx } from "@/contexts/PictogramsContext";
 import { GalleriesProvider, useGalleriesCtx } from "@/contexts/GalleriesContext";
 import { useUserCollections } from "@/hooks/useUserCollections";
@@ -124,8 +124,12 @@ function AppInner() {
     remove: removeUserCollection,
     addPictogram: addToUserCollection,
     removePictogram: removeFromUserCollection,
+    refetch: refetchUserCollections,
   } = useUserCollections(!!user);
   const { userPictograms, blobUrls, refetch: refetchUserPictograms } = useUserPictograms(!!user);
+  const handleUserPictoUploadSuccess = useCallback(async () => {
+    await Promise.allSettled([refetchUserPictograms(), refetchUserCollections()]);
+  }, [refetchUserPictograms, refetchUserCollections]);
   const [userPictoUploadOpen, setUserPictoUploadOpen] = useState(false);
 
   // Handle browser back/forward
@@ -596,9 +600,6 @@ function AppInner() {
                   {selectedUserCollectionId && (() => {
                     const col = userCollections.find(c => c.id === selectedUserCollectionId);
                     if (!col) return null;
-                    const colUserPictos = userPictograms.filter(p =>
-                      col.userPictogramIds.includes(p.id)
-                    );
                     return (
                       <>
                         <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8 pt-6 pb-2">
@@ -682,7 +683,7 @@ function AppInner() {
               onOpenChange={setUserPictoUploadOpen}
               collectionId={selectedUserCollectionId}
               collectionName={col.name}
-              onUploadSuccess={refetchUserPictograms}
+              onUploadSuccess={handleUserPictoUploadSuccess}
             />
           );
         })()}
