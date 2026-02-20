@@ -187,6 +187,9 @@ export function PictoModal({
     }
   }, [isOpen, isAuthenticated]);
 
+  // Reset state only when the modal opens or a different pictogram is shown.
+  // Do NOT add pictogram.tags/name/contributor to deps — they change on every
+  // background refetch and would discard in-progress edits and close the modal.
   useEffect(() => {
     if (isOpen) {
       svgCacheRef.current = null;
@@ -205,13 +208,8 @@ export function PictoModal({
         setSvgLoaded(true);
       });
     }
-  }, [
-    isOpen,
-    pictogram.url,
-    pictogram.tags,
-    pictogram.name,
-    pictogram.filename,
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, pictogram.id]);
 
   // Update blob URL when modifiedSvg changes for safe preview via <img>
   useEffect(() => {
