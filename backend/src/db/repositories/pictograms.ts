@@ -123,7 +123,7 @@ export function insertPictogram(data: {
 
 export function updatePictogram(
   id: string,
-  data: { name?: string; tags?: string[]; contributor?: Contributor },
+  data: { name?: string; tags?: string[]; contributor?: Contributor | null },
 ): Pictogram | null {
   const existing = db
     .select()
@@ -136,8 +136,8 @@ export function updatePictogram(
   if (data.name !== undefined) updates.name = data.name;
   if (data.tags !== undefined) updates.tags = JSON.stringify(data.tags);
   if (data.contributor !== undefined) {
-    updates.contributorUsername = data.contributor.githubUsername;
-    updates.contributorAvatarUrl = data.contributor.githubAvatarUrl;
+    updates.contributorUsername = data.contributor?.githubUsername ?? null;
+    updates.contributorAvatarUrl = data.contributor?.githubAvatarUrl ?? null;
   }
 
   if (Object.keys(updates).length > 0) {
