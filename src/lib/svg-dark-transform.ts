@@ -32,7 +32,6 @@ export function transformSvgToDark(svgText: string): string {
 /**
  * Cache module-level : url → promise du SVG text transformé (dark).
  * Partagé entre toutes les instances de usePictogramUrl et prefetchDarkSvgs.
- * En cas d'erreur, supprimé du cache pour permettre un retry.
  */
 export const darkSvgCache = new Map<string, Promise<string>>();
 
@@ -54,40 +53,66 @@ export function getDarkSvgText(url: string): Promise<string> {
 }
 
 /**
- * Prefetch batch : envoie toutes les URLs en une seule requête au backend,
- * remplit le cache, puis les instances de usePictogramUrl trouvent le cache déjà prêt.
+ * Prefetch batch : pré-remplit le cache avec des promises non-résolues
+ * pour chaque URL manquante, AVANT d'envoyer la requête batch.
+ *
+ * Les composants (usePictogramUrl) qui appellent getDarkSvgText() trouvent
+ * immédiatement une promise dans le cache et s'y abonnent. Quand le batch
+ * retourne, toutes les promises se résolvent en même temps → tous les pictos
+ * passent en dark simultanément.
+ *
  * Fallback sur des fetches individuels si le batch échoue.
  */
-export async function prefetchDarkSvgs(urls: string[]): Promise<void> {
+export function prefetchDarkSvgs(urls: string[]): void {
   if (urls.length === 0) return;
 
   const missing = urls.filter((url) => !darkSvgCache.has(url));
   if (missing.length === 0) return;
 
-  try {
-    const response = await fetch(`${API_URL}/api/proxy/svg-batch`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ urls: missing }),
+  // Pré-remplir le cache avec des promises non-résolues pour chaque URL manquante.
+  // Les composants qui appellent getDarkSvgText() trouveront ces promises et attendront.
+  const resolvers = new Map<string, (value: string) => void>();
+  const rejecters = new Map<string, (err: unknown) => void>();
+
+  for (const url of missing) {
+    const promise = new Promise<string>((resolve, reject) => {
+      resolvers.set(url, resolve);
+      rejecters.set(url, reject);
     });
-
-    if (!response.ok) throw new Error(`Batch failed: ${response.status}`);
-
-    const data = (await response.json()) as {
-      results: { url: string; svgText?: string; error?: string }[];
-    };
-
-    for (const result of data.results) {
-      if (result.svgText && !darkSvgCache.has(result.url)) {
-        darkSvgCache.set(result.url, Promise.resolve(transformSvgToDark(result.svgText)));
-      } else if (result.error && !darkSvgCache.has(result.url)) {
-        // Marque comme échouée pour éviter de retenter immédiatement
-        console.warn(`[prefetchDarkSvgs] Failed for ${result.url}: ${result.error}`);
-      }
-    }
-  } catch (err) {
-    // Fallback : fetches individuels (comportement d'avant)
-    console.warn("[prefetchDarkSvgs] Batch failed, falling back to individual fetches:", err);
-    missing.forEach((url) => getDarkSvgText(url));
+    darkSvgCache.set(url, promise);
   }
+
+  // Lance le batch en arrière-plan
+  fetch(`${API_URL}/api/proxy/svg-batch`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ urls: missing }),
+  })
+    .then((response) => {
+      if (!response.ok) throw new Error(`Batch failed: ${response.status}`);
+      return response.json() as Promise<{
+        results: { url: string; svgText?: string; error?: string }[];
+      }>;
+    })
+    .then(({ results }) => {
+      for (const result of results) {
+        if (result.svgText) {
+          resolvers.get(result.url)?.(transformSvgToDark(result.svgText));
+        } else {
+          // Supprimer du cache et rejeter pour permettre un retry
+          darkSvgCache.delete(result.url);
+          rejecters.get(result.url)?.(new Error(result.error ?? "fetch_failed"));
+        }
+      }
+    })
+    .catch((err) => {
+      // Batch échoué : supprimer les promises en attente du cache
+      // et lancer des fetches individuels en fallback
+      console.warn("[prefetchDarkSvgs] Batch failed, falling back to individual fetches:", err);
+      for (const url of missing) {
+        darkSvgCache.delete(url);
+        rejecters.get(url)?.(err);
+      }
+      missing.forEach((url) => getDarkSvgText(url));
+    });
 }
