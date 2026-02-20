@@ -3,6 +3,7 @@ import {
   Suspense,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -50,6 +51,7 @@ const ColorCustomizer = lazy(() =>
 import { API_URL } from "@/lib/config";
 import { getStoredToken } from "@/lib/github-auth";
 import { useDownloads } from "@/hooks/useDownloads";
+import { usePictogramsCtx } from "@/contexts/PictogramsContext";
 
 // Session-level cache: team members don't change during a session
 let teamMembersCache: { login: string; avatar_url: string }[] | null = null;
@@ -84,6 +86,7 @@ export function PictoModal({
   onDeletePictogram,
   onLogin,
 }: PictoModalProps) {
+  const { pictograms: allPictograms } = usePictogramsCtx();
   const [pngSize, setPngSize] = useState(512);
   const svgCacheRef = useRef<string | null>(null);
   const [svgLoaded, setSvgLoaded] = useState(false);
@@ -97,6 +100,29 @@ export function PictoModal({
   const [tags, setTags] = useState<string[]>(pictogram.tags || []);
   const [tagInput, setTagInput] = useState("");
   const [savingTags, setSavingTags] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  // Tous les tags existants dans la base (pour les suggestions)
+  const allExistingTags = useMemo(() => {
+    const set = new Set<string>();
+    for (const p of allPictograms) {
+      for (const tag of p.tags ?? []) set.add(tag);
+    }
+    return Array.from(set);
+  }, [allPictograms]);
+
+  const normalize = (s: string) =>
+    s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+  const tagSuggestions = useMemo(() => {
+    const raw = tagInput.split(";").pop() ?? "";
+    const term = raw.trim();
+    if (!term) return [];
+    const normTerm = normalize(term);
+    return allExistingTags
+      .filter((t) => !tags.includes(t) && normalize(t).includes(normTerm))
+      .slice(0, 6);
+  }, [tagInput, allExistingTags, tags]);
 
   // Name editing state
   const [editingName, setEditingName] = useState(false);
@@ -740,14 +766,41 @@ const handleDownloadSvg = () => {
               </label>
               {isAuthenticated ? (
                 <div className="space-y-2">
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Ajouter un tag..."
-                      value={tagInput}
-                      onChange={(e) => setTagInput(e.target.value)}
-                      onKeyDown={handleTagKeyDown}
-                      disabled={savingTags}
-                    />
+                  <div className="relative flex gap-2">
+                    <div className="relative flex-1">
+                      <Input
+                        placeholder="Ajouter un tag… ou plusieurs séparés par ;"
+                        value={tagInput}
+                        onChange={(e) => {
+                          setTagInput(e.target.value);
+                          setShowSuggestions(true);
+                        }}
+                        onKeyDown={handleTagKeyDown}
+                        onFocus={() => setShowSuggestions(true)}
+                        onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+                        disabled={savingTags}
+                      />
+                      {showSuggestions && tagSuggestions.length > 0 && (
+                        <ul className="absolute z-50 top-full left-0 right-0 mt-1 bg-popover border border-border rounded shadow-md overflow-hidden text-sm">
+                          {tagSuggestions.map((suggestion) => (
+                            <li
+                              key={suggestion}
+                              onMouseDown={() => {
+                                // Remplace le dernier segment après ";" par la suggestion
+                                const parts = tagInput.split(";");
+                                parts[parts.length - 1] = suggestion;
+                                const next = parts.join(";");
+                                setTagInput(next);
+                                setShowSuggestions(false);
+                              }}
+                              className="px-3 py-1.5 cursor-pointer hover:bg-accent"
+                            >
+                              {suggestion}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
                     <Button
                       type="button"
                       variant="outline"
