@@ -22,6 +22,8 @@ import {
 import { uploadPictogram } from "@/lib/upload";
 import { API_URL } from "@/lib/config";
 import type { Gallery } from "@/lib/types";
+import { useTheme } from "@/hooks/use-theme";
+import { transformSvgToDark } from "@/lib/svg-dark-transform";
 
 interface UploadDialogProps {
   onUploadSuccess?: () => void;
@@ -36,11 +38,14 @@ export function UploadDialog({
   onOpenChange,
   user,
 }: UploadDialogProps) {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen ?? internalOpen;
   const setOpen = onOpenChange ?? setInternalOpen;
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [darkPreviewUrl, setDarkPreviewUrl] = useState<string | null>(null);
   const [metadata, setMetadata] = useState<SvgMetadata>({});
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -174,6 +179,11 @@ export function UploadDialog({
         if (existing.tags && existing.tags.length > 0) {
           setTags(existing.tags);
         }
+        // Preview dark mode
+        try {
+          const darkBlob = new Blob([transformSvgToDark(content)], { type: "image/svg+xml" });
+          setDarkPreviewUrl((prev) => { if (prev) URL.revokeObjectURL(prev); return URL.createObjectURL(darkBlob); });
+        } catch { /* silently fail */ }
       };
       reader.readAsText(selectedFile);
     },
@@ -333,11 +343,11 @@ export function UploadDialog({
   };
 
   const resetForm = () => {
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-    }
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    if (darkPreviewUrl) URL.revokeObjectURL(darkPreviewUrl);
     setFile(null);
     setPreviewUrl(null);
+    setDarkPreviewUrl(null);
     setMetadata({});
     setProgress(0);
     setTags([]);
@@ -374,7 +384,7 @@ export function UploadDialog({
           </Button>
         </DialogTrigger>
       )}
-      <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-y-auto" aria-describedby={undefined}>
         <DialogHeader>
           <DialogTitle>Ajouter un pictogramme</DialogTitle>
         </DialogHeader>
@@ -437,7 +447,7 @@ export function UploadDialog({
                   className="hidden"
                 />
                 <img
-                  src={previewUrl!}
+                  src={(isDark && darkPreviewUrl) ? darkPreviewUrl : previewUrl!}
                   alt="Aperçu SVG"
                   className="w-48 h-48 object-contain"
                 />

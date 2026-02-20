@@ -13,8 +13,9 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { PictoMosaic } from "@/components/PictoMosaic";
 import { DarkAwarePicto } from "@/components/DarkAwarePicto";
 import { useDarkPrefetch } from "@/hooks/useDarkPrefetch";
-import { API_URL } from "@/lib/config";
-import type { Pictogram, PictogramManifest, GalleriesFile } from "@/lib/types";
+import { usePictogramsCtx } from "@/contexts/PictogramsContext";
+import { useGalleriesCtx } from "@/contexts/GalleriesContext";
+import type { Pictogram } from "@/lib/types";
 import type { GitHubUser } from "@/lib/github-auth";
 
 interface HomePageProps {
@@ -108,51 +109,29 @@ export function HomePage({
   onLogin,
   onLogout,
 }: HomePageProps) {
-  const [mosaicPictos, setMosaicPictos] = useState<Pictogram[]>([]);
+  const { pictograms: allPictograms, loading } = usePictogramsCtx();
+  const { galleries } = useGalleriesCtx();
+
+  const pictos = useMemo(
+    () => allPictograms.filter((p) => !p.filename.endsWith("_dark.svg")),
+    [allPictograms],
+  );
+  const mosaicPictos = useMemo(() => pictos.slice(0, 40), [pictos]);
+  const totalCount = useMemo(() => Math.floor(pictos.length / 10) * 10, [pictos]);
+  const collections = galleries.length;
+
+  // Shuffle une seule fois quand les pictos sont disponibles
   const [previewPictos, setPreviewPictos] = useState<Pictogram[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
+  useEffect(() => {
+    if (pictos.length > 0 && previewPictos.length === 0) {
+      setPreviewPictos([...pictos].sort(() => Math.random() - 0.5).slice(0, 12));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pictos.length]);
 
   // Prefetch batch des SVGs dark pour les pictos d'aperçu de collection
   const previewUrls = useMemo(() => previewPictos.map((p) => p.url), [previewPictos]);
   useDarkPrefetch(previewUrls);
-  const [collections, setCollections] = useState(0);
-  const [, setContributors] = useState(0);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const [pictoRes, galleriesRes] = await Promise.all([
-          fetch(`${API_URL}/api/pictograms/manifest`),
-          fetch(`${API_URL}/api/galleries`),
-        ]);
-
-        if (pictoRes.ok) {
-          const data: PictogramManifest = await pictoRes.json();
-          const pictos = data.pictograms.filter(p => !p.filename.endsWith("_dark.svg"));
-          setMosaicPictos(pictos.slice(0, 40));
-          const shuffled = [...pictos].sort(() => Math.random() - 0.5);
-          setPreviewPictos(shuffled.slice(0, 12));
-          setTotalCount(Math.floor(pictos.length / 10) * 10);
-
-          const contribs = new Set(
-            pictos.map((p) => p.contributor?.githubUsername).filter(Boolean),
-          );
-          setContributors(contribs.size);
-        }
-
-        if (galleriesRes.ok) {
-          const galData: GalleriesFile = await galleriesRes.json();
-          setCollections(galData.galleries.length);
-        }
-      } catch {
-        // Silently fail - mosaic just won't show
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchData();
-  }, []);
 
   return (
     <div className="min-h-screen bg-background font-sans">
@@ -467,6 +446,18 @@ export function HomePage({
             <span className="text-xl font-black tracking-tighter">La Boite à Pictos</span>
           </div>
           <div className="flex items-center gap-4">
+            <a
+              href="/confidentialite"
+              className="text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+            >
+              Confidentialité
+            </a>
+            <a
+              href="/cookies"
+              className="text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+            >
+              Cookies
+            </a>
             <span className="inline-flex items-center rounded-full border border-border bg-muted/50 px-2 py-0.5 text-[10px] font-mono text-muted-foreground/60 select-none">
               v{__APP_VERSION__}
             </span>

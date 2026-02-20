@@ -40,6 +40,7 @@ interface PictoGridProps {
   getLikeCount?: (id: string) => number;
   hasLiked?: (id: string) => boolean;
   onToggleLike?: (id: string) => void;
+  privateIds?: Set<string>;
 }
 
 export function PictoGrid({
@@ -63,6 +64,7 @@ export function PictoGrid({
   getLikeCount,
   hasLiked,
   onToggleLike,
+  privateIds,
 }: PictoGridProps) {
   const [compact, setCompact] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>("date");
@@ -234,6 +236,7 @@ export function PictoGrid({
               likeCount={getLikeCount?.(pictogram.id)}
               hasLiked={hasLiked?.(pictogram.id)}
               onToggleLike={onToggleLike ? () => onToggleLike(pictogram.id) : undefined}
+              isPrivate={privateIds?.has(pictogram.id)}
             />
           ))}
         </div>

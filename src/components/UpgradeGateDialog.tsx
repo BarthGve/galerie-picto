@@ -37,6 +37,7 @@ export function UpgradeGateDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
+        aria-describedby={undefined}
         className="overflow-hidden border-[var(--dsfr-blue-france-925)] bg-gradient-to-b from-white to-[var(--dsfr-blue-france-975)] dark:border-white/10 dark:from-[var(--dsfr-grey-50)] dark:to-[var(--dsfr-grey-50)] p-0 shadow-2xl shadow-primary/10 sm:max-w-md sm:rounded"
       >
         <VisuallyHidden.Root asChild>

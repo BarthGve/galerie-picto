@@ -422,7 +422,7 @@ const handleDownloadSvg = () => {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-y-auto rounded border-border">
+      <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-y-auto rounded border-border" aria-describedby={undefined}>
         <DialogHeader>
           <div className="flex items-center gap-2">
             {editingName ? (
@@ -801,7 +801,7 @@ const handleDownloadSvg = () => {
 
       {/* Color customizer dialog */}
       <Dialog open={showColorDialog} onOpenChange={setShowColorDialog}>
-        <DialogContent className="sm:max-w-sm rounded border-border">
+        <DialogContent className="sm:max-w-sm rounded border-border" aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle className="text-sm font-bold flex items-center gap-2">
               <Palette className="w-4 h-4 text-primary" />

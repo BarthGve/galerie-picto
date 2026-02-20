@@ -1,4 +1,4 @@
-import { LogOut, Github } from "lucide-react";
+import { LogOut, Github, User } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -21,10 +21,12 @@ export function NavUser({
   user,
   onLogin,
   onLogout,
+  onGoProfile,
 }: {
   user: GitHubUser | null;
   onLogin: () => void;
   onLogout: () => void;
+  onGoProfile: () => void;
 }) {
   const { isMobile } = useSidebar();
 
@@ -110,6 +112,10 @@ export function NavUser({
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={onGoProfile}>
+              <User />
+              Mon profil
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={onLogout}>
               <LogOut />
               Déconnexion

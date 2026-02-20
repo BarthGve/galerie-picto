@@ -50,6 +50,7 @@ export function AppSidebar({
   onRemoveUserCollection,
   onAddToUserCollection,
   onGoFeedback,
+  onGoProfile,
   ...props
 }: React.ComponentProps<typeof Sidebar> & {
   galleries: Gallery[];
@@ -81,6 +82,7 @@ export function AppSidebar({
   onRemoveUserCollection?: (id: string) => Promise<void>;
   onAddToUserCollection?: (collectionId: string, pictogramId: string) => Promise<boolean>;
   onGoFeedback?: () => void;
+  onGoProfile?: () => void;
 }) {
   return (
     <Sidebar collapsible="offcanvas" {...props}>
@@ -228,7 +230,7 @@ export function AppSidebar({
         </SidebarMenu>
         <SidebarSeparator className="mx-0 w-full" />
         <div className="flex items-center px-2 py-1">
-          <NavUser user={user} onLogin={onLogin} onLogout={onLogout} />
+          <NavUser user={user} onLogin={onLogin} onLogout={onLogout} onGoProfile={onGoProfile ?? (() => {})} />
         </div>
       </SidebarFooter>
     </Sidebar>

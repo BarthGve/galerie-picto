@@ -3,6 +3,7 @@ import {
   text,
   integer,
   primaryKey,
+  index,
 } from "drizzle-orm/sqlite-core";
 
 export const pictograms = sqliteTable("pictograms", {
@@ -127,4 +128,40 @@ export const anonymousDownloads = sqliteTable(
     count: integer("count").notNull().default(1),
   },
   (table) => [primaryKey({ columns: [table.ip, table.downloadDate] })],
+);
+
+export const userPictograms = sqliteTable(
+  "user_pictograms",
+  {
+    id: text("id").primaryKey(),
+    ownerLogin: text("owner_login")
+      .notNull()
+      .references(() => users.githubLogin, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    filename: text("filename").notNull(),
+    minioKey: text("minio_key").notNull(),
+    size: integer("size").notNull(),
+    tags: text("tags"), // JSON array sérialisé
+    createdAt: text("created_at").$defaultFn(() => new Date().toISOString()),
+    updatedAt: text("updated_at").$defaultFn(() => new Date().toISOString()),
+  },
+  (table) => [index("up_owner_login_idx").on(table.ownerLogin)],
+);
+
+export const userCollectionUserPictograms = sqliteTable(
+  "user_collection_user_pictograms",
+  {
+    collectionId: text("collection_id")
+      .notNull()
+      .references(() => userCollections.id, { onDelete: "cascade" }),
+    userPictogramId: text("user_pictogram_id")
+      .notNull()
+      .references(() => userPictograms.id, { onDelete: "cascade" }),
+    position: integer("position").notNull().default(0),
+    addedAt: text("added_at").$defaultFn(() => new Date().toISOString()),
+  },
+  (table) => [
+    primaryKey({ columns: [table.collectionId, table.userPictogramId] }),
+    index("ucup_user_pictogram_id_idx").on(table.userPictogramId),
+  ],
 );

@@ -21,8 +21,10 @@ import githubProfileRoutes from "./routes/github-profile.js";
 import downloadsRoutes from "./routes/downloads.js";
 import favoritesRoutes from "./routes/favorites.js";
 import userCollectionsRoutes from "./routes/user-collections.js";
+import userPictogramsRoutes from "./routes/user-pictograms.js";
 import likesRoutes from "./routes/likes.js";
 import feedbackRoutes from "./routes/feedback.js";
+import accountRoutes from "./routes/account.js";
 
 const app = express();
 
@@ -113,8 +115,18 @@ app.use("/api/proxy", proxyRoutes);
 app.use("/api/github/profile", githubProfileRoutes);
 app.use("/api/user", favoritesRoutes);
 app.use("/api/user", userCollectionsRoutes);
+
+const userUploadLimiter = rateLimit({
+  windowMs: 60_000,
+  limit: 10,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+});
+app.use("/api/user/pictograms", userUploadLimiter);
+app.use("/api/user", userPictogramsRoutes);
 app.use("/api/pictograms", likesRoutes);
 app.use("/api/feedback", feedbackRoutes);
+app.use("/api/user", accountRoutes);
 
 // Run migrations then start server
 runMigrations();

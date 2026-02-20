@@ -1,12 +1,14 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { PictogramsProvider, usePictogramsCtx } from "@/contexts/PictogramsContext";
 import { GalleriesProvider, useGalleriesCtx } from "@/contexts/GalleriesContext";
 import { useUserCollections } from "@/hooks/useUserCollections";
+import { useUserPictograms } from "@/hooks/useUserPictograms";
 import { DownloadsContext, useDownloadsProvider } from "@/hooks/useDownloads";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useLikes } from "@/hooks/useLikes";
 import { useFeedbackNotifications } from "@/hooks/useFeedbackNotifications";
 import { PictoGrid } from "@/components/PictoGrid";
+import { UserPictoUploadDialog } from "@/components/UserPictoUploadDialog";
 import { AppSidebar } from "@/components/Sidebar";
 import { SiteHeader } from "@/components/site-header";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
@@ -52,7 +54,16 @@ const DiscoverShowcase = lazy(() =>
 const FeedbackPage = lazy(() =>
   import("@/components/FeedbackPage").then((m) => ({ default: m.FeedbackPage })),
 );
-type Page = "home" | "discover" | "gallery" | "test-discover" | "feedback";
+const PrivacyPage = lazy(() =>
+  import("@/components/PrivacyPage").then((m) => ({ default: m.PrivacyPage })),
+);
+const ProfilePage = lazy(() =>
+  import("@/components/ProfilePage").then((m) => ({ default: m.ProfilePage })),
+);
+const CookiesPage = lazy(() =>
+  import("@/components/CookiesPage").then((m) => ({ default: m.CookiesPage })),
+);
+type Page = "home" | "discover" | "gallery" | "test-discover" | "feedback" | "privacy" | "cookies" | "profile";
 
 function getInitialPage(): Page {
   const path = window.location.pathname;
@@ -60,6 +71,9 @@ function getInitialPage(): Page {
   if (path === "/discover") return "discover";
   if (path === "/feedback") return "feedback";
   if (path === "/test-discover") return "test-discover";
+  if (path === "/confidentialite") return "privacy";
+  if (path === "/cookies") return "cookies";
+  if (path === "/profil") return "profile";
   // OAuth callback → go straight to discover
   if (new URLSearchParams(window.location.search).has("code")) return "discover";
   return "home";
@@ -110,7 +124,13 @@ function AppInner() {
     remove: removeUserCollection,
     addPictogram: addToUserCollection,
     removePictogram: removeFromUserCollection,
+    refetch: refetchUserCollections,
   } = useUserCollections(!!user);
+  const { userPictograms, blobUrls, refetch: refetchUserPictograms } = useUserPictograms(!!user);
+  const handleUserPictoUploadSuccess = useCallback(async () => {
+    await Promise.allSettled([refetchUserPictograms(), refetchUserCollections()]);
+  }, [refetchUserPictograms, refetchUserCollections]);
+  const [userPictoUploadOpen, setUserPictoUploadOpen] = useState(false);
 
   // Handle browser back/forward
   useEffect(() => {
@@ -119,6 +139,9 @@ function AppInner() {
       if (path === "/gallery") setPage("gallery");
       else if (path === "/discover") setPage("discover");
       else if (path === "/feedback") setPage("feedback");
+      else if (path === "/confidentialite") setPage("privacy");
+      else if (path === "/cookies") setPage("cookies");
+      else if (path === "/profil") setPage("profile");
       else setPage("home");
     };
     window.addEventListener("popstate", onPopState);
@@ -135,7 +158,13 @@ function AppInner() {
             ? "/feedback"
             : target === "test-discover"
               ? "/test-discover"
-              : "/";
+              : target === "privacy"
+                ? "/confidentialite"
+                : target === "cookies"
+                ? "/cookies"
+                : target === "profile"
+                  ? "/profil"
+                  : "/";
     window.history.pushState(null, "", path);
     setPage(target);
     if (target === "discover" || target === "home") {
@@ -293,6 +322,22 @@ function AppInner() {
       if (col) {
         const ids = new Set(col.pictogramIds);
         result = result.filter((picto) => ids.has(picto.id));
+
+        // Injecter les pictos privés de la collection comme des Pictogram normaux
+        const now = new Date().toISOString();
+        const privateAsPublic = userPictograms
+          .filter((p) => col.userPictogramIds.includes(p.id) && blobUrls.has(p.id))
+          .map((p) => ({
+            id: p.id,
+            name: p.name,
+            filename: p.filename,
+            url: blobUrls.get(p.id)!,
+            size: p.size,
+            lastModified: p.updatedAt ?? p.createdAt ?? now,
+            tags: p.tags,
+          }));
+
+        result = [...privateAsPublic, ...result];
       }
     }
 
@@ -331,7 +376,26 @@ function AppInner() {
     galleries,
     selectedUserCollectionId,
     userCollections,
+    userPictograms,
+    blobUrls,
   ]);
+
+  // Legal pages — avec header/footer landing
+  if (page === "privacy") {
+    return (
+      <Suspense fallback={null}>
+        <PrivacyPage user={user} onLogin={handleLogin} onLogout={logout} />
+      </Suspense>
+    );
+  }
+
+  if (page === "cookies") {
+    return (
+      <Suspense fallback={null}>
+        <CookiesPage user={user} onLogin={handleLogin} onLogout={logout} />
+      </Suspense>
+    );
+  }
 
   // Home page — rendered before gallery data is needed
   if (page === "home") {
@@ -438,6 +502,7 @@ function AppInner() {
           onGoHome={() => navigateTo("home")}
           onGoDiscover={() => navigateTo("discover")}
           onGoFeedback={() => navigateTo("feedback")}
+          onGoProfile={() => navigateTo("profile")}
           currentPage={page}
           favoritesCount={favoritesCount}
           showFavoritesOnly={showFavoritesOnly}
@@ -472,7 +537,13 @@ function AppInner() {
           />
           <div className="flex flex-1 flex-col">
             <div className="@container/main flex flex-1 flex-col gap-2">
-              {page === "feedback" ? (
+              {page === "profile" ? (
+                <Suspense fallback={null}>
+                  <ProfilePage
+                    onDeleted={() => { logout(); navigateTo("home"); }}
+                  />
+                </Suspense>
+              ) : page === "feedback" ? (
                 <Suspense fallback={null}>
                   <FeedbackPage user={user} onLogin={handleLogin} />
                 </Suspense>
@@ -530,19 +601,31 @@ function AppInner() {
                     const col = userCollections.find(c => c.id === selectedUserCollectionId);
                     if (!col) return null;
                     return (
-                      <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8 pt-6 pb-2">
-                        <div className="flex items-center gap-3 mb-1">
-                          <span
-                            className="size-3 shrink-0 rounded-full"
-                            style={{ backgroundColor: col.color ?? "var(--muted-foreground)", opacity: col.color ? 1 : 0.4 }}
-                          />
-                          <h2 className="font-extrabold text-lg text-foreground leading-tight">{col.name}</h2>
-                          <span className="text-xs text-muted-foreground font-medium">{col.pictogramIds.length} picto{col.pictogramIds.length !== 1 ? "s" : ""}</span>
+                      <>
+                        <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8 pt-6 pb-2">
+                          <div className="flex items-center gap-3 mb-1">
+                            <span
+                              className="size-3 shrink-0 rounded-full"
+                              style={{ backgroundColor: col.color ?? "var(--muted-foreground)", opacity: col.color ? 1 : 0.4 }}
+                            />
+                            <h2 className="font-extrabold text-lg text-foreground leading-tight">{col.name}</h2>
+                            <span className="text-xs text-muted-foreground font-medium">
+                              {col.pictogramIds.length + col.userPictogramIds.length} picto{(col.pictogramIds.length + col.userPictogramIds.length) !== 1 ? "s" : ""}
+                            </span>
+                            <button
+                              onClick={() => setUserPictoUploadOpen(true)}
+                              className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] bg-primary text-primary-foreground text-xs font-bold hover:opacity-90 transition-opacity"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                              Ajouter un SVG perso
+                            </button>
+                          </div>
+                          {col.description && (
+                            <p className="text-sm text-muted-foreground pl-6">{col.description}</p>
+                          )}
                         </div>
-                        {col.description && (
-                          <p className="text-sm text-muted-foreground pl-6">{col.description}</p>
-                        )}
-                      </div>
+
+                      </>
                     );
                   })()}
                   <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8">
@@ -569,6 +652,9 @@ function AppInner() {
                       getLikeCount={getLikeCount}
                       hasLiked={hasLiked}
                       onToggleLike={user ? toggleLike : undefined}
+                      privateIds={selectedUserCollectionId ? new Set(
+                        userCollections.find(c => c.id === selectedUserCollectionId)?.userPictogramIds ?? []
+                      ) : undefined}
                     />
                   </div>
                 </div>
@@ -587,6 +673,20 @@ function AppInner() {
             />
           </Suspense>
         )}
+
+        {userPictoUploadOpen && selectedUserCollectionId && (() => {
+          const col = userCollections.find(c => c.id === selectedUserCollectionId);
+          if (!col) return null;
+          return (
+            <UserPictoUploadDialog
+              open={userPictoUploadOpen}
+              onOpenChange={setUserPictoUploadOpen}
+              collectionId={selectedUserCollectionId}
+              collectionName={col.name}
+              onUploadSuccess={handleUserPictoUploadSuccess}
+            />
+          );
+        })()}
 
         {galleryDialogOpen && (
           <Suspense fallback={null}>

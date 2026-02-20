@@ -21,6 +21,8 @@ export const config = {
     secretKey: process.env.MINIO_SECRET_KEY || "",
     bucket: process.env.MINIO_BUCKET || "media",
     prefix: process.env.MINIO_PREFIX || "artwork/dev/",
+    privateBucket: process.env.MINIO_PRIVATE_BUCKET || "",
+    privatePrefix: process.env.MINIO_PRIVATE_PREFIX || "",
   },
 };
 
@@ -31,6 +33,7 @@ const required = [
   ["MINIO_ENDPOINT", config.minio.endpoint],
   ["MINIO_ACCESS_KEY", config.minio.accessKey],
   ["MINIO_SECRET_KEY", config.minio.secretKey],
+  ["MINIO_PRIVATE_BUCKET", config.minio.privateBucket],
 ] as const;
 
 const missing = required.filter(([, value]) => !value).map(([name]) => name);

@@ -48,6 +48,18 @@ export interface UserCollection {
   createdAt: string | null;
   updatedAt: string | null;
   pictogramIds: string[];
+  userPictogramIds: string[];
+}
+
+export interface UserPictogram {
+  id: string;
+  ownerLogin: string;
+  name: string;
+  filename: string;
+  size: number;
+  tags: string[];
+  createdAt: string | null;
+  updatedAt: string | null;
 }
 
 export interface DownloadOptions {

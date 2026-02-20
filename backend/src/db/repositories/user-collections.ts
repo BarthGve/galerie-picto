@@ -1,6 +1,10 @@
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, inArray } from "drizzle-orm";
 import { db } from "../index.js";
-import { userCollections, userCollectionPictograms } from "../schema.js";
+import {
+  userCollections,
+  userCollectionPictograms,
+  userCollectionUserPictograms,
+} from "../schema.js";
 
 const MAX_COLLECTIONS = 20;
 const MAX_PICTOS_PER_COLLECTION = 200;
@@ -15,11 +19,13 @@ export interface UserCollection {
   createdAt: string | null;
   updatedAt: string | null;
   pictogramIds: string[];
+  userPictogramIds: string[];
 }
 
 function rowToCollection(
   row: typeof userCollections.$inferSelect,
   pictogramIds: string[] = [],
+  userPictogramIds: string[] = [],
 ): UserCollection {
   return {
     id: row.id,
@@ -31,6 +37,7 @@ function rowToCollection(
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     pictogramIds,
+    userPictogramIds,
   };
 }
 
@@ -44,35 +51,43 @@ export function getUserCollections(userLogin: string): UserCollection[] {
 
   if (cols.length === 0) return [];
 
-  const links = db
-    .select()
+  const colIds = cols.map((c) => c.id);
+
+  const allLinks = db
+    .select({
+      collectionId: userCollectionPictograms.collectionId,
+      pictogramId: userCollectionPictograms.pictogramId,
+    })
     .from(userCollectionPictograms)
-    .where(
-      eq(
-        userCollectionPictograms.collectionId,
-        sql`(SELECT id FROM user_collections WHERE user_login = ${userLogin})`,
-      ),
-    )
+    .where(inArray(userCollectionPictograms.collectionId, colIds))
+    .orderBy(userCollectionPictograms.position)
     .all();
 
-  // Build pictoIds map per collection
-  const pictoMap = new Map<string, string[]>();
-  // Re-fetch links properly per collection
-  for (const col of cols) {
-    const pictos = db
-      .select({ pictogramId: userCollectionPictograms.pictogramId })
-      .from(userCollectionPictograms)
-      .where(eq(userCollectionPictograms.collectionId, col.id))
-      .orderBy(userCollectionPictograms.position)
-      .all()
-      .map((r) => r.pictogramId);
-    pictoMap.set(col.id, pictos);
-  }
+  const allUserLinks = db
+    .select({
+      collectionId: userCollectionUserPictograms.collectionId,
+      userPictogramId: userCollectionUserPictograms.userPictogramId,
+    })
+    .from(userCollectionUserPictograms)
+    .where(inArray(userCollectionUserPictograms.collectionId, colIds))
+    .orderBy(userCollectionUserPictograms.position)
+    .all();
 
-  // suppress unused lint warning
-  void links;
+  const pictoMap = new Map<string, string[]>(cols.map((c) => [c.id, []]));
+  const userPictoMap = new Map<string, string[]>(cols.map((c) => [c.id, []]));
 
-  return cols.map((col) => rowToCollection(col, pictoMap.get(col.id) ?? []));
+  for (const link of allLinks)
+    pictoMap.get(link.collectionId)?.push(link.pictogramId);
+  for (const link of allUserLinks)
+    userPictoMap.get(link.collectionId)?.push(link.userPictogramId);
+
+  return cols.map((col) =>
+    rowToCollection(
+      col,
+      pictoMap.get(col.id) ?? [],
+      userPictoMap.get(col.id) ?? [],
+    ),
+  );
 }
 
 export function getCollectionById(
@@ -96,7 +111,15 @@ export function getCollectionById(
     .all()
     .map((r) => r.pictogramId);
 
-  return rowToCollection(col, pictogramIds);
+  const userPictogramIds = db
+    .select({ userPictogramId: userCollectionUserPictograms.userPictogramId })
+    .from(userCollectionUserPictograms)
+    .where(eq(userCollectionUserPictograms.collectionId, id))
+    .orderBy(userCollectionUserPictograms.position)
+    .all()
+    .map((r) => r.userPictogramId);
+
+  return rowToCollection(col, pictogramIds, userPictogramIds);
 }
 
 export function createCollection(
