@@ -84,7 +84,7 @@ export function NavMain({
               <Images />
               <span>Tous les pictos</span>
             </SidebarMenuButton>
-            <SidebarMenuBadge className="text-[10px] font-black px-1.5 py-0.5 rounded-md bg-accent text-muted-foreground">
+            <SidebarMenuBadge className="text-[10px] font-black px-1.5 py-0.5 rounded-md bg-accent peer-hover/menu-button:bg-transparent">
               {totalPictogramCount}
             </SidebarMenuBadge>
           </SidebarMenuItem>
@@ -108,7 +108,7 @@ export function NavMain({
                 <span>Mes favoris</span>
               </SidebarMenuButton>
               {(favoritesCount ?? 0) > 0 && (
-                <SidebarMenuBadge className="text-[10px] font-black px-1.5 py-0.5 rounded-md bg-accent text-muted-foreground">
+                <SidebarMenuBadge className="text-[10px] font-black px-1.5 py-0.5 rounded-md bg-accent peer-hover/menu-button:bg-transparent">
                   {favoritesCount}
                 </SidebarMenuBadge>
               )}

@@ -195,7 +195,7 @@ export function PictoGrid({
           </p>
           <button
             onClick={() => { setActiveTag(null); onPageChange(1); }}
-            className="px-6 py-3 rounded-xl bg-foreground text-background font-bold text-sm shadow-xl hover:scale-105 transition-transform"
+            className="px-6 py-3 rounded-[4px] bg-foreground text-background font-bold text-sm shadow-xl hover:scale-105 transition-transform"
           >
             Réinitialiser les filtres
           </button>

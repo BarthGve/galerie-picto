@@ -66,7 +66,7 @@ export function NavContributors({
               />
               <span className="text-sm font-bold">{c.login}</span>
             </SidebarMenuButton>
-            <SidebarMenuBadge className="text-[10px] font-black px-1.5 py-0.5 rounded-md bg-accent text-muted-foreground">
+            <SidebarMenuBadge className="text-[10px] font-black px-1.5 py-0.5 rounded-md bg-accent peer-hover/menu-button:bg-transparent">
               {c.count}
             </SidebarMenuBadge>
           </SidebarMenuItem>
