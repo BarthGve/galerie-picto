@@ -552,7 +552,7 @@ export function DiscoverPage({
                     onMouseLeave={e => { e.currentTarget.style.backgroundColor = ''; e.currentTarget.style.borderColor = ''; }}
                   >
                     {name}{" "}
-                    <span className="opacity-40 ml-1">{count}</span>
+                    <span className="ml-1 text-[var(--dsfr-blue-france-main)] font-extrabold">{count}</span>
                   </button>
                 ))}
               </div>
