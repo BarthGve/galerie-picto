@@ -106,6 +106,7 @@ export function PictoModal({
   // Contributor editing state
   const [savingContributor, setSavingContributor] = useState(false);
   const [editingContributor, setEditingContributor] = useState(false);
+  const [localContributor, setLocalContributor] = useState(pictogram.contributor ?? null);
   const [teamMembers, setTeamMembers] = useState<{ login: string; avatar_url: string }[]>([]);
   const [loadingTeam, setLoadingTeam] = useState(false);
 
@@ -197,6 +198,7 @@ export function PictoModal({
       setTags(pictogram.tags || []);
       setEditingName(false);
       setEditingContributor(false);
+      setLocalContributor(pictogram.contributor ?? null);
       setName(pictogram.name || pictogram.filename.replace(/\.svg$/i, ""));
       fetchSvgText(pictogram.url).then((text) => {
         svgCacheRef.current = text;
@@ -405,6 +407,11 @@ const handleDownloadSvg = () => {
 
       if (response.ok) {
         toast.success(member ? "Contributeur mis à jour" : "Contributeur retiré");
+        setLocalContributor(
+          member
+            ? { githubUsername: member.login, githubAvatarUrl: member.avatar_url }
+            : null,
+        );
         setEditingContributor(false);
         onPictogramUpdated?.();
       } else {
@@ -585,7 +592,7 @@ const handleDownloadSvg = () => {
                           disabled={savingContributor}
                           onClick={() => handleSetContributor(null)}
                           className={`flex items-center justify-center w-9 h-9 rounded-full border-2 text-xs font-bold transition-all ${
-                            !pictogram.contributor
+                            !localContributor
                               ? "border-primary text-primary bg-primary/10"
                               : "border-border text-muted-foreground opacity-50 hover:opacity-100"
                           }`}
@@ -600,7 +607,7 @@ const handleDownloadSvg = () => {
                             disabled={savingContributor}
                             onClick={() => handleSetContributor(member)}
                             className={`relative rounded-full transition-all ${
-                              pictogram.contributor?.githubUsername === member.login
+                              localContributor?.githubUsername === member.login
                                 ? "ring-2 ring-primary ring-offset-2 ring-offset-background"
                                 : "opacity-50 hover:opacity-100 hover:ring-2 hover:ring-muted-foreground/30 hover:ring-offset-1 hover:ring-offset-background"
                             }`}
@@ -628,17 +635,17 @@ const handleDownloadSvg = () => {
                 );
               }
 
-              return pictogram.contributor ? (
+              return localContributor ? (
                 <div className="flex items-center gap-3 p-2">
                   <img
-                    src={pictogram.contributor.githubAvatarUrl}
-                    alt={pictogram.contributor.githubUsername}
+                    src={localContributor.githubAvatarUrl}
+                    alt={localContributor.githubUsername}
                     className="w-8 h-8 rounded-full ring-2 ring-ring-accent"
                   />
                   <div className="flex-1">
                     <p className="text-xs text-muted-foreground">Contributeur</p>
                     <p className="text-sm font-medium text-foreground">
-                      {pictogram.contributor.githubUsername}
+                      {localContributor.githubUsername}
                     </p>
                   </div>
                   <Button
@@ -660,17 +667,17 @@ const handleDownloadSvg = () => {
                   Définir un contributeur
                 </Button>
               );
-            })() : pictogram.contributor ? (
+            })() : localContributor ? (
               <div className="flex items-center gap-3 p-2">
                 <img
-                  src={pictogram.contributor.githubAvatarUrl}
-                  alt={pictogram.contributor.githubUsername}
+                  src={localContributor.githubAvatarUrl}
+                  alt={localContributor.githubUsername}
                   className="w-8 h-8 rounded-full ring-2 ring-ring-accent"
                 />
                 <div className="flex-1">
                   <p className="text-xs text-muted-foreground">Contributeur</p>
                   <p className="text-sm font-medium text-foreground">
-                    {pictogram.contributor.githubUsername}
+                    {localContributor.githubUsername}
                   </p>
                 </div>
               </div>
