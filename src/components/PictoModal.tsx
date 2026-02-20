@@ -337,13 +337,42 @@ const handleDownloadSvg = () => {
     }
   };
 
-  // Tag editing handlers
+  // Tag editing handlers — chaque modification persiste immédiatement en base
+  const saveTags = async (newTags: string[]) => {
+    const token = getStoredToken();
+    if (!token) return;
+    setSavingTags(true);
+    try {
+      const response = await fetch(`${API_URL}/api/pictograms/${pictogram.id}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ tags: newTags }),
+      });
+      if (response.ok) {
+        onPictogramUpdated?.();
+      } else {
+        toast.error("Erreur lors de la mise à jour des tags");
+      }
+    } catch {
+      toast.error("Erreur réseau");
+    } finally {
+      setSavingTags(false);
+    }
+  };
+
   const handleAddTag = () => {
     const trimmed = tagInput.trim();
-    if (trimmed && !tags.includes(trimmed)) {
-      setTags([...tags, trimmed]);
+    if (!trimmed || tags.includes(trimmed)) {
+      setTagInput("");
+      return;
     }
+    const newTags = [...tags, trimmed];
+    setTags(newTags);
     setTagInput("");
+    saveTags(newTags);
   };
 
   const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -354,38 +383,9 @@ const handleDownloadSvg = () => {
   };
 
   const handleRemoveTag = (tag: string) => {
-    setTags(tags.filter((t) => t !== tag));
-  };
-
-  const handleSaveTags = async () => {
-    const token = getStoredToken();
-    if (!token) return;
-
-    setSavingTags(true);
-    try {
-      const response = await fetch(
-        `${API_URL}/api/pictograms/${pictogram.id}`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ tags }),
-        },
-      );
-
-      if (response.ok) {
-        toast.success("Tags mis à jour");
-        onPictogramUpdated?.();
-      } else {
-        toast.error("Erreur lors de la mise à jour des tags");
-      }
-    } catch {
-      toast.error("Erreur réseau");
-    } finally {
-      setSavingTags(false);
-    }
+    const newTags = tags.filter((t) => t !== tag);
+    setTags(newTags);
+    saveTags(newTags);
   };
 
   const handleSetContributor = async (
@@ -757,9 +757,12 @@ const handleDownloadSvg = () => {
                     </Button>
                   </div>
                   {tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5">
+                    <div className="flex flex-wrap gap-1.5 mt-1">
                       {tags.map((tag) => (
                         <Badge key={tag} variant="secondary" className="cursor-pointer gap-1">
+                          {savingTags ? (
+                            <Loader2 className="h-2.5 w-2.5 animate-spin" />
+                          ) : null}
                           {tag}
                           <button
                             type="button"
@@ -773,19 +776,6 @@ const handleDownloadSvg = () => {
                       ))}
                     </div>
                   )}
-                  <Button
-                    type="button"
-                    size="sm"
-                    onClick={handleSaveTags}
-                    disabled={savingTags}
-                    className="rounded"
-                  >
-                    {savingTags ? (
-                      <><Loader2 className="h-3 w-3 animate-spin mr-1" />Enregistrement...</>
-                    ) : (
-                      "Enregistrer les tags"
-                    )}
-                  </Button>
                 </div>
               ) : (
                 <div className="flex flex-wrap gap-1.5">
