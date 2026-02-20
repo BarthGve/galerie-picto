@@ -1,6 +1,6 @@
 {
   "name": "la-boite-a-picto-backend",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Backend API for La Boite à Pictos",
   "type": "module",
   "scripts": {
