@@ -364,12 +364,15 @@ const handleDownloadSvg = () => {
   };
 
   const handleAddTag = () => {
-    const trimmed = tagInput.trim();
-    if (!trimmed || tags.includes(trimmed)) {
+    const newItems = tagInput
+      .split(";")
+      .map((t) => t.trim())
+      .filter((t) => t && !tags.includes(t));
+    if (newItems.length === 0) {
       setTagInput("");
       return;
     }
-    const newTags = [...tags, trimmed];
+    const newTags = [...tags, ...newItems];
     setTags(newTags);
     setTagInput("");
     saveTags(newTags);
