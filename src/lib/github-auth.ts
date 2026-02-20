@@ -149,7 +149,7 @@ export async function verifyUploadPermission(token: string): Promise<boolean> {
  */
 export function logout() {
   localStorage.removeItem("github_token");
-  window.location.reload();
+  window.location.href = "/";
 }
 
 /**
