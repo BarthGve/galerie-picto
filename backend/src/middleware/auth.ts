@@ -20,23 +20,20 @@ const TOKEN_CACHE_TTL = 5 * 60_000;
 const collaboratorsCache = { logins: new Set<string>(), expiresAt: 0 };
 const COLLABORATORS_CACHE_TTL = 10 * 60_000;
 
-async function isRepoCollaborator(
-  login: string,
-  token: string,
-): Promise<boolean> {
+async function isRepoCollaborator(login: string): Promise<boolean> {
   // Check cache first
   if (collaboratorsCache.expiresAt > Date.now()) {
     return collaboratorsCache.logins.has(login);
   }
 
-  if (!config.github.repo) return false;
+  if (!config.github.repo || !config.feedback.token) return false;
 
   try {
     const response = await fetch(
       `https://api.github.com/repos/${config.github.repo}/collaborators`,
       {
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${config.feedback.token}`,
           Accept: "application/vnd.github.v3+json",
         },
       },
@@ -110,7 +107,7 @@ export async function authMiddleware(
       config.github.allowedUsername &&
       user.login === config.github.allowedUsername;
 
-    if (!isAllowedUser && !(await isRepoCollaborator(user.login, token))) {
+    if (!isAllowedUser && !(await isRepoCollaborator(user.login))) {
       res.status(403).json({ error: "User not authorized" });
       return;
     }

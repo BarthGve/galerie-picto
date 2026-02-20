@@ -51,7 +51,8 @@ export function PictogramsProvider({
 
   useEffect(() => {
     refetchPictograms();
-  }, [refetchPictograms]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const deletePictogram = useCallback(
     async (id: string): Promise<boolean> => {

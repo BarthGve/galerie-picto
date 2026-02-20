@@ -64,7 +64,8 @@ export function GalleriesProvider({
 
   useEffect(() => {
     refetchGalleries();
-  }, [refetchGalleries]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function getAuthHeaders(): HeadersInit {
     const token = localStorage.getItem("github_token");

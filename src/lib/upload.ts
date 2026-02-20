@@ -17,7 +17,7 @@ export interface UploadOptions {
  */
 export async function uploadPictogram(
   options: UploadOptions,
-): Promise<{ success: boolean; url?: string; error?: string }> {
+): Promise<{ success: boolean; url?: string; pictogramId?: string; error?: string }> {
   const {
     file,
     metadata,
@@ -59,10 +59,12 @@ export async function uploadPictogram(
 
     onProgress?.(70);
 
+    const pictogramId = crypto.randomUUID();
+
     // 5. Notifier le backend pour mettre à jour le manifest
     try {
       await notifyUploadComplete(token, {
-        id: crypto.randomUUID(),
+        id: pictogramId,
         filename: file.name,
         name: metadata.title || file.name.replace(/\.svg$/i, ""),
         url: publicUrl,
@@ -81,6 +83,7 @@ export async function uploadPictogram(
     return {
       success: true,
       url: publicUrl,
+      pictogramId,
     };
   } catch (error) {
     console.error("Upload error:", error);

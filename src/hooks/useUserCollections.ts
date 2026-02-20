@@ -48,6 +48,7 @@ export function useUserCollections(isAuthenticated: boolean) {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         pictogramIds: [],
+        userPictogramIds: [],
       };
       setCollections((prev) => [...prev, temp]);
 

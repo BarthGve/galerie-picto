@@ -8,11 +8,13 @@ export function useLikes(isAuthenticated: boolean) {
 
   useEffect(() => {
     const token = getStoredToken();
+    // Toujours charger les counts (publics). Si connecté, charge aussi les liked.
     fetch(`${API_URL}/api/pictograms/likes`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     })
-      .then((res) => res.json())
-      .then((data: { counts: Record<string, number>; liked: string[] }) => {
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { counts: Record<string, number>; liked: string[] } | null) => {
+        if (!data) return;
         setCounts(new Map(Object.entries(data.counts ?? {})));
         setLiked(new Set(data.liked ?? []));
       })

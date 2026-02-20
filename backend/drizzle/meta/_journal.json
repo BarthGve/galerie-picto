@@ -36,6 +36,13 @@
       "when": 1771700000000,
       "tag": "0004_user_collection_description",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1771800000000,
+      "tag": "0005_nappy_molecule_man",
+      "breakpoints": true
     }
   ]
 }

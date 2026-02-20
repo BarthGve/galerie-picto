@@ -32,15 +32,14 @@ export function useFeedbackNotifications(isAuthenticated: boolean) {
   );
   const [unreadCount, setUnreadCount] = useState(0);
   const seenRef = useRef<Set<number>>(getSeenIds());
-  const abortRef = useRef<AbortController | null>(null);
 
-  // Compute unread from notifications list
+  // Stable ref pour refreshUnread — pas de dépendance externe
   const refreshUnread = useCallback((notifs: FeedbackNotification[]) => {
     const seen = seenRef.current;
     setUnreadCount(notifs.filter((n) => !seen.has(n.id)).length);
   }, []);
 
-  // Fetch resolved notifications from API
+  // Stable ref pour fetchNotifications — accès via ref dans l'effet SSE
   const fetchNotifications = useCallback(async () => {
     const token = getStoredToken();
     if (!token) return;
@@ -57,21 +56,26 @@ export function useFeedbackNotifications(isAuthenticated: boolean) {
     }
   }, [refreshUnread]);
 
-  // SSE connection for real-time notifications
+  // Refs pour éviter que l'effet SSE ne se reconnecte quand les callbacks changent
+  const fetchNotificationsRef = useRef(fetchNotifications);
+  const refreshUnreadRef = useRef(refreshUnread);
+  useEffect(() => { fetchNotificationsRef.current = fetchNotifications; }, [fetchNotifications]);
+  useEffect(() => { refreshUnreadRef.current = refreshUnread; }, [refreshUnread]);
+
+  // SSE connection — ne dépend que de isAuthenticated
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    fetchNotifications();
+    fetchNotificationsRef.current();
 
     // Poll every 60s as fallback (dev: no webhook, prod: redundancy)
-    const pollInterval = setInterval(fetchNotifications, 60_000);
+    const pollInterval = setInterval(() => fetchNotificationsRef.current(), 60_000);
 
     const token = getStoredToken();
     if (!token) return () => clearInterval(pollInterval);
 
     let active = true;
     const controller = new AbortController();
-    abortRef.current = controller;
 
     async function connect() {
       while (active) {
@@ -99,13 +103,11 @@ export function useFeedbackNotifications(isAuthenticated: boolean) {
             for (const line of lines) {
               if (!line.startsWith("data: ")) continue;
               try {
-                const notif = JSON.parse(
-                  line.slice(6),
-                ) as FeedbackNotification;
+                const notif = JSON.parse(line.slice(6)) as FeedbackNotification;
                 setNotifications((prev) => {
                   if (prev.some((n) => n.id === notif.id)) return prev;
                   const next = [notif, ...prev];
-                  refreshUnread(next);
+                  refreshUnreadRef.current(next);
                   return next;
                 });
                 setUnreadCount((c) => c + 1);
@@ -114,7 +116,7 @@ export function useFeedbackNotifications(isAuthenticated: boolean) {
               }
             }
           }
-        } catch (err) {
+        } catch {
           if (!active) break;
           // Network error — retry after 5s
           await new Promise((r) => setTimeout(r, 5000));
@@ -129,7 +131,7 @@ export function useFeedbackNotifications(isAuthenticated: boolean) {
       controller.abort();
       clearInterval(pollInterval);
     };
-  }, [isAuthenticated, fetchNotifications, refreshUnread]);
+  }, [isAuthenticated]); // Seule vraie dépendance : login/logout
 
   const markAsRead = useCallback(
     (id: number) => {

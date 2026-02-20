@@ -2,6 +2,7 @@ import {
   S3Client,
   PutObjectCommand,
   DeleteObjectCommand,
+  GetObjectCommand,
 } from "@aws-sdk/client-s3";
 import { config } from "../config.js";
 
@@ -50,4 +51,52 @@ export async function deleteFile(key: string): Promise<void> {
     Key: key,
   });
   await s3Client.send(command);
+}
+
+const privateS3Client = new S3Client({
+  endpoint: config.minio.endpoint,
+  region: "us-east-1",
+  credentials: {
+    accessKeyId: config.minio.accessKey,
+    secretAccessKey: config.minio.secretKey,
+  },
+  forcePathStyle: true,
+});
+
+export async function writePrivateSvgFile(
+  key: string,
+  svgContent: string,
+): Promise<void> {
+  const command = new PutObjectCommand({
+    Bucket: config.minio.privateBucket,
+    Key: key,
+    Body: svgContent,
+    ContentType: "image/svg+xml",
+    CacheControl: "private",
+  });
+  await privateS3Client.send(command);
+}
+
+export async function deletePrivateFile(key: string): Promise<void> {
+  const command = new DeleteObjectCommand({
+    Bucket: config.minio.privateBucket,
+    Key: key,
+  });
+  await privateS3Client.send(command);
+}
+
+export async function readPrivateFileAsText(
+  key: string,
+): Promise<string | null> {
+  try {
+    const command = new GetObjectCommand({
+      Bucket: config.minio.privateBucket,
+      Key: key,
+    });
+    const response = await privateS3Client.send(command);
+    if (!response.Body) return null;
+    return await response.Body.transformToString();
+  } catch {
+    return null;
+  }
 }

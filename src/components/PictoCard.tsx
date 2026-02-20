@@ -1,5 +1,5 @@
 import { lazy, Suspense, useRef, useState } from "react";
-import { Copy, Check, Download, Heart, BookmarkPlus, Bookmark, ThumbsUp } from "lucide-react";
+import { Copy, Check, Download, Heart, BookmarkPlus, Bookmark, ThumbsUp, Lock } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -63,30 +63,36 @@ function UserCollectionButton({
         <p className="text-xs font-medium text-muted-foreground mb-2 px-2">
           Mes collections
         </p>
-        <div className="space-y-1">
-          {userCollections.map((col) => {
-            const checked = col.pictogramIds.includes(pictogramId);
-            return (
-              <label
-                key={col.id}
-                className="flex items-center gap-2 cursor-pointer hover:bg-accent rounded px-2 py-1.5"
-              >
-                <Checkbox
-                  checked={checked}
-                  onCheckedChange={(v) => handleToggle(col, v === true)}
-                />
-                <span
-                  className="size-2.5 shrink-0 rounded-full"
-                  style={{
-                    backgroundColor: col.color ?? "var(--muted-foreground)",
-                    opacity: col.color ? 1 : 0.3,
-                  }}
-                />
-                <span className="text-sm truncate">{col.name}</span>
-              </label>
-            );
-          })}
-        </div>
+        {userCollections.length === 0 ? (
+          <p className="text-xs text-muted-foreground px-2 py-1 italic">
+            Aucune collection. Créez-en une depuis la sidebar.
+          </p>
+        ) : (
+          <div className="space-y-1">
+            {userCollections.map((col) => {
+              const checked = col.pictogramIds.includes(pictogramId);
+              return (
+                <label
+                  key={col.id}
+                  className="flex items-center gap-2 cursor-pointer hover:bg-accent rounded px-2 py-1.5"
+                >
+                  <Checkbox
+                    checked={checked}
+                    onCheckedChange={(v) => handleToggle(col, v === true)}
+                  />
+                  <span
+                    className="size-2.5 shrink-0 rounded-full"
+                    style={{
+                      backgroundColor: col.color ?? "var(--muted-foreground)",
+                      opacity: col.color ? 1 : 0.3,
+                    }}
+                  />
+                  <span className="text-sm truncate">{col.name}</span>
+                </label>
+              );
+            })}
+          </div>
+        )}
       </PopoverContent>
     </Popover>
   );
@@ -115,6 +121,7 @@ interface PictoCardProps {
   likeCount?: number;
   hasLiked?: boolean;
   onToggleLike?: () => void;
+  isPrivate?: boolean;
 }
 
 export function PictoCard({
@@ -136,6 +143,7 @@ export function PictoCard({
   likeCount = 0,
   hasLiked,
   onToggleLike,
+  isPrivate,
 }: PictoCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -227,6 +235,14 @@ export function PictoCard({
           </button>
         )}
 
+        {/* Badge privé */}
+        {isPrivate && (
+          <span className="absolute top-2 left-2 z-10 flex items-center gap-1 text-[10px] text-muted-foreground bg-background/80 rounded-[25px] px-1.5 py-0.5 border border-border">
+            <Lock className="size-2.5" />
+            Privé
+          </span>
+        )}
+
         {/* Quick actions overlay */}
         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-1 z-20">
           {showGallerySelector && (
@@ -238,7 +254,7 @@ export function PictoCard({
               variant="compact"
             />
           )}
-          {userCollections && userCollections.length > 0 && onAddToUserCollection && (
+          {userCollections !== undefined && onAddToUserCollection && (
             <UserCollectionButton
               pictogramId={pictogram.id}
               userCollections={userCollections}
