@@ -50,6 +50,7 @@ export function AppSidebar({
   onRemoveUserCollection,
   onAddToUserCollection,
   onGoFeedback,
+  onGoGuides,
   onGoProfile,
   onGoAdmin,
   isCollaborator = false,
@@ -84,6 +85,7 @@ export function AppSidebar({
   onRemoveUserCollection?: (id: string) => Promise<void>;
   onAddToUserCollection?: (collectionId: string, pictogramId: string) => Promise<boolean>;
   onGoFeedback?: () => void;
+  onGoGuides?: () => void;
   onGoProfile?: () => void;
   onGoAdmin?: () => void;
   isCollaborator?: boolean;
@@ -132,6 +134,7 @@ export function AppSidebar({
           isAuthenticated={!!user}
           onUploadClick={onUploadClick}
           onGoDiscover={onGoDiscover}
+          onGoGuides={onGoGuides}
           currentPage={currentPage}
           favoritesCount={favoritesCount}
           showFavoritesOnly={showFavoritesOnly}

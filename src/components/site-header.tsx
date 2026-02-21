@@ -1,5 +1,5 @@
 import { Moon, Search, Sun, Bell, Bug, Sparkles, CheckCircle2 } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -31,6 +31,23 @@ export function SiteHeader({
   const isDark = theme === "dark";
   const [bellOpen, setBellOpen] = useState(false);
   const bellRef = useRef<HTMLDivElement>(null);
+  const [hidden, setHidden] = useState(false);
+  const lastScrollY = useRef(0);
+
+  useEffect(() => {
+    const threshold = 60;
+    const onScroll = () => {
+      const y = window.scrollY;
+      if (y > threshold && y > lastScrollY.current) {
+        setHidden(true);
+      } else {
+        setHidden(false);
+      }
+      lastScrollY.current = y;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -53,7 +70,7 @@ export function SiteHeader({
   }
 
   return (
-    <header className="sticky top-0 z-30 flex shrink-0 items-center justify-between gap-2 px-6 py-4">
+    <header className={`sticky top-0 z-10 flex shrink-0 items-center justify-between gap-2 px-6 py-4 transition-transform duration-300 ${hidden ? "-translate-y-full" : "translate-y-0"}`}>
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded">
         Aller au contenu principal
       </a>

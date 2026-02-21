@@ -1,4 +1,4 @@
-import { Images, CirclePlus, Compass, Heart } from "lucide-react";
+import { Images, CirclePlus, Compass, Heart, BookOpen } from "lucide-react";
 
 import {
   SidebarGroup,
@@ -18,6 +18,7 @@ export function NavMain({
   isAuthenticated,
   onUploadClick,
   onGoDiscover,
+  onGoGuides,
   currentPage,
   favoritesCount,
   showFavoritesOnly,
@@ -31,6 +32,7 @@ export function NavMain({
   isAuthenticated: boolean;
   onUploadClick: () => void;
   onGoDiscover?: () => void;
+  onGoGuides?: () => void;
   currentPage?: string;
   favoritesCount?: number;
   showFavoritesOnly?: boolean;
@@ -70,6 +72,16 @@ export function NavMain({
             >
               <Compass />
               <span>Découvrir</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              isActive={currentPage === "guides"}
+              onClick={onGoGuides}
+              tooltip="Guides"
+            >
+              <BookOpen />
+              <span>Guides</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

@@ -449,6 +449,7 @@ export function HomePage({
             <a href="/discover" className="text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors">Découvrir</a>
             <a href="/gallery" className="text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors">Galerie</a>
             <a href="/feedback" className="text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors">Feedback</a>
+            <a href="/guides" className="text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors">Guides</a>
             <a href="/confidentialite" className="text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors">Confidentialité</a>
             <a href="/cookies" className="text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors">Cookies</a>
             <span className="inline-flex items-center rounded-full border border-border bg-muted/50 px-2 py-0.5 text-[10px] font-mono text-muted-foreground/60 select-none">

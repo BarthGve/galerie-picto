@@ -74,6 +74,11 @@ const CollectionsPage = lazy(() =>
     default: m.CollectionsPage,
   })),
 );
+const GuidesPage = lazy(() =>
+  import("@/components/GuidesPage").then((m) => ({
+    default: m.GuidesPage,
+  })),
+);
 const NotFoundPage = lazy(() =>
   import("@/components/NotFoundPage").then((m) => ({
     default: m.NotFoundPage,
@@ -83,7 +88,7 @@ const NotFoundPage = lazy(() =>
 const normalizeSearch = (s: string) =>
   s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-type Page = "home" | "discover" | "gallery" | "collections" | "test-discover" | "feedback" | "privacy" | "cookies" | "profile" | "admin" | "404";
+type Page = "home" | "discover" | "gallery" | "collections" | "test-discover" | "feedback" | "privacy" | "cookies" | "guides" | "profile" | "admin" | "404";
 
 function getInitialPage(): Page {
   const path = window.location.pathname;
@@ -96,6 +101,7 @@ function getInitialPage(): Page {
   if (path === "/profil") return "profile";
   if (path === "/admin") return "admin";
   if (path === "/collections") return "collections";
+  if (path === "/guides") return "guides";
   // OAuth callback → go straight to discover
   if (new URLSearchParams(window.location.search).has("code")) return "discover";
   if (path === "/") return "home";
@@ -216,6 +222,7 @@ function AppInner() {
       else if (path === "/profil") setPage("profile");
       else if (path === "/admin") setPage("admin");
       else if (path === "/collections") setPage("collections");
+      else if (path === "/guides") setPage("guides");
       else if (path === "/") setPage("home");
       else setPage("404");
     };
@@ -243,7 +250,9 @@ function AppInner() {
                     ? "/admin"
                     : target === "collections"
                       ? "/collections"
-                      : "/";
+                      : target === "guides"
+                        ? "/guides"
+                        : "/";
     window.history.pushState(null, "", path);
     setPage(target);
     if (target === "discover" || target === "home") {
@@ -535,6 +544,21 @@ function AppInner() {
     );
   }
 
+  if (page === "guides") {
+    return (
+      <>
+        <SEOHead
+          title="Guides"
+          description="Tutoriels pas-à-pas pour utiliser La Boite à Pictos : personnaliser les couleurs, télécharger, créer des collections et plus."
+          path="/guides"
+        />
+        <Suspense fallback={null}>
+          <GuidesPage user={user} onLogin={handleLogin} onLogout={logout} />
+        </Suspense>
+      </>
+    );
+  }
+
   // Home page — rendered before gallery data is needed
   if (page === "home") {
     return (
@@ -676,6 +700,7 @@ function AppInner() {
           onAddToGallery={addPictogramToGallery}
           onGoHome={() => navigateTo("home")}
           onGoDiscover={() => navigateTo("discover")}
+          onGoGuides={() => navigateTo("guides")}
           onGoFeedback={() => navigateTo("feedback")}
           onGoProfile={() => navigateTo("profile")}
           onGoAdmin={() => navigateTo("admin")}

@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { Helmet } from "react-helmet-async";
 import {
   Breadcrumb as BreadcrumbRoot,
@@ -37,14 +38,16 @@ export function BreadcrumbNav({ items }: BreadcrumbNavProps) {
       <BreadcrumbRoot>
         <BreadcrumbList>
           {items.map((item, i) => (
-            <BreadcrumbItem key={i}>
+            <Fragment key={i}>
               {i > 0 && <BreadcrumbSeparator />}
-              {item.href ? (
-                <BreadcrumbLink href={item.href}>{item.label}</BreadcrumbLink>
-              ) : (
-                <BreadcrumbPage>{item.label}</BreadcrumbPage>
-              )}
-            </BreadcrumbItem>
+              <BreadcrumbItem>
+                {item.href ? (
+                  <BreadcrumbLink href={item.href}>{item.label}</BreadcrumbLink>
+                ) : (
+                  <BreadcrumbPage>{item.label}</BreadcrumbPage>
+                )}
+              </BreadcrumbItem>
+            </Fragment>
           ))}
         </BreadcrumbList>
       </BreadcrumbRoot>
