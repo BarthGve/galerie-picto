@@ -27,7 +27,7 @@ import { useTheme } from "@/hooks/use-theme";
 import { transformSvgToDark } from "@/lib/svg-dark-transform";
 
 interface UploadDialogProps {
-  onUploadSuccess?: () => void;
+  onUploadSuccess?: (info?: { pictogramId: string; url: string; filename: string }) => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   user?: { login: string; avatar_url: string } | null;
@@ -350,7 +350,7 @@ export function UploadDialog({
         );
         setOpen(false);
         resetForm();
-        onUploadSuccess?.();
+        onUploadSuccess?.({ pictogramId: result.pictogramId!, url: result.url!, filename: file.name });
       } else {
         toast.error(result.error || "Erreur lors de l'upload");
       }

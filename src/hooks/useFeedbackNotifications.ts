@@ -159,5 +159,32 @@ export function useFeedbackNotifications(isAuthenticated: boolean) {
     [notifications],
   );
 
-  return { notifications, unreadCount, markAsRead, markAllAsRead, isRead };
+  const dismiss = useCallback(async (id: number) => {
+    const token = getStoredToken();
+    if (token) {
+      fetch(`${API_URL}/api/feedback/notifications/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      }).catch(() => {});
+    }
+    setNotifications((prev) => {
+      const next = prev.filter((n) => n.id !== id);
+      setUnreadCount(next.filter((n) => !n.isRead).length);
+      return next;
+    });
+  }, []);
+
+  const dismissAll = useCallback(async () => {
+    const token = getStoredToken();
+    if (token) {
+      fetch(`${API_URL}/api/feedback/notifications`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      }).catch(() => {});
+    }
+    setNotifications([]);
+    setUnreadCount(0);
+  }, []);
+
+  return { notifications, unreadCount, markAsRead, markAllAsRead, isRead, dismiss, dismissAll };
 }

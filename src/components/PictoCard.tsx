@@ -163,6 +163,7 @@ function PictoCardInner({
   const [cardModifiedSvg, setCardModifiedSvg] = useState<string | null>(null);
   const [cardPreviewUrl, setCardPreviewUrl] = useState<string | null>(null);
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
+  const [svgText, setSvgText] = useState<string | null>(null);
   const svgCacheRef = useRef<string | null>(null);
   const displayUrl = usePictogramUrl(pictogram);
 
@@ -171,6 +172,7 @@ function PictoCardInner({
     if (cardModifiedSvg) {
       const blob = new Blob([cardModifiedSvg], { type: "image/svg+xml" });
       const url = URL.createObjectURL(blob);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- derived state from effect-created blob URL
       setCardPreviewUrl(url);
       return () => URL.revokeObjectURL(url);
     }
@@ -183,6 +185,7 @@ function PictoCardInner({
     if (!svgCacheRef.current) {
       fetchSvgText(pictogram.url).then((text) => {
         svgCacheRef.current = text;
+        setSvgText(text);
       });
     }
   };
@@ -193,6 +196,7 @@ function PictoCardInner({
       fetchSvgText(pictogram.url)
         .then((text) => {
           svgCacheRef.current = text;
+          setSvgText(text);
         })
         .catch(() => {
           toast.error("Impossible de charger ce pictogramme");
@@ -382,9 +386,9 @@ function PictoCardInner({
                       </div>
                     }
                   >
-                    {svgCacheRef.current ? (
+                    {svgText ? (
                       <ColorCustomizer
-                        svgText={svgCacheRef.current}
+                        svgText={svgText}
                         onModifiedSvgChange={(svg) => setCardModifiedSvg(svg)}
                       />
                     ) : (

@@ -19,6 +19,7 @@ import { API_URL } from "@/lib/config";
 import { getStoredToken } from "@/lib/github-auth";
 import { useAdminStats } from "@/hooks/useAdminStats";
 import { useAdminUsers, type AdminUser } from "@/hooks/useAdminUsers";
+import { AdminRequestsSection } from "@/components/AdminRequestsSection";
 
 function formatDate(iso: string | null | undefined) {
   if (!iso) return "—";
@@ -31,7 +32,7 @@ function formatDate(iso: string | null | undefined) {
 
 function SkeletonCard() {
   return (
-    <div className="rounded-xl border border-border bg-muted/30 p-5 animate-pulse">
+    <div className="rounded-[4px] border border-border bg-muted/30 p-5 animate-pulse">
       <div className="h-3 w-24 rounded bg-muted mb-3" />
       <div className="h-7 w-16 rounded bg-muted" />
     </div>
@@ -50,7 +51,7 @@ function KpiCard({
   sub?: string;
 }) {
   return (
-    <div className="rounded-xl border border-border bg-card p-5 flex flex-col gap-2">
+    <div className="rounded-[4px] border border-border bg-card p-5 flex flex-col gap-2">
       <div className="flex items-center gap-2 text-muted-foreground text-xs font-medium">
         <Icon className="size-3.5" />
         {label}
@@ -109,11 +110,13 @@ function TopList({
 
 function UserRow({
   user,
+  isTeamMember,
   onBan,
   onUnban,
   onDelete,
 }: {
   user: AdminUser;
+  isTeamMember: boolean;
   onBan: (login: string) => void;
   onUnban: (login: string) => void;
   onDelete: (login: string) => void;
@@ -161,6 +164,11 @@ function UserRow({
           <div className="min-w-0">
             <p className="text-xs font-semibold text-foreground truncate">
               @{user.githubLogin}
+              {isTeamMember && (
+                <span className="ml-1.5 inline-flex items-center gap-0.5 text-[10px] font-bold" style={{ color: "var(--dsfr-green-archipel-sun)" }}>
+                  <ShieldCheck className="size-2.5" /> team
+                </span>
+              )}
               {isBanned && (
                 <span className="ml-1.5 inline-flex items-center gap-0.5 text-[10px] font-bold text-destructive">
                   <Ban className="size-2.5" /> banni
@@ -236,7 +244,7 @@ function UserRow({
 }
 
 function UsersSection() {
-  const { result, loading, error, page, setPage, pageSize, handleSearchChange, ban, unban, removeUser } =
+  const { result, loading, error, page, setPage, pageSize, teamLogins, handleSearchChange, ban, unban, removeUser } =
     useAdminUsers();
   const searchRef = useRef<HTMLInputElement>(null);
 
@@ -252,18 +260,18 @@ function UsersSection() {
           type="search"
           placeholder="Rechercher par login ou nom…"
           onChange={(e) => handleSearchChange(e.target.value)}
-          className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50"
+          className="w-full pl-9 pr-3 py-2 text-sm rounded-[4px] border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50"
         />
       </div>
 
       {error && (
-        <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+        <div className="rounded-[4px] border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {error}
         </div>
       )}
 
       {/* Table */}
-      <div className="rounded-xl border border-border bg-card overflow-hidden">
+      <div className="rounded-[4px] border border-border bg-card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
@@ -316,6 +324,7 @@ function UsersSection() {
                   <UserRow
                     key={user.githubLogin}
                     user={user}
+                    isTeamMember={teamLogins.has(user.githubLogin)}
                     onBan={ban}
                     onUnban={unban}
                     onDelete={removeUser}
@@ -366,10 +375,10 @@ function UsersSection() {
   );
 }
 
-export function AdminPage() {
+export function AdminPage({ activeRequestCount = 0 }: { activeRequestCount?: number }) {
   const { stats, loading, error, refetch } = useAdminStats();
   const [openTickets, setOpenTickets] = useState<number | null>(null);
-  const [activeTab, setActiveTab] = useState<"dashboard" | "users">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "users" | "requests">("dashboard");
 
   useEffect(() => {
     fetch(`${API_URL}/api/feedback`)
@@ -473,13 +482,31 @@ export function AdminPage() {
               )}
             </span>
           </button>
+          <button
+            onClick={() => setActiveTab("requests")}
+            className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
+              activeTab === "requests"
+                ? "border-tertiary text-tertiary"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <span className="flex items-center gap-1.5">
+              <MessageSquare className="size-3.5" />
+              Demandes
+              {activeRequestCount > 0 && (
+                <span className="inline-flex items-center justify-center rounded-full bg-muted text-muted-foreground text-[10px] font-bold px-1.5 py-0.5 leading-none">
+                  {activeRequestCount}
+                </span>
+              )}
+            </span>
+          </button>
         </div>
 
         {/* Contenu Dashboard */}
         {activeTab === "dashboard" && (
           <div className="space-y-8">
             {error && (
-              <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+              <div className="rounded-[4px] border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
                 {error}
               </div>
             )}
@@ -514,7 +541,7 @@ export function AdminPage() {
 
             {/* Tops */}
             {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 rounded-xl border border-border bg-card p-5 animate-pulse">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 rounded-[4px] border border-border bg-card p-5 animate-pulse">
                 {[0, 1].map((i) => (
                   <div key={i} className="space-y-3">
                     <div className="h-3 w-32 rounded bg-muted" />
@@ -528,7 +555,7 @@ export function AdminPage() {
                 ))}
               </div>
             ) : stats ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 rounded-xl border border-border bg-card p-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 rounded-[4px] border border-border bg-card p-5">
                 <div className="space-y-6">
                   <TopList title="Top téléchargements" items={stats.downloads.topPictograms} />
                   {stats.pictograms.neverDownloaded.length > 0 && (
@@ -556,7 +583,7 @@ export function AdminPage() {
 
             {/* Activité récente */}
             {loading ? (
-              <div className="rounded-xl border border-border bg-card p-5 space-y-4 animate-pulse">
+              <div className="rounded-[4px] border border-border bg-card p-5 space-y-4 animate-pulse">
                 <div className="h-3 w-28 rounded bg-muted" />
                 <div className="space-y-2">
                   {[1, 2, 3, 4, 5].map((i) => (
@@ -568,7 +595,7 @@ export function AdminPage() {
                 </div>
               </div>
             ) : stats ? (
-              <div className="rounded-xl border border-border bg-card p-5 space-y-4">
+              <div className="rounded-[4px] border border-border bg-card p-5 space-y-4">
                 <h3 className="text-base font-extrabold tracking-tight text-tertiary">
                   Activité récente
                 </h3>
@@ -632,6 +659,9 @@ export function AdminPage() {
 
         {/* Contenu Utilisateurs */}
         {activeTab === "users" && <UsersSection />}
+
+        {/* Contenu Demandes */}
+        {activeTab === "requests" && <AdminRequestsSection />}
       </div>
     </div>
   );

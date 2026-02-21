@@ -24,6 +24,7 @@ export function usePictogramUrl(pictogram: Pictogram): string {
         URL.revokeObjectURL(blobUrlRef.current);
         blobUrlRef.current = null;
       }
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- cleanup when not dark mode
       setBlobUrl(null);
       return;
     }

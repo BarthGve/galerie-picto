@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Heart, FolderOpen, ThumbsUp, Mail, Calendar, AlertTriangle, User, BarChart2 } from "lucide-react";
+import { Heart, FolderOpen, ThumbsUp, Mail, Calendar, AlertTriangle, User, BarChart2, Inbox } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,7 @@ interface UserProfile {
     favoritesCount: number;
     collectionsCount: number;
     likesCount: number;
+    requestsCount: number;
   };
 }
 
@@ -91,7 +92,7 @@ export function ProfilePage({ onDeleted }: ProfilePageProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
 
             {/* Identité */}
-            <section className="rounded-xl border border-border bg-card p-5">
+            <section className="rounded border border-border bg-card p-5">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded bg-tertiary/80 backdrop-blur-sm flex items-center justify-center text-tertiary-foreground shadow-lg ring-1 ring-tertiary/20 shrink-0">
                   <User className="w-5 h-5" />
@@ -135,7 +136,7 @@ export function ProfilePage({ onDeleted }: ProfilePageProps) {
             </section>
 
             {/* Stats */}
-            <section className="rounded-xl border border-border bg-card p-5">
+            <section className="rounded border border-border bg-card p-5">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded bg-tertiary/80 backdrop-blur-sm flex items-center justify-center text-tertiary-foreground shadow-lg ring-1 ring-tertiary/20 shrink-0">
                   <BarChart2 className="w-5 h-5" />
@@ -144,7 +145,7 @@ export function ProfilePage({ onDeleted }: ProfilePageProps) {
                   Données d'utilisation
                 </h2>
               </div>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col items-center gap-2 p-4 bg-muted/30 rounded-[4px]">
                   <Heart className="size-5 text-muted-foreground" />
                   <span className="text-2xl font-bold">{profile.stats.favoritesCount}</span>
@@ -160,13 +161,18 @@ export function ProfilePage({ onDeleted }: ProfilePageProps) {
                   <span className="text-2xl font-bold">{profile.stats.likesCount}</span>
                   <span className="text-xs text-muted-foreground">Likes</span>
                 </div>
+                <div className="flex flex-col items-center gap-2 p-4 bg-muted/30 rounded-[4px]">
+                  <Inbox className="size-5 text-muted-foreground" />
+                  <span className="text-2xl font-bold">{profile.stats.requestsCount}</span>
+                  <span className="text-xs text-muted-foreground">Demandes de pictos</span>
+                </div>
               </div>
             </section>
 
             </div>{/* Fin grid 1/2 1/2 */}
 
             {/* Danger zone */}
-            <section className="rounded-xl border border-destructive/40 bg-card p-5">
+            <section className="rounded border border-destructive/40 bg-card p-5">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded bg-destructive/80 backdrop-blur-sm flex items-center justify-center text-white shadow-lg ring-1 ring-destructive/20 shrink-0">
                   <AlertTriangle className="w-5 h-5" />

@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "6ff010ca-8495-4794-9c18-b5834cc79020",
-  "prevId": "24c4ea82-b8c4-4eee-bcae-b7d0fd5f21f4",
+  "id": "24c4ea82-b8c4-4eee-bcae-b7d0fd5f21f4",
+  "prevId": "0115ed78-d7b3-4b79-a80f-1c4d94b14808",
   "tables": {
     "anonymous_downloads": {
       "name": "anonymous_downloads",
@@ -521,94 +521,6 @@
           ],
           "columnsTo": [
             "github_login"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "picto_request_history": {
-      "name": "picto_request_history",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "request_id": {
-          "name": "request_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "actor_login": {
-          "name": "actor_login",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "action": {
-          "name": "action",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "from_status": {
-          "name": "from_status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "to_status": {
-          "name": "to_status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "detail": {
-          "name": "detail",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "prh_request_id_idx": {
-          "name": "prh_request_id_idx",
-          "columns": [
-            "request_id"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {
-        "picto_request_history_request_id_picto_requests_id_fk": {
-          "name": "picto_request_history_request_id_picto_requests_id_fk",
-          "tableFrom": "picto_request_history",
-          "tableTo": "picto_requests",
-          "columnsFrom": [
-            "request_id"
-          ],
-          "columnsTo": [
-            "id"
           ],
           "onDelete": "cascade",
           "onUpdate": "no action"

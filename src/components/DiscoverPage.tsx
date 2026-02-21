@@ -186,6 +186,7 @@ export function DiscoverPage({
     if (!selectedPicto) return;
     const updated = pictograms.find((p) => p.id === selectedPicto.id);
     if (updated) setSelectedPicto(updated);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- selectedPicto in deps would cause infinite loop
   }, [pictograms]);
 
   const latestPictos = useMemo(() => {

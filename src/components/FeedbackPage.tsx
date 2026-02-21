@@ -11,8 +11,15 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { API_URL } from "@/lib/config";
 import { getStoredToken, type GitHubUser } from "@/lib/github-auth";
+
+interface FeedbackComment {
+  author: string;
+  body: string;
+  createdAt: string;
+}
 
 interface FeedbackItem {
   id: number;
@@ -23,6 +30,8 @@ interface FeedbackItem {
   status: "open" | "resolved";
   resolution?: string;
   url: string;
+  fields?: Record<string, string>;
+  comments?: FeedbackComment[];
 }
 
 type FormType = "bug" | "improvement";
@@ -72,10 +81,13 @@ function IssuesList({
           <p className="text-sm text-muted-foreground">
             Vous voyez un problème ou avez une idée ?
           </p>
-          <Button size="sm" className="rounded" onClick={onSignal}>
-            <Send className="size-3.5 mr-1.5" />
+          <button
+            onClick={onSignal}
+            className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm hover:bg-primary/90 active:bg-primary/80 flex items-center gap-2"
+          >
+            <Send className="size-3.5" />
             Initier un ticket
-          </Button>
+          </button>
         </div>
       ) : (
         <div className="rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/10 to-background px-5 py-5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
@@ -123,76 +135,122 @@ function IssuesList({
       )}
 
       {!loading && !error && items.length > 0 && (
-        <div className="space-y-3">
-          {items.map((item) => {
-            const inner = (
-              <div className="grid grid-cols-2 gap-4 items-start">
-                {/* Colonne signalement */}
-                <div className="flex items-start gap-3 min-w-0">
-                  <div className="mt-0.5 shrink-0">
-                    {item.type === "bug" ? (
-                      <Bug className="size-4 text-orange-500" />
-                    ) : (
-                      <Sparkles className="size-4 text-primary" />
-                    )}
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className={`font-medium text-sm text-foreground truncate${isCollaborator ? " group-hover:text-primary transition-colors" : ""}`}>
-                        {item.title}
-                      </span>
-                      {item.status === "resolved" ? (
-                        <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-[10px] px-1.5 py-0 shrink-0">
-                          <CheckCircle2 className="size-3 mr-1" />
-                          Résolu
-                        </Badge>
-                      ) : (
-                        <Badge
-                          variant="outline"
-                          className="text-orange-600 border-orange-300 bg-orange-50 text-[10px] px-1.5 py-0 shrink-0"
-                        >
-                          <Clock className="size-3 mr-1" />
-                          En cours
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Signalé par{" "}
-                      <span className="font-medium">@{item.reportedBy}</span>
-                      {" · "}
-                      {formatDate(item.createdAt)}
-                    </p>
-                  </div>
-                </div>
-                {/* Colonne résolution */}
-                <div className="min-w-0">
-                  {item.status === "resolved" && item.resolution ? (
-                    <p className="text-xs text-muted-foreground line-clamp-3">
-                      <span className="font-medium text-foreground">Résolution :</span>{" "}
-                      {item.resolution}
-                    </p>
-                  ) : (
-                    <span className="text-xs text-muted-foreground/40 italic">—</span>
-                  )}
-                </div>
-              </div>
-            );
-            return isCollaborator ? (
-              <a
-                key={item.id}
-                href={item.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block rounded bg-transparent group"
-              >
-                {inner}
-              </a>
+        <div className="space-y-1">
+          {items.map((item) => (
+            <IssueRow key={item.id} item={item} isCollaborator={isCollaborator} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Issue row with expandable details ────────────────────────────────────────
+
+function IssueRow({
+  item,
+  isCollaborator,
+}: {
+  item: FeedbackItem;
+  isCollaborator: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const fields = item.fields ?? {};
+  const hasFields = Object.keys(fields).length > 0;
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full text-left px-4 py-3 rounded-lg flex items-start gap-3 hover:bg-muted/40 transition-colors cursor-pointer"
+      >
+        <div className="mt-0.5 shrink-0">
+          {item.type === "bug" ? (
+            <Bug className="size-4 text-orange-500" />
+          ) : (
+            <Sparkles className="size-4 text-primary" />
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-medium text-sm text-foreground">
+              {item.title}
+            </span>
+            {item.status === "resolved" ? (
+              <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-[10px] px-1.5 py-0 shrink-0">
+                <CheckCircle2 className="size-3 mr-1" />
+                Résolu
+              </Badge>
             ) : (
-              <div key={item.id} className="block rounded bg-transparent">
-                {inner}
+              <Badge
+                variant="outline"
+                className="text-orange-600 border-orange-300 bg-orange-50 text-[10px] px-1.5 py-0 shrink-0"
+              >
+                <Clock className="size-3 mr-1" />
+                En cours
+              </Badge>
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            Signalé par{" "}
+            <span className="font-medium">@{item.reportedBy}</span>
+            {" · "}
+            {formatDate(item.createdAt)}
+          </p>
+        </div>
+      </button>
+
+      {open && (
+        <div className="px-11 pb-4 space-y-3">
+          {hasFields &&
+            Object.entries(fields).map(([label, content]) => (
+              <div key={label}>
+                <p className="text-xs font-semibold text-foreground mb-0.5">
+                  {label}
+                </p>
+                <p className="text-sm text-muted-foreground whitespace-pre-line">
+                  {content}
+                </p>
               </div>
-            );
-          })}
+            ))}
+
+          {item.comments && item.comments.length > 0 && (
+            <div className={hasFields ? "pt-2 border-t border-border space-y-3" : "space-y-3"}>
+              <p className="text-xs font-semibold text-foreground">
+                Commentaires
+              </p>
+              {item.comments.map((c, i) => (
+                <div key={i} className="space-y-0.5">
+                  <p className="text-xs text-muted-foreground">
+                    <span className="font-medium text-foreground">@{c.author}</span>
+                    {" · "}
+                    {formatDate(c.createdAt)}
+                  </p>
+                  <p className="text-sm text-muted-foreground whitespace-pre-line">
+                    {c.body}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {!hasFields && (!item.comments || item.comments.length === 0) && (
+            <p className="text-sm text-muted-foreground italic">
+              Aucun détail disponible.
+            </p>
+          )}
+
+          {isCollaborator && (
+            <a
+              href={item.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-primary hover:underline inline-block"
+            >
+              Voir sur GitHub
+            </a>
+          )}
         </div>
       )}
     </div>
@@ -294,22 +352,22 @@ function BugForm({ onSuccess }: { onSuccess: () => void }) {
       </Field>
 
       <Field label="Est-ce que cela vous bloque ?" required>
-        <select
-          value={impact}
-          onChange={(e) => setImpact(e.target.value)}
-          className={inputCls}
-        >
-          <option value="">Choisir...</option>
-          <option value="Bloquant — je ne peux plus utiliser l'outil">
-            Oui, je ne peux plus utiliser l'outil
-          </option>
-          <option value="Gênant — mais je peux continuer à travailler">
-            C'est gênant mais je peux continuer
-          </option>
-          <option value="Mineur — c'est un petit détail">
-            C'est un petit détail
-          </option>
-        </select>
+        <Select value={impact} onValueChange={setImpact}>
+          <SelectTrigger>
+            <SelectValue placeholder="Choisir..." />
+          </SelectTrigger>
+          <SelectContent position="popper" className="w-(--radix-select-trigger-width)">
+            <SelectItem value="Bloquant — je ne peux plus utiliser l'outil">
+              Oui, je ne peux plus utiliser l'outil
+            </SelectItem>
+            <SelectItem value="Gênant — mais je peux continuer à travailler">
+              C'est gênant mais je peux continuer
+            </SelectItem>
+            <SelectItem value="Mineur — c'est un petit détail">
+              C'est un petit détail
+            </SelectItem>
+          </SelectContent>
+        </Select>
       </Field>
 
       {error && (
@@ -318,19 +376,25 @@ function BugForm({ onSuccess }: { onSuccess: () => void }) {
         </p>
       )}
 
-      <Button type="submit" disabled={!canSubmit || loading} className="w-full rounded">
-        {loading ? (
-          <span className="flex items-center gap-2">
-            <span className="size-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-            Envoi en cours...
-          </span>
-        ) : (
-          <span className="flex items-center gap-2">
-            <Send className="size-4" />
-            Envoyer le signalement
-          </span>
-        )}
-      </Button>
+      <div className="flex justify-end">
+        <button
+          type="submit"
+          disabled={!canSubmit || loading}
+          className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm hover:bg-primary/90 active:bg-primary/80 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2"
+        >
+          {loading ? (
+            <>
+              <span className="size-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+              Envoi en cours...
+            </>
+          ) : (
+            <>
+              <Send className="size-4" />
+              Envoyer le signalement
+            </>
+          )}
+        </button>
+      </div>
     </form>
   );
 }
@@ -422,22 +486,22 @@ function ImprovementForm({ onSuccess }: { onSuccess: () => void }) {
       </Field>
 
       <Field label="À quel point est-ce important pour vous ?" required>
-        <select
-          value={importance}
-          onChange={(e) => setImportance(e.target.value)}
-          className={inputCls}
-        >
-          <option value="">Choisir...</option>
-          <option value="Indispensable — j'en ai vraiment besoin">
-            Indispensable pour moi
-          </option>
-          <option value="Utile — ça m'aiderait beaucoup">
-            Ça m'aiderait beaucoup
-          </option>
-          <option value="Nice-to-have — ce serait sympa">
-            Ce serait sympa
-          </option>
-        </select>
+        <Select value={importance} onValueChange={setImportance}>
+          <SelectTrigger>
+            <SelectValue placeholder="Choisir..." />
+          </SelectTrigger>
+          <SelectContent position="popper" className="w-(--radix-select-trigger-width)">
+            <SelectItem value="Indispensable — j'en ai vraiment besoin">
+              Indispensable pour moi
+            </SelectItem>
+            <SelectItem value="Utile — ça m'aiderait beaucoup">
+              Ça m'aiderait beaucoup
+            </SelectItem>
+            <SelectItem value="Nice-to-have — ce serait sympa">
+              Ce serait sympa
+            </SelectItem>
+          </SelectContent>
+        </Select>
       </Field>
 
       {error && (
@@ -446,19 +510,25 @@ function ImprovementForm({ onSuccess }: { onSuccess: () => void }) {
         </p>
       )}
 
-      <Button type="submit" disabled={!canSubmit || loading} className="w-full rounded">
-        {loading ? (
-          <span className="flex items-center gap-2">
-            <span className="size-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-            Envoi en cours...
-          </span>
-        ) : (
-          <span className="flex items-center gap-2">
-            <Send className="size-4" />
-            Envoyer la demande
-          </span>
-        )}
-      </Button>
+      <div className="flex justify-end">
+        <button
+          type="submit"
+          disabled={!canSubmit || loading}
+          className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm hover:bg-primary/90 active:bg-primary/80 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2"
+        >
+          {loading ? (
+            <>
+              <span className="size-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+              Envoi en cours...
+            </>
+          ) : (
+            <>
+              <Send className="size-4" />
+              Envoyer la demande
+            </>
+          )}
+        </button>
+      </div>
     </form>
   );
 }

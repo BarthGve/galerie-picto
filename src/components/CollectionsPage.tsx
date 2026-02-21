@@ -58,7 +58,7 @@ export function CollectionsPage({
   onDeletePictogram,
 }: CollectionsPageProps) {
   const onGoGalleryRef = useRef(onGoGallery);
-  onGoGalleryRef.current = onGoGallery;
+  useEffect(() => { onGoGalleryRef.current = onGoGallery; });
 
   // Rediriger vers gallery si non connecté
   useEffect(() => {

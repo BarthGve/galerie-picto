@@ -30,6 +30,8 @@ import feedbackRoutes from "./routes/feedback.js";
 import accountRoutes from "./routes/account.js";
 import adminRoutes from "./routes/admin.js";
 import sitemapRoutes from "./routes/sitemap.js";
+import requestsRoutes from "./routes/requests.js";
+import notificationsRoutes from "./routes/notifications.js";
 
 const app = express();
 
@@ -154,6 +156,8 @@ const adminLimiter = rateLimit({
 app.use("/api/admin", adminLimiter);
 app.use("/api/admin", adminRoutes);
 app.use("/api/sitemap.xml", sitemapRoutes);
+app.use("/api/requests", requestsRoutes);
+app.use("/api/notifications", notificationsRoutes);
 
 // Run migrations then start server
 runMigrations();

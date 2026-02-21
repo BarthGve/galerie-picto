@@ -30,7 +30,22 @@ export function useAdminUsers() {
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+  const [teamLogins, setTeamLogins] = useState<Set<string>>(new Set());
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Fetch team members once
+  useEffect(() => {
+    const token = getStoredToken();
+    if (!token) return;
+    fetch(`${API_URL}/api/auth/team`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((members: { login: string }[]) => {
+        setTeamLogins(new Set(members.map((m) => m.login)));
+      })
+      .catch(() => {});
+  }, []);
 
   const fetchUsers = useCallback(async (p: number, s: string) => {
     const token = getStoredToken();
@@ -113,6 +128,7 @@ export function useAdminUsers() {
     page,
     search,
     pageSize: PAGE_SIZE,
+    teamLogins,
     setPage,
     handleSearchChange,
     ban,
