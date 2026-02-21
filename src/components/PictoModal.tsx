@@ -24,6 +24,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -72,6 +74,7 @@ interface PictoModalProps {
   onDeletePictogram?: (id: string) => Promise<boolean>;
   onLogin?: () => void;
   isPrivate?: boolean;
+  initialModifiedSvg?: string | null;
 }
 
 export function PictoModal({
@@ -87,13 +90,14 @@ export function PictoModal({
   onDeletePictogram,
   onLogin,
   isPrivate,
+  initialModifiedSvg,
 }: PictoModalProps) {
   const { pictograms: allPictograms } = usePictogramsCtx();
-  const [pngSize, setPngSize] = useState(512);
+  const [pngSize, setPngSize] = useState(128);
   const svgCacheRef = useRef<string | null>(null);
   const [svgLoaded, setSvgLoaded] = useState(false);
   const displayUrl = usePictogramUrl(pictogram);
-  const [showColorDialog, setShowColorDialog] = useState(false);
+  const [showColorPopover, setShowColorPopover] = useState(false);
   const [modifiedSvg, setModifiedSvg] = useState<string | null>(null);
   // Blob URL for the live preview when colors are modified
   const [previewBlobUrl, setPreviewBlobUrl] = useState<string | null>(null);
@@ -182,7 +186,7 @@ export function PictoModal({
       const link = document.createElement("a");
       link.href = url;
       const baseName = pictogram.filename.replace(/\.svg$/i, "");
-      link.download = `${baseName}-256px.png`;
+      link.download = `${baseName}-128px.png`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -232,8 +236,8 @@ export function PictoModal({
     if (isOpen) {
       svgCacheRef.current = null;
       setSvgLoaded(false);
-      setShowColorDialog(false);
-      setModifiedSvg(null);
+      setShowColorPopover(false);
+      setModifiedSvg(initialModifiedSvg ?? null);
       setPreviewBlobUrl(null);
       setTags(pictogram.tags || []);
       setTagInput("");
@@ -723,14 +727,59 @@ const handleDownloadSvg = () => {
                 className="w-48 h-48 object-contain drop-shadow-sm"
               />
               {isAuthenticated && svgLoaded && (
-                <button
-                  onClick={() => setShowColorDialog(true)}
-                  className="absolute bottom-3 right-3 w-8 h-8 flex items-center justify-center rounded-[4px] bg-background border border-border text-muted-foreground hover:text-primary hover:border-primary transition-colors shadow-sm"
-                  title="Personnaliser les couleurs"
-                >
-                  <Palette className="w-4 h-4" />
-                </button>
-              )}
+              <TooltipProvider delayDuration={400}>
+                <Popover open={showColorPopover} onOpenChange={setShowColorPopover}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <PopoverTrigger asChild>
+                        <button
+                          className={`absolute bottom-3 right-3 w-8 h-8 flex items-center justify-center rounded-[4px] bg-background border transition-colors shadow-sm ${modifiedSvg ? "text-primary border-primary/60" : "border-border text-muted-foreground hover:text-primary hover:border-primary"}`}
+                        >
+                          <Palette className="w-4 h-4" />
+                        </button>
+                      </PopoverTrigger>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">
+                      {modifiedSvg ? "Couleurs personnalisées" : "Personnaliser les couleurs"}
+                    </TooltipContent>
+                  </Tooltip>
+                  <PopoverContent className="w-80 p-0" side="right" align="end" sideOffset={8}>
+                    <Suspense
+                      fallback={
+                        <div className="h-20 flex items-center justify-center text-xs text-muted-foreground">
+                          Chargement…
+                        </div>
+                      }
+                    >
+                      {svgCacheRef.current && (
+                        <ColorCustomizer
+                          svgText={svgCacheRef.current}
+                          onModifiedSvgChange={handleModifiedSvgChange}
+                        />
+                      )}
+                    </Suspense>
+                  </PopoverContent>
+                </Popover>
+              </TooltipProvider>
+            )}
+            {!isAuthenticated && (
+              <p className="absolute bottom-3 left-3 right-3 text-xs text-center text-muted-foreground">
+                <Lock className="w-3 h-3 inline mr-1 shrink-0" />
+                {onLogin ? (
+                  <>
+                    <button
+                      className="text-primary hover:underline font-medium"
+                      onClick={onLogin}
+                    >
+                      Connectez-vous
+                    </button>
+                    {" "}pour personnaliser les couleurs
+                  </>
+                ) : (
+                  "Connectez-vous pour personnaliser les couleurs"
+                )}
+              </p>
+            )}
             </div>
 
             {/* Contributor — masqué pour les pictos privés */}
@@ -924,14 +973,25 @@ const handleDownloadSvg = () => {
                       <Lock className="w-3.5 h-3.5" />
                       SVG
                     </button>
-                    {/* PNG anonyme — extra gap via ml */}
+                    {/* Select taille bloqué pour non-connectés — ouvre le dialog de connexion */}
+                    <select
+                      value={128}
+                      onChange={() => setUpgradeGateOpen(true)}
+                      className="h-9 w-24 rounded-[4px] border border-border bg-background px-2 text-xs font-medium focus:outline-none shrink-0 opacity-60 cursor-pointer"
+                    >
+                      <option value={128}>128 px</option>
+                      <option value={256}>256 px</option>
+                      <option value={512}>512 px</option>
+                      <option value={1024}>1024 px</option>
+                    </select>
+                    {/* PNG anonyme — 128px fixe côté backend */}
                     <button
                       onClick={handleDownloadPngAnonymous}
-                      disabled={anonDownloadsRemaining === 0}
-                      className="h-9 flex-1 flex items-center justify-center gap-2 rounded-[4px] text-xs font-bold text-primary-foreground transition-all hover:opacity-90 disabled:opacity-50 ml-2 bg-primary"
+                      disabled={anonDownloadsRemaining === null || anonDownloadsRemaining === 0}
+                      className="h-9 flex-1 flex items-center justify-center gap-2 rounded-[4px] text-xs font-bold text-primary-foreground transition-all hover:opacity-90 disabled:opacity-50 bg-primary"
                     >
                       <Download className="w-3.5 h-3.5" />
-                      PNG (256 px)
+                      PNG (128 px)
                     </button>
                   </div>
                   {anonDownloadsRemaining === 0 ? (
@@ -962,31 +1022,6 @@ const handleDownloadSvg = () => {
         />
       )}
 
-      {/* Color customizer dialog */}
-      <Dialog open={showColorDialog} onOpenChange={setShowColorDialog}>
-        <DialogContent className="sm:max-w-sm rounded border-border" aria-describedby={undefined}>
-          <DialogHeader>
-            <DialogTitle className="text-sm font-bold flex items-center gap-2">
-              <Palette className="w-4 h-4 text-primary" />
-              Personnaliser les couleurs
-            </DialogTitle>
-          </DialogHeader>
-          <Suspense
-            fallback={
-              <div className="h-20 flex items-center justify-center text-xs text-muted-foreground">
-                Chargement...
-              </div>
-            }
-          >
-            {svgCacheRef.current && (
-              <ColorCustomizer
-                svgText={svgCacheRef.current}
-                onModifiedSvgChange={handleModifiedSvgChange}
-              />
-            )}
-          </Suspense>
-        </DialogContent>
-      </Dialog>
     </Dialog>
   );
 }
