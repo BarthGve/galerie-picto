@@ -55,6 +55,7 @@ export function useUserPictograms(isAuthenticated: boolean) {
   }, [isAuthenticated, fetchBlobUrls]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- data fetching pattern
     refetch();
   }, [refetch]);
 
@@ -63,15 +64,16 @@ export function useUserPictograms(isAuthenticated: boolean) {
     if (!isAuthenticated) {
       blobUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
       blobUrlsRef.current.clear();
-      setBlobUrls(new Map());
+      setBlobUrls(new Map()); // eslint-disable-line react-hooks/set-state-in-effect -- cleanup on logout
       setUserPictograms([]);
     }
   }, [isAuthenticated]);
 
   // Nettoyage au démontage
   useEffect(() => {
+    const ref = blobUrlsRef.current;
     return () => {
-      blobUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+      ref.forEach((url) => URL.revokeObjectURL(url));
     };
   }, []);
 

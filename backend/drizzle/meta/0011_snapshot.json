@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "6ff010ca-8495-4794-9c18-b5834cc79020",
-  "prevId": "24c4ea82-b8c4-4eee-bcae-b7d0fd5f21f4",
+  "id": "042edd5a-d0cb-49d0-a047-58bc9406a9e2",
+  "prevId": "04df36f6-70e2-48c7-b7be-8d394f9da6e3",
   "tables": {
     "anonymous_downloads": {
       "name": "anonymous_downloads",
@@ -172,6 +172,14 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
+        },
+        "dismissed": {
+          "name": "dismissed",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
         }
       },
       "indexes": {},
@@ -413,6 +421,14 @@
           "autoincrement": false,
           "default": 0
         },
+        "dismissed": {
+          "name": "dismissed",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
         "created_at": {
           "name": "created_at",
           "type": "text",
@@ -427,6 +443,14 @@
           "columns": [
             "recipient_login",
             "is_read"
+          ],
+          "isUnique": false
+        },
+        "notif_recipient_dismissed_idx": {
+          "name": "notif_recipient_dismissed_idx",
+          "columns": [
+            "recipient_login",
+            "dismissed"
           ],
           "isUnique": false
         }
@@ -612,6 +636,19 @@
           ],
           "onDelete": "cascade",
           "onUpdate": "no action"
+        },
+        "picto_request_history_actor_login_users_github_login_fk": {
+          "name": "picto_request_history_actor_login_users_github_login_fk",
+          "tableFrom": "picto_request_history",
+          "tableTo": "users",
+          "columnsFrom": [
+            "actor_login"
+          ],
+          "columnsTo": [
+            "github_login"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -720,6 +757,13 @@
           "name": "pr_status_idx",
           "columns": [
             "status"
+          ],
+          "isUnique": false
+        },
+        "pr_assigned_to_idx": {
+          "name": "pr_assigned_to_idx",
+          "columns": [
+            "assigned_to"
           ],
           "isUnique": false
         }

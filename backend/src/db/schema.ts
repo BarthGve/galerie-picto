@@ -181,6 +181,93 @@ export const feedbackSeen = sqliteTable(
       .references(() => users.githubLogin, { onDelete: "cascade" }),
     issueId: integer("issue_id").notNull(),
     seenAt: text("seen_at").$defaultFn(() => new Date().toISOString()),
+    dismissed: integer("dismissed").notNull().default(0),
   },
   (table) => [primaryKey({ columns: [table.userLogin, table.issueId] })],
+);
+
+export const pictoRequests = sqliteTable(
+  "picto_requests",
+  {
+    id: text("id").primaryKey(),
+    requesterLogin: text("requester_login")
+      .notNull()
+      .references(() => users.githubLogin, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    description: text("description").notNull(),
+    referenceImageKey: text("reference_image_key"),
+    urgency: text("urgency").notNull().default("normale"),
+    status: text("status").notNull().default("nouvelle"),
+    assignedTo: text("assigned_to").references(() => users.githubLogin),
+    deliveredPictogramId: text("delivered_pictogram_id").references(
+      () => pictograms.id,
+    ),
+    rejectionReason: text("rejection_reason"),
+    createdAt: text("created_at").$defaultFn(() => new Date().toISOString()),
+    updatedAt: text("updated_at").$defaultFn(() => new Date().toISOString()),
+  },
+  (table) => [
+    index("pr_requester_login_idx").on(table.requesterLogin),
+    index("pr_status_idx").on(table.status),
+    index("pr_assigned_to_idx").on(table.assignedTo),
+  ],
+);
+
+export const pictoRequestComments = sqliteTable(
+  "picto_request_comments",
+  {
+    id: text("id").primaryKey(),
+    requestId: text("request_id")
+      .notNull()
+      .references(() => pictoRequests.id, { onDelete: "cascade" }),
+    authorLogin: text("author_login")
+      .notNull()
+      .references(() => users.githubLogin, { onDelete: "cascade" }),
+    content: text("content").notNull(),
+    createdAt: text("created_at").$defaultFn(() => new Date().toISOString()),
+  },
+  (table) => [index("prc_request_id_idx").on(table.requestId)],
+);
+
+export const pictoRequestHistory = sqliteTable(
+  "picto_request_history",
+  {
+    id: text("id").primaryKey(),
+    requestId: text("request_id")
+      .notNull()
+      .references(() => pictoRequests.id, { onDelete: "cascade" }),
+    actorLogin: text("actor_login")
+      .notNull()
+      .references(() => users.githubLogin, { onDelete: "cascade" }),
+    action: text("action").notNull(), // "created" | "assigned" | "status_changed"
+    fromStatus: text("from_status"),
+    toStatus: text("to_status"),
+    detail: text("detail"), // extra info (e.g. rejection reason, assignee)
+    createdAt: text("created_at").$defaultFn(() => new Date().toISOString()),
+  },
+  (table) => [index("prh_request_id_idx").on(table.requestId)],
+);
+
+export const notifications = sqliteTable(
+  "notifications",
+  {
+    id: text("id").primaryKey(),
+    recipientLogin: text("recipient_login")
+      .notNull()
+      .references(() => users.githubLogin, { onDelete: "cascade" }),
+    type: text("type").notNull(),
+    title: text("title").notNull(),
+    message: text("message").notNull(),
+    link: text("link"),
+    isRead: integer("is_read").notNull().default(0),
+    dismissed: integer("dismissed").notNull().default(0),
+    createdAt: text("created_at").$defaultFn(() => new Date().toISOString()),
+  },
+  (table) => [
+    index("notif_recipient_read_idx").on(table.recipientLogin, table.isRead),
+    index("notif_recipient_dismissed_idx").on(
+      table.recipientLogin,
+      table.dismissed,
+    ),
+  ],
 );

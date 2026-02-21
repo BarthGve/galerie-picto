@@ -1,7 +1,7 @@
 {
   "name": "la-boite-a-picto",
   "private": true,
-  "version": "0.2.2",
+  "version": "0.3.0",
   "type": "module",
   "scripts": {
     "dev": "pnpm dev:backend & sleep 2 && curl -sf http://localhost:3004/health > /dev/null && echo '✓ Backend ready on :3004' && pnpm dev:frontend",

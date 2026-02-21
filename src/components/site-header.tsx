@@ -1,10 +1,11 @@
-import { Moon, Search, Sun, Bell, Bug, Sparkles, CheckCircle2 } from "lucide-react";
+import { Moon, Search, Sun, Bell, Bug, Sparkles, CheckCircle2, MessageSquarePlus, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useTheme } from "@/hooks/use-theme";
 import type { FeedbackNotification } from "@/hooks/useFeedbackNotifications";
+import type { AppNotification } from "@/lib/types";
 
 export function SiteHeader({
   onSearch,
@@ -13,8 +14,15 @@ export function SiteHeader({
   unreadCount,
   onMarkRead,
   onMarkAllRead,
+  onDismissNotif,
+  onDismissAppNotif,
+  onClearAllNotifs,
   onGoFeedback,
   isAuthenticated,
+  appNotifications,
+  onAppMarkRead,
+  onGoRequests,
+  onFetchAppNotifications,
 }: {
   onSearch: (query: string) => void;
   totalCount: number;
@@ -24,6 +32,15 @@ export function SiteHeader({
   onMarkAllRead?: () => void;
   onGoFeedback?: () => void;
   isAuthenticated?: boolean;
+  appNotifications?: AppNotification[];
+  appUnreadCount?: number;
+  onAppMarkRead?: (id: string) => void;
+  onAppMarkAllRead?: () => void;
+  onDismissNotif?: (id: number) => void;
+  onDismissAppNotif?: (id: string) => void;
+  onClearAllNotifs?: () => void;
+  onGoRequests?: () => void;
+  onFetchAppNotifications?: () => void;
 }) {
   const [query, setQuery] = useState("");
   const timerRef = useRef<ReturnType<typeof setTimeout>>(null);
@@ -33,6 +50,12 @@ export function SiteHeader({
   const bellRef = useRef<HTMLDivElement>(null);
   const [hidden, setHidden] = useState(false);
   const lastScrollY = useRef(0);
+  const [contextMenu, setContextMenu] = useState<{
+    x: number;
+    y: number;
+    type: "feedback" | "app";
+    id: number | string;
+  } | null>(null);
 
   useEffect(() => {
     const threshold = 60;
@@ -58,15 +81,42 @@ export function SiteHeader({
 
   const hasNotifs = (unreadCount ?? 0) > 0;
   const notifList = notifications ?? [];
+  const totalNotifCount = notifList.length + (appNotifications ?? []).length;
 
   function handleBellClick() {
-    setBellOpen((v) => !v);
+    setBellOpen((v) => {
+      if (!v) onFetchAppNotifications?.();
+      return !v;
+    });
   }
 
   function handleNotifClick(n: FeedbackNotification) {
     onMarkRead?.(n.id);
     setBellOpen(false);
     onGoFeedback?.();
+  }
+
+  function handleContextMenu(
+    e: React.MouseEvent,
+    type: "feedback" | "app",
+    id: number | string,
+  ) {
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY, type, id });
+  }
+
+  function closeContextMenu() {
+    setContextMenu(null);
+  }
+
+  function handleDismissFromContext() {
+    if (!contextMenu) return;
+    if (contextMenu.type === "feedback") {
+      onDismissNotif?.(contextMenu.id as number);
+    } else {
+      onDismissAppNotif?.(contextMenu.id as string);
+    }
+    closeContextMenu();
   }
 
   return (
@@ -112,39 +162,86 @@ export function SiteHeader({
             {/* Notification panel */}
             {bellOpen && (
               <>
-                {/* Backdrop */}
+                {/* Backdrop — ferme panel et context menu */}
                 <div
                   className="fixed inset-0 z-40"
-                  onClick={() => setBellOpen(false)}
+                  onClick={() => { setBellOpen(false); closeContextMenu(); }}
+                  onContextMenu={(e) => { e.preventDefault(); closeContextMenu(); }}
                 />
                 <div className="absolute right-0 top-full mt-2 z-50 w-80 rounded border border-border bg-popover shadow-xl overflow-hidden">
                   {/* Header */}
                   <div className="flex items-center justify-between px-4 py-3 border-b border-border">
                     <span className="font-semibold text-sm">Notifications</span>
-                    {notifList.length > 0 && (
-                      <button
-                        onClick={() => {
-                          onMarkAllRead?.();
-                        }}
-                        className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        Tout marquer comme lu
-                      </button>
+                    {totalNotifCount > 0 && (
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => onMarkAllRead?.()}
+                          className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          Tout lu
+                        </button>
+                        <button
+                          onClick={() => { onClearAllNotifs?.(); }}
+                          className="text-xs text-destructive/70 hover:text-destructive transition-colors"
+                        >
+                          Tout effacer
+                        </button>
+                      </div>
                     )}
                   </div>
 
                   {/* List */}
                   <div className="max-h-80 overflow-y-auto">
-                    {notifList.length === 0 ? (
+                    {/* App notifications (demandes) */}
+                    {(appNotifications ?? []).length > 0 && (
+                      <>
+                        <div className="px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground bg-muted/30 border-b border-border/50">
+                          Demandes
+                        </div>
+                        {(appNotifications ?? []).map((n) => (
+                          <button
+                            key={n.id}
+                            onClick={() => {
+                              onAppMarkRead?.(n.id);
+                              setBellOpen(false);
+                              if (n.link?.startsWith("/requests")) onGoRequests?.();
+                            }}
+                            onContextMenu={(e) => handleContextMenu(e, "app", n.id)}
+                            className={`w-full text-left px-4 py-3 hover:bg-accent/60 transition-colors border-b border-border/50 last:border-0 ${!n.isRead ? "bg-accent/30" : ""}`}
+                          >
+                            <div className="flex items-start gap-2.5">
+                              <div className="mt-0.5 shrink-0">
+                                <MessageSquarePlus className="size-3.5 text-indigo-500" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium truncate">{n.title}</p>
+                                <p className="text-xs text-muted-foreground truncate mt-0.5">{n.message}</p>
+                              </div>
+                              {!n.isRead && (
+                                <span className="size-2 rounded-full bg-indigo-500 shrink-0 mt-1.5" />
+                              )}
+                            </div>
+                          </button>
+                        ))}
+                      </>
+                    )}
+
+                    {/* Feedback notifications */}
+                    {notifList.length > 0 && (
+                      <div className="px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground bg-muted/30 border-b border-border/50">
+                        Signalements
+                      </div>
+                    )}
+                    {notifList.length === 0 && (appNotifications ?? []).length === 0 ? (
                       <p className="text-sm text-muted-foreground text-center py-8 px-4">
-                        Pas de nouvelle pour le moment. On vous prévient dès
-                        qu'un de vos signalements est traité.
+                        Pas de nouvelle pour le moment.
                       </p>
                     ) : (
                       notifList.map((n) => (
                         <button
                           key={n.id}
                           onClick={() => handleNotifClick(n)}
+                          onContextMenu={(e) => handleContextMenu(e, "feedback", n.id)}
                           className="w-full text-left px-4 py-3 hover:bg-accent/60 transition-colors border-b border-border/50 last:border-0"
                         >
                           <div className="flex items-start gap-2.5">
@@ -179,6 +276,23 @@ export function SiteHeader({
                     )}
                   </div>
                 </div>
+
+                {/* Context menu clic droit */}
+                {contextMenu && (
+                  <div
+                    className="fixed z-[60] min-w-[140px] rounded border border-border bg-popover shadow-lg py-1 text-sm"
+                    style={{ top: contextMenu.y, left: contextMenu.x }}
+                    onMouseLeave={closeContextMenu}
+                  >
+                    <button
+                      onClick={handleDismissFromContext}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-destructive hover:bg-destructive/10 transition-colors"
+                    >
+                      <Trash2 className="size-3.5" />
+                      Supprimer
+                    </button>
+                  </div>
+                )}
               </>
             )}
           </div>

@@ -53,6 +53,8 @@ export function AppSidebar({
   onGoGuides,
   onGoProfile,
   onGoAdmin,
+  onGoRequests,
+  activeRequestCount = 0,
   isCollaborator = false,
   ...props
 }: React.ComponentProps<typeof Sidebar> & {
@@ -88,6 +90,8 @@ export function AppSidebar({
   onGoGuides?: () => void;
   onGoProfile?: () => void;
   onGoAdmin?: () => void;
+  onGoRequests?: () => void;
+  activeRequestCount?: number;
   isCollaborator?: boolean;
 }) {
   return (
@@ -135,6 +139,9 @@ export function AppSidebar({
           onUploadClick={onUploadClick}
           onGoDiscover={onGoDiscover}
           onGoGuides={onGoGuides}
+          onGoRequests={onGoRequests}
+          activeRequestCount={activeRequestCount}
+          isCollaborator={isCollaborator}
           currentPage={currentPage}
           favoritesCount={favoritesCount}
           showFavoritesOnly={showFavoritesOnly}
@@ -237,12 +244,12 @@ export function AppSidebar({
               onClick={onGoFeedback}
               className="text-muted-foreground hover:text-foreground hover:bg-accent/60"
             >
-              {!!user ? (
+              {user ? (
                 <MessageCircleWarning className="size-4" />
               ) : (
                 <LayoutList className="size-4" />
               )}
-              <span>{!!user ? "Signaler" : "Signalements"}</span>
+              <span>{user ? "Signaler" : "Signalements"}</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

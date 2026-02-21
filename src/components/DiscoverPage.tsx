@@ -117,10 +117,10 @@ function BentoCard({
 }
 
 const glass = (r: number, g: number, b: number): React.CSSProperties => ({
-  background: `rgba(${r}, ${g}, ${b}, 0.18)`,
+  background: `rgba(${r}, ${g}, ${b}, 0.65)`,
   backdropFilter: "blur(10px)",
   WebkitBackdropFilter: "blur(10px)",
-  border: `1px solid rgba(${r}, ${g}, ${b}, 0.32)`,
+  border: `1px solid rgba(${r}, ${g}, ${b}, 0.65)`,
 });
 
 // Visual positions [left=2nd, center=1st, right=3rd]
@@ -186,6 +186,7 @@ export function DiscoverPage({
     if (!selectedPicto) return;
     const updated = pictograms.find((p) => p.id === selectedPicto.id);
     if (updated) setSelectedPicto(updated);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- selectedPicto in deps would cause infinite loop
   }, [pictograms]);
 
   const latestPictos = useMemo(() => {
@@ -492,7 +493,7 @@ export function DiscoverPage({
                 {featuredGalleries.map((gallery) => (
                   <div
                     key={gallery.id}
-                    className="flex flex-col p-5 rounded border border-border hover:bg-accent/30 hover:shadow-lg transition-all cursor-pointer"
+                    className="flex flex-col p-5 rounded hover:bg-accent/30 hover:shadow-lg transition-all cursor-pointer"
                     onClick={() =>
                       onNavigateGallery({ galleryId: gallery.id })
                     }
@@ -568,36 +569,36 @@ export function DiscoverPage({
 
           {/* ── Contributeur à la une (full width banner) ── */}
           {topContributor && (
-            <BentoCard className="md:col-span-full lg:col-span-full bg-accent p-8 md:p-10">
-              <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:opacity-[0.1] transition-opacity pointer-events-none">
-                <svg className="w-48 h-48 rotate-12" viewBox="0 0 24 24" fill="currentColor">
+            <BentoCard className="md:col-span-full lg:col-span-full bg-accent p-4 md:p-5">
+              <div className="absolute top-0 right-0 p-6 opacity-[0.05] group-hover:opacity-[0.1] transition-opacity pointer-events-none">
+                <svg className="w-32 h-32 rotate-12" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z" />
                 </svg>
               </div>
 
-              <div className="relative z-10 flex flex-col lg:flex-row items-center gap-8">
+              <div className="relative z-10 flex flex-col lg:flex-row items-center gap-5">
                 <div className="relative shrink-0">
-                  <div className="absolute -inset-4 bg-gradient-to-tr from-[#e3e3fd] to-[#2845c1] rounded-full blur-2xl opacity-20 group-hover:opacity-40 transition-opacity" />
-                  <Avatar className="relative h-28 w-28 md:h-36 md:w-36 ring-4 ring-ring-accent ring-offset-2 ring-offset-background shadow-xl">
+                  <div className="absolute -inset-3 bg-gradient-to-tr from-[#e3e3fd] to-[#2845c1] rounded-full blur-2xl opacity-20 group-hover:opacity-40 transition-opacity" />
+                  <Avatar className="relative h-14 w-14 md:h-16 md:w-16 ring-2 ring-ring-accent ring-offset-2 ring-offset-background shadow-xl">
                     <AvatarImage
                       src={
                         topContributorProfile?.avatar_url ||
-                        `https://github.com/${topContributor.username}.png?size=144`
+                        `https://github.com/${topContributor.username}.png?size=96`
                       }
                       alt={topContributor.username}
                     />
-                    <AvatarFallback className="text-2xl font-bold">
+                    <AvatarFallback className="text-base font-bold">
                       {topContributor.username.slice(0, 2).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="absolute -bottom-1 -right-1 w-10 h-10 rounded-full bg-gradient-to-br from-[#2845c1] to-[#6a6af4] border-2 border-background flex items-center justify-center text-primary-foreground shadow-lg">
-                    <Star className="w-5 h-5 fill-current" />
+                  <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-gradient-to-br from-[#2845c1] to-[#6a6af4] border-2 border-background flex items-center justify-center text-primary-foreground shadow-lg">
+                    <Star className="w-3.5 h-3.5 fill-current" />
                   </div>
                 </div>
 
-                <div className="flex-1 text-center lg:text-left space-y-3">
+                <div className="flex-1 text-center lg:text-left space-y-2">
                   <div>
-                    <h3 className="text-2xl md:text-3xl font-extrabold tracking-tight text-tertiary">
+                    <h3 className="text-base md:text-lg font-extrabold tracking-tight text-tertiary">
                       {topContributorProfile?.name || topContributor.username}
                     </h3>
                     <p className="text-github-accent font-bold">

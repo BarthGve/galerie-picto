@@ -269,6 +269,7 @@ export function GalleriesProvider({
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- hook co-located with its Provider
 export function useGalleriesCtx(): GalleriesContextValue {
   const ctx = useContext(GalleriesContext);
   if (!ctx) {

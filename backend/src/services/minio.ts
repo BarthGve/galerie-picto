@@ -79,6 +79,21 @@ export async function deletePrivateFile(key: string): Promise<void> {
   await s3Client.send(command);
 }
 
+export async function writeImageFile(
+  key: string,
+  buffer: Buffer,
+  contentType: string,
+): Promise<void> {
+  const command = new PutObjectCommand({
+    Bucket: config.minio.bucket,
+    Key: key,
+    Body: buffer,
+    ContentType: contentType,
+    CacheControl: "public, max-age=31536000",
+  });
+  await s3Client.send(command);
+}
+
 export async function readPrivateFileAsText(
   key: string,
 ): Promise<string | null> {

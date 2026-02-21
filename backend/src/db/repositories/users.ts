@@ -14,6 +14,7 @@ export interface UserProfile {
     favoritesCount: number;
     collectionsCount: number;
     likesCount: number;
+    requestsCount: number;
   };
 }
 
@@ -78,6 +79,7 @@ export function getUserProfile(login: string): UserProfile | null {
       favoritesCount: sql<number>`(SELECT COUNT(*) FROM favorites WHERE user_login = ${login})`,
       collectionsCount: sql<number>`(SELECT COUNT(*) FROM user_collections WHERE user_login = ${login})`,
       likesCount: sql<number>`(SELECT COUNT(*) FROM pictogram_likes WHERE user_login = ${login})`,
+      requestsCount: sql<number>`(SELECT COUNT(*) FROM picto_requests WHERE requester_login = ${login})`,
     })
     .from(users)
     .where(eq(users.githubLogin, login))
@@ -96,6 +98,7 @@ export function getUserProfile(login: string): UserProfile | null {
       favoritesCount: Number(row.favoritesCount),
       collectionsCount: Number(row.collectionsCount),
       likesCount: Number(row.likesCount),
+      requestsCount: Number(row.requestsCount),
     },
   };
 }

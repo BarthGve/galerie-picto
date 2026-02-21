@@ -8,6 +8,8 @@ import { DownloadsContext, useDownloadsProvider } from "@/hooks/useDownloads";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useLikes } from "@/hooks/useLikes";
 import { useFeedbackNotifications } from "@/hooks/useFeedbackNotifications";
+import { useNotifications } from "@/hooks/useNotifications";
+import { useActiveRequestCount } from "@/hooks/useActiveRequestCount";
 import { PictoGrid } from "@/components/PictoGrid";
 import { UserPictoUploadDialog } from "@/components/UserPictoUploadDialog";
 import { AppSidebar } from "@/components/Sidebar";
@@ -84,11 +86,16 @@ const NotFoundPage = lazy(() =>
     default: m.NotFoundPage,
   })),
 );
+const RequestsPage = lazy(() =>
+  import("@/components/RequestsPage").then((m) => ({
+    default: m.RequestsPage,
+  })),
+);
 
 const normalizeSearch = (s: string) =>
   s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-type Page = "home" | "discover" | "gallery" | "collections" | "test-discover" | "feedback" | "privacy" | "cookies" | "guides" | "profile" | "admin" | "404";
+type Page = "home" | "discover" | "gallery" | "collections" | "test-discover" | "feedback" | "privacy" | "cookies" | "guides" | "profile" | "admin" | "requests" | "404";
 
 function getInitialPage(): Page {
   const path = window.location.pathname;
@@ -102,6 +109,7 @@ function getInitialPage(): Page {
   if (path === "/admin") return "admin";
   if (path === "/collections") return "collections";
   if (path === "/guides") return "guides";
+  if (path === "/demandes") return "requests";
   // OAuth callback → go straight to discover
   if (new URLSearchParams(window.location.search).has("code")) return "discover";
   if (path === "/") return "home";
@@ -147,8 +155,18 @@ function AppInner() {
   const [selectedUserCollectionId, setSelectedUserCollectionId] = useState<string | null>(initialParams.get("collectionId"));
   const { isFavorite, toggleFavorite, favoritesCount } = useFavorites(!!user);
   const { getLikeCount, hasLiked, toggleLike } = useLikes(!!user);
-  const { notifications, unreadCount, markAsRead, markAllAsRead } =
+  const activeRequestCount = useActiveRequestCount();
+  const { notifications: feedbackNotifications, unreadCount: feedbackUnreadCount, markAsRead: feedbackMarkAsRead, markAllAsRead: feedbackMarkAllAsRead, dismiss: feedbackDismiss, dismissAll: feedbackDismissAll } =
     useFeedbackNotifications(!!user);
+  const {
+    notifications: appNotifications,
+    unreadCount: appUnreadCount,
+    fetchNotifications: fetchAppNotifications,
+    markAsRead: appMarkAsRead,
+    markAllAsRead: appMarkAllAsRead,
+    dismiss: appDismiss,
+    dismissAll: appDismissAll,
+  } = useNotifications(!!user);
   const {
     collections: userCollections,
     create: createUserCollection,
@@ -206,8 +224,6 @@ function AppInner() {
     if (page === "admin" && !authLoading && !isCollaborator) {
       navigateTo("home");
     }
-  // navigateTo est redéfini à chaque render mais stable fonctionnellement
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, isCollaborator, authLoading]);
 
   // Handle browser back/forward
@@ -223,6 +239,7 @@ function AppInner() {
       else if (path === "/admin") setPage("admin");
       else if (path === "/collections") setPage("collections");
       else if (path === "/guides") setPage("guides");
+      else if (path === "/demandes") setPage("requests");
       else if (path === "/") setPage("home");
       else setPage("404");
     };
@@ -252,7 +269,9 @@ function AppInner() {
                       ? "/collections"
                       : target === "guides"
                         ? "/guides"
-                        : "/";
+                        : target === "requests"
+                          ? "/demandes"
+                          : "/";
     window.history.pushState(null, "", path);
     setPage(target);
     if (target === "discover" || target === "home") {
@@ -608,6 +627,8 @@ function AppInner() {
         return <SEOHead title="Politique de confidentialité" description="Politique de confidentialité de La Boite à Pictos. Découvrez comment vos données sont traitées." path="/confidentialite" />;
       case "cookies":
         return <SEOHead title="Gestion des cookies" description="Politique de gestion des cookies de La Boite à Pictos." path="/cookies" />;
+      case "requests":
+        return <SEOHead title="Mes demandes" description="Demandez la création de nouveaux pictogrammes SVG sur La Boite à Pictos." path="/demandes" />;
       case "guides":
         return <SEOHead title="Guides" description="Tutoriels pas-à-pas pour utiliser La Boite à Pictos : personnaliser les couleurs, télécharger, créer des collections et plus." path="/guides" />;
       default:
@@ -664,6 +685,8 @@ function AppInner() {
           onGoFeedback={() => navigateTo("feedback")}
           onGoProfile={() => navigateTo("profile")}
           onGoAdmin={() => navigateTo("admin")}
+          onGoRequests={() => navigateTo("requests")}
+          activeRequestCount={activeRequestCount}
           isCollaborator={isCollaborator}
           currentPage={page}
           favoritesCount={favoritesCount}
@@ -691,11 +714,20 @@ function AppInner() {
             }}
             totalCount={pictograms.length}
             isAuthenticated={!!user}
-            notifications={notifications}
-            unreadCount={unreadCount}
-            onMarkRead={markAsRead}
-            onMarkAllRead={markAllAsRead}
+            notifications={feedbackNotifications}
+            unreadCount={feedbackUnreadCount + appUnreadCount}
+            onMarkRead={feedbackMarkAsRead}
+            onMarkAllRead={() => { feedbackMarkAllAsRead(); appMarkAllAsRead(); }}
+            onDismissNotif={feedbackDismiss}
+            onDismissAppNotif={appDismiss}
+            onClearAllNotifs={() => { feedbackDismissAll(); appDismissAll(); }}
             onGoFeedback={() => navigateTo("feedback")}
+            appNotifications={appNotifications}
+            appUnreadCount={appUnreadCount}
+            onAppMarkRead={appMarkAsRead}
+            onAppMarkAllRead={appMarkAllAsRead}
+            onGoRequests={() => navigateTo("requests")}
+            onFetchAppNotifications={fetchAppNotifications}
           />
           <main id="main-content" className="flex flex-1 flex-col">
             <div className="@container/main flex flex-1 flex-col gap-2">
@@ -719,7 +751,14 @@ function AppInner() {
                 </Suspense>
               ) : page === "admin" && isCollaborator ? (
                 <Suspense fallback={null}>
-                  <AdminPage />
+                  <AdminPage activeRequestCount={activeRequestCount} />
+                </Suspense>
+              ) : page === "requests" ? (
+                <Suspense fallback={null}>
+                  <RequestsPage
+                    isAuthenticated={!!user}
+                    onLogin={handleLogin}
+                  />
                 </Suspense>
               ) : page === "feedback" ? (
                 <Suspense fallback={null}>

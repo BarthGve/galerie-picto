@@ -5,8 +5,11 @@ import { authAnyUser } from "../middleware/auth-any-user.js";
 import type { AuthenticatedRequest, GitHubUser } from "../middleware/auth.js";
 import {
   getSeenIssueIds,
+  getDismissedIssueIds,
   markIssueSeen,
   markIssuesSeen,
+  dismissIssueSeen,
+  dismissAllIssuesSeen,
 } from "../db/repositories/feedback-seen.js";
 
 interface GitHubLabel {
@@ -26,6 +29,8 @@ interface GitHubIssue {
 
 interface GitHubComment {
   body: string;
+  user?: { login: string };
+  created_at: string;
 }
 
 interface RequestWithRawBody extends Request {
@@ -38,6 +43,12 @@ const router = Router();
 const sseClients = new Map<string, Set<Response>>();
 
 // Issues cache: 5 min TTL
+interface FeedbackComment {
+  author: string;
+  body: string;
+  createdAt: string;
+}
+
 interface FeedbackItem {
   id: number;
   type: "bug" | "improvement";
@@ -47,6 +58,8 @@ interface FeedbackItem {
   status: "open" | "resolved";
   resolution?: string;
   url: string;
+  fields?: Record<string, string>;
+  comments?: FeedbackComment[];
 }
 let issuesCache: { data: FeedbackItem[]; expiresAt: number } | null = null;
 
@@ -78,20 +91,47 @@ async function githubFetch(path: string, options: RequestInit = {}) {
   });
 }
 
-async function getIssueResolution(issueNumber: number): Promise<string> {
-  if (!config.feedback.token || !config.feedback.repo)
-    return "Résolu sans commentaire";
+async function getIssueComments(
+  issueNumber: number,
+): Promise<FeedbackComment[]> {
+  if (!config.feedback.token || !config.feedback.repo) return [];
   try {
     const res = await githubFetch(
       `/repos/${config.feedback.repo}/issues/${issueNumber}/comments?per_page=100`,
     );
-    if (!res.ok) return "Résolu sans commentaire";
+    if (!res.ok) return [];
     const comments = (await res.json()) as GitHubComment[];
-    const last = comments[comments.length - 1];
-    return last?.body?.slice(0, 300) || "Résolu sans commentaire";
+    return comments
+      .filter((c) => c.body?.trim())
+      .map((c) => ({
+        author: c.user?.login ?? "inconnu",
+        body: c.body.trim(),
+        createdAt: c.created_at,
+      }));
   } catch {
-    return "Résolu sans commentaire";
+    return [];
   }
+}
+
+function parseIssueBody(body: string): Record<string, string> {
+  const fields: Record<string, string> = {};
+  if (!body) return fields;
+  const sections = body.split(/^###\s+/m).slice(1);
+  for (const section of sections) {
+    const newlineIdx = section.indexOf("\n");
+    if (newlineIdx === -1) continue;
+    const label = section.slice(0, newlineIdx).trim();
+    const content = section
+      .slice(newlineIdx + 1)
+      .replace(/^---[\s\S]*$/m, "")
+      .replace(/_Signalé via.*_/g, "")
+      .replace(/_Demandé via.*_/g, "")
+      .trim();
+    if (label && content && content !== "Non renseigné") {
+      fields[label] = content;
+    }
+  }
+  return fields;
 }
 
 function extractReporter(body: string): string {
@@ -263,10 +303,8 @@ router.get("/", async (_req: Request, res: Response) => {
 
     const data: FeedbackItem[] = await Promise.all(
       allIssues.map(async (issue) => {
-        let resolution: string | undefined;
-        if (issue.state === "closed") {
-          resolution = await getIssueResolution(issue.number);
-        }
+        const comments = await getIssueComments(issue.number);
+        const lastComment = comments[comments.length - 1];
         return {
           id: issue.number,
           type: issue.labels?.some((l: GitHubLabel) => l.name === "bug")
@@ -276,8 +314,13 @@ router.get("/", async (_req: Request, res: Response) => {
           reportedBy: extractReporter(issue.body ?? ""),
           createdAt: issue.created_at,
           status: issue.state === "open" ? "open" : "resolved",
-          resolution,
+          resolution:
+            issue.state === "closed"
+              ? (lastComment?.body.slice(0, 300) ?? "Résolu sans commentaire")
+              : undefined,
           url: issue.html_url,
+          fields: parseIssueBody(issue.body ?? ""),
+          comments: comments.length > 0 ? comments : undefined,
         };
       }),
     );
@@ -323,19 +366,25 @@ router.get(
       );
 
       const seenIds = getSeenIssueIds(user.login);
+      const dismissedIds = getDismissedIssueIds(user.login);
 
       const notifications = await Promise.all(
-        myIssues.map(async (issue) => ({
-          id: issue.number,
-          type: issue.labels?.some((l: GitHubLabel) => l.name === "bug")
-            ? "bug"
-            : "improvement",
-          title: issue.title,
-          closedAt: issue.closed_at,
-          resolution: await getIssueResolution(issue.number),
-          url: issue.html_url,
-          isRead: seenIds.has(issue.number),
-        })),
+        myIssues
+          .filter((issue) => !dismissedIds.has(issue.number))
+          .map(async (issue) => ({
+            id: issue.number,
+            type: issue.labels?.some((l: GitHubLabel) => l.name === "bug")
+              ? "bug"
+              : "improvement",
+            title: issue.title,
+            closedAt: issue.closed_at,
+            resolution:
+              (await getIssueComments(issue.number))
+                .pop()
+                ?.body.slice(0, 300) ?? "Résolu sans commentaire",
+            url: issue.html_url,
+            isRead: seenIds.has(issue.number),
+          })),
       );
 
       res.json(notifications);
@@ -343,6 +392,32 @@ router.get(
       console.error("GitHub error:", err);
       res.json([]);
     }
+  },
+);
+
+// ─── DELETE /api/feedback/notifications/:issueId — Dismiss one feedback notif ─
+router.delete(
+  "/notifications/:issueId",
+  authAnyUser,
+  (req: AuthenticatedRequest, res: Response) => {
+    const user = req.user as GitHubUser;
+    const issueId = parseInt(req.params.issueId as string, 10);
+    if (isNaN(issueId) || issueId <= 0) {
+      return void res.status(400).json({ error: "ID invalide" });
+    }
+    dismissIssueSeen(user.login, issueId);
+    res.status(204).end();
+  },
+);
+
+// ─── DELETE /api/feedback/notifications — Dismiss all feedback notifications ──
+router.delete(
+  "/notifications",
+  authAnyUser,
+  (req: AuthenticatedRequest, res: Response) => {
+    const user = req.user as GitHubUser;
+    dismissAllIssuesSeen(user.login);
+    res.status(204).end();
   },
 );
 
@@ -469,7 +544,9 @@ router.post("/webhook", async (req: Request, res: Response) => {
   const type = (issue.labels as GitHubLabel[])?.some((l) => l.name === "bug")
     ? "bug"
     : "improvement";
-  getIssueResolution(issue.number).then((resolution) => {
+  getIssueComments(issue.number).then((comments) => {
+    const resolution =
+      comments.pop()?.body.slice(0, 300) ?? "Résolu sans commentaire";
     pushSseNotification(reporterLogin, {
       id: issue.number,
       type,

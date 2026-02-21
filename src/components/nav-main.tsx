@@ -1,4 +1,4 @@
-import { Images, CirclePlus, Compass, Heart, BookOpen } from "lucide-react";
+import { Images, CirclePlus, Compass, Heart, BookOpen, MessageSquarePlus } from "lucide-react";
 
 import {
   SidebarGroup,
@@ -19,6 +19,9 @@ export function NavMain({
   onUploadClick,
   onGoDiscover,
   onGoGuides,
+  onGoRequests,
+  activeRequestCount = 0,
+  isCollaborator,
   currentPage,
   favoritesCount,
   showFavoritesOnly,
@@ -33,6 +36,9 @@ export function NavMain({
   onUploadClick: () => void;
   onGoDiscover?: () => void;
   onGoGuides?: () => void;
+  onGoRequests?: () => void;
+  activeRequestCount?: number;
+  isCollaborator?: boolean;
   currentPage?: string;
   favoritesCount?: number;
   showFavoritesOnly?: boolean;
@@ -41,8 +47,8 @@ export function NavMain({
   return (
     <SidebarGroup>
       <SidebarGroupContent className="flex flex-col gap-1">
-        {isAuthenticated && (
-          <SidebarMenu>
+        <SidebarMenu className={isCollaborator ? "gap-4" : ""}>
+          {isAuthenticated && (
             <SidebarMenuItem>
               <SidebarMenuButton
                 tooltip="Ajouter un pictogramme"
@@ -53,8 +59,24 @@ export function NavMain({
                 <span>Ajouter</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
-          </SidebarMenu>
-        )}
+          )}
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              tooltip="Demander un pictogramme"
+              onClick={onGoRequests}
+              isActive={currentPage === "requests"}
+              className="bg-indigo-50 text-indigo-700 shadow-sm rounded hover:bg-indigo-100 hover:text-indigo-800 active:bg-indigo-200 dark:bg-indigo-950 dark:text-indigo-300 dark:hover:bg-indigo-900"
+            >
+              <MessageSquarePlus />
+              <span>Demander un picto</span>
+            </SidebarMenuButton>
+            {activeRequestCount > 0 && (
+              <SidebarMenuBadge className="text-[10px] font-black px-1.5 py-0.5 rounded-md bg-indigo-100 text-indigo-700 peer-hover/menu-button:bg-transparent">
+                {activeRequestCount}
+              </SidebarMenuBadge>
+            )}
+          </SidebarMenuItem>
+        </SidebarMenu>
 
         <div className="h-4" />
 
