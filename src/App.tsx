@@ -1,4 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { SEOHead } from "@/components/SEOHead";
 import { PictogramsProvider, usePictogramsCtx } from "@/contexts/PictogramsContext";
 import { GalleriesProvider, useGalleriesCtx } from "@/contexts/GalleriesContext";
 import { useUserCollections } from "@/hooks/useUserCollections";
@@ -474,37 +475,54 @@ function AppInner() {
   // Legal pages — avec header/footer landing
   if (page === "privacy") {
     return (
-      <Suspense fallback={null}>
-        <PrivacyPage user={user} onLogin={handleLogin} onLogout={logout} />
-      </Suspense>
+      <>
+        <SEOHead
+          title="Politique de confidentialité"
+          description="Politique de confidentialité de La Boite à Pictos. Découvrez comment vos données sont traitées."
+          path="/confidentialite"
+        />
+        <Suspense fallback={null}>
+          <PrivacyPage user={user} onLogin={handleLogin} onLogout={logout} />
+        </Suspense>
+      </>
     );
   }
 
   if (page === "cookies") {
     return (
-      <Suspense fallback={null}>
-        <CookiesPage user={user} onLogin={handleLogin} onLogout={logout} />
-      </Suspense>
+      <>
+        <SEOHead
+          title="Gestion des cookies"
+          description="Politique de gestion des cookies de La Boite à Pictos."
+          path="/cookies"
+        />
+        <Suspense fallback={null}>
+          <CookiesPage user={user} onLogin={handleLogin} onLogout={logout} />
+        </Suspense>
+      </>
     );
   }
 
   // Home page — rendered before gallery data is needed
   if (page === "home") {
     return (
-      <Suspense
-        fallback={
-          <div className="min-h-screen flex items-center justify-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
-          </div>
-        }
-      >
-        <HomePage
-          onEnterGallery={() => navigateTo("discover")}
-          user={user}
-          onLogin={handleLogin}
-          onLogout={logout}
-        />
-      </Suspense>
+      <>
+        <SEOHead path="/" />
+        <Suspense
+          fallback={
+            <div className="min-h-screen flex items-center justify-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
+            </div>
+          }
+        >
+          <HomePage
+            onEnterGallery={() => navigateTo("discover")}
+            user={user}
+            onLogin={handleLogin}
+            onLogout={logout}
+          />
+        </Suspense>
+      </>
     );
   }
 
@@ -553,8 +571,28 @@ function AppInner() {
     );
   }
 
+  const seoForPage = (() => {
+    switch (page) {
+      case "discover":
+        return <SEOHead title="Découvrir" description="Découvrez les derniers pictogrammes SVG ajoutés à La Boite à Pictos. Parcourez les galeries et trouvez l'inspiration." path="/discover" />;
+      case "gallery":
+        return <SEOHead title="Galerie" description="Parcourez tous les pictogrammes SVG de La Boite à Pictos. Filtrez par galerie, contributeur ou mot-clé." path="/gallery" />;
+      case "collections":
+        return <SEOHead title="Mes collections" description="Gérez vos collections personnelles de pictogrammes SVG sur La Boite à Pictos." path="/collections" />;
+      case "feedback":
+        return <SEOHead title="Feedback" description="Partagez vos retours et suggestions pour améliorer La Boite à Pictos." path="/feedback" />;
+      case "profile":
+        return <SEOHead title="Mon profil" path="/profil" />;
+      case "admin":
+        return <SEOHead title="Administration" path="/admin" />;
+      default:
+        return null;
+    }
+  })();
+
   return (
     <DownloadsContext.Provider value={downloadsValue}>
+    {seoForPage}
     <TooltipProvider>
       <div className="relative">
         {/* ── Background orbs + dot grid (Proposition B) ── */}

@@ -27,6 +27,7 @@
     "react": "^19.2.0",
     "react-aria-components": "^1.15.1",
     "react-dom": "^19.2.0",
+    "react-helmet-async": "^2.0.5",
     "shadcn": "^3.8.4",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.0",
