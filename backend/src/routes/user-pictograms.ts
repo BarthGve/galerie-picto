@@ -17,7 +17,7 @@ import {
   getUserPictogramById,
   getUserStorageUsed,
   insertUserPictogram,
-  updateUserPictogramName,
+  updateUserPictogram,
   deleteUserPictogram,
   addUserPictogramToCollection,
   removeUserPictogramFromCollection,
@@ -183,28 +183,43 @@ router.get(
   },
 );
 
-// PATCH /pictograms/:id — Renommer
+// PATCH /pictograms/:id — Mettre à jour nom et/ou tags
 router.patch(
   "/pictograms/:id",
   authAnyUser,
   (req: AuthenticatedRequest, res: Response): void => {
     const login = req.user!.login;
     const id = String(req.params.id);
-    const { name } = req.body as { name?: string };
+    const { name, tags } = req.body as { name?: string; tags?: string[] };
 
-    const trimmedName = name?.trim();
-    if (
-      !trimmedName ||
-      typeof trimmedName !== "string" ||
-      trimmedName.length > 100
-    ) {
-      res
-        .status(400)
-        .json({ error: "Invalid or missing name (max 100 chars)" });
+    if (name === undefined && tags === undefined) {
+      res.status(400).json({ error: "name or tags required" });
       return;
     }
 
-    const userPictogram = updateUserPictogramName(id, login, trimmedName);
+    if (name !== undefined) {
+      const trimmedName = name.trim();
+      if (!trimmedName || trimmedName.length > 100) {
+        res.status(400).json({ error: "Invalid name (max 100 chars)" });
+        return;
+      }
+    }
+
+    if (tags !== undefined) {
+      if (
+        !Array.isArray(tags) ||
+        tags.length > 30 ||
+        tags.some((t) => typeof t !== "string" || t.length > 50)
+      ) {
+        res.status(400).json({ error: "Invalid tags (max 30, 50 chars each)" });
+        return;
+      }
+    }
+
+    const userPictogram = updateUserPictogram(id, login, {
+      name: name !== undefined ? name.trim() : undefined,
+      tags,
+    });
     if (!userPictogram) {
       res.status(404).json({ error: "Not found" });
       return;

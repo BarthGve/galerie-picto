@@ -200,7 +200,7 @@ export function PictoCard({
           e.dataTransfer.setData("application/pictogram-id", pictogram.id);
           e.dataTransfer.effectAllowed = "copy";
         }}
-        onClick={() => { if (!isPrivate) setIsModalOpen(true); }}
+        onClick={() => setIsModalOpen(true)}
         onMouseEnter={prefetchSvg}
       >
         <div className={`relative flex items-center justify-center ${compact ? "aspect-square p-2" : "aspect-[4/3] p-4"}`}>
@@ -367,8 +367,9 @@ export function PictoCard({
             isAuthenticated={isAuthenticated}
             user={user}
             onPictogramUpdated={onPictogramUpdated}
-            onDeletePictogram={onDeletePictogram}
+            onDeletePictogram={isPrivate ? undefined : onDeletePictogram}
             onLogin={onLogin}
+            isPrivate={isPrivate}
           />
         </Suspense>
       )}

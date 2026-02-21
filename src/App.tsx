@@ -132,6 +132,15 @@ function AppInner() {
     await Promise.allSettled([refetchUserPictograms(), refetchUserCollections()]);
   }, [refetchUserPictograms, refetchUserCollections]);
 
+  // Quand on est dans une collection utilisateur, rafraîchir aussi les userPictograms
+  // (les pictos privés ont leur nom/tags stockés dans userPictograms, pas dans pictograms)
+  const handlePictogramUpdatedInGallery = useCallback(async () => {
+    await refetchPictograms();
+    if (selectedUserCollectionId) {
+      await refetchUserPictograms();
+    }
+  }, [refetchPictograms, refetchUserPictograms, selectedUserCollectionId]);
+
   const handleDeleteUserPictogram = useCallback(async (id: string) => {
     const token = getStoredToken();
     if (!token) return;
@@ -662,7 +671,7 @@ function AppInner() {
                       isAuthenticated={!!user}
                       user={user}
                       selectedGalleryId={selectedGalleryId}
-                      onPictogramUpdated={refetchPictograms}
+                      onPictogramUpdated={handlePictogramUpdatedInGallery}
                       onDeletePictogram={
                         user ? handleDeletePictogram : undefined
                       }
