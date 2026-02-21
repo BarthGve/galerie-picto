@@ -177,6 +177,13 @@ function RequestDetailPanel({
                 <AlertTriangle className="w-3 h-3" /> URGENT
               </span>
             )}
+            {request.assignedTo && (
+              <span className="text-xs text-slate-500 flex items-center gap-1">
+                Assigné à
+                {request.assignedToAvatar && <img src={request.assignedToAvatar} alt="" className="w-4 h-4 rounded-full" decoding="async" />}
+                <strong className="text-slate-700">{request.assignedToName || request.assignedTo}</strong>
+              </span>
+            )}
           </div>
         </div>
         <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
@@ -589,7 +596,13 @@ export function AdminRequestsSection() {
                   <div className="text-xs text-slate-400">
                     <span>{r.requesterName || r.requesterLogin}</span>
                     <span> · {new Date(r.createdAt!).toLocaleDateString("fr-FR")}</span>
-                    {r.assignedTo && <span> · Assigné à {r.assignedTo}</span>}
+                    {r.assignedTo && (
+                      <span className="inline-flex items-center gap-1">
+                        {" · Assigné à "}
+                        {r.assignedToAvatar && <img src={r.assignedToAvatar} alt="" className="w-4 h-4 rounded-full inline" decoding="async" />}
+                        <strong className="text-slate-600">{r.assignedToName || r.assignedTo}</strong>
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>

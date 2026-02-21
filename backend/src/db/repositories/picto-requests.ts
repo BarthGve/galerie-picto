@@ -1,4 +1,5 @@
 import { eq, desc, sql, inArray } from "drizzle-orm";
+import { alias } from "drizzle-orm/sqlite-core";
 import { v4 as uuidv4 } from "uuid";
 import { db } from "../index.js";
 import {
@@ -7,6 +8,8 @@ import {
   pictograms,
   users,
 } from "../schema.js";
+
+const assigneeUsers = alias(users, "assignee_users");
 
 export type RequestStatus =
   | "nouvelle"
@@ -63,6 +66,8 @@ export function getRequestById(id: string) {
       urgency: pictoRequests.urgency,
       status: pictoRequests.status,
       assignedTo: pictoRequests.assignedTo,
+      assignedToName: assigneeUsers.githubName,
+      assignedToAvatar: assigneeUsers.githubAvatarUrl,
       deliveredPictogramId: pictoRequests.deliveredPictogramId,
       rejectionReason: pictoRequests.rejectionReason,
       createdAt: pictoRequests.createdAt,
@@ -70,6 +75,10 @@ export function getRequestById(id: string) {
     })
     .from(pictoRequests)
     .leftJoin(users, eq(pictoRequests.requesterLogin, users.githubLogin))
+    .leftJoin(
+      assigneeUsers,
+      eq(pictoRequests.assignedTo, assigneeUsers.githubLogin),
+    )
     .where(eq(pictoRequests.id, id))
     .get();
   if (!row) return null;
@@ -116,11 +125,17 @@ export function getAllRequests(statusFilter?: RequestStatus) {
       urgency: pictoRequests.urgency,
       status: pictoRequests.status,
       assignedTo: pictoRequests.assignedTo,
+      assignedToName: assigneeUsers.githubName,
+      assignedToAvatar: assigneeUsers.githubAvatarUrl,
       createdAt: pictoRequests.createdAt,
       updatedAt: pictoRequests.updatedAt,
     })
     .from(pictoRequests)
-    .leftJoin(users, eq(pictoRequests.requesterLogin, users.githubLogin));
+    .leftJoin(users, eq(pictoRequests.requesterLogin, users.githubLogin))
+    .leftJoin(
+      assigneeUsers,
+      eq(pictoRequests.assignedTo, assigneeUsers.githubLogin),
+    );
 
   if (statusFilter) {
     return baseQuery

@@ -86,6 +86,8 @@ export interface PictoRequest {
   urgency: string;
   status: PictoRequestStatus;
   assignedTo: string | null;
+  assignedToName: string | null;
+  assignedToAvatar: string | null;
   deliveredPictogramId: string | null;
   deliveredPictogramUrl: string | null;
   rejectionReason: string | null;
