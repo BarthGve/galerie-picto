@@ -148,6 +148,10 @@ pnpm build            # Construire le frontend pour la production
   - `authAnyUser` (`backend/src/middleware/auth-any-user.ts`) : accepte tout utilisateur GitHub connecte. Utiliser pour likes, feedback, collections utilisateur.
 - **JWT — revocation** : Les JWT ont une TTL de 24h. La perte de statut collaborateur n'est pas effective avant expiration du token (design stateless assume). Ne pas essayer de verifier le statut collaborateur a chaque requete.
 - **Codes HTTP auth** : Utiliser `401` pour toutes les erreurs d'authentification (token invalide/expire/manquant). Utiliser `403` pour les erreurs d'autorisation (token valide mais acces refuse). Ne jamais renvoyer `500` pour une erreur auth.
+- **req.params en TypeScript** : Toujours caster les params Express avec `String(req.params.xxx)` plutot que de les destructurer directement. Le type infere est `string | string[]` en config stricte, ce qui cause des TS2345 en prod.
+- **Migrations Drizzle** : Ne jamais creer les fichiers SQL manuellement. Toujours utiliser `pnpm drizzle-kit generate` dans `backend/`. Les migrations manuelles sans snapshot sont silencieusement ignorees par Drizzle. Si une migration a deja ete appliquee a la main via sqlite3, inserer son hash SHA-256 dans `__drizzle_migrations` avec `shasum -a 256 fichier.sql`.
+- **Ban utilisateur** : `backend/src/middleware/ban-list.ts` maintient un Set en memoire charge au demarrage depuis la DB (`initBanList`). Les deux middlewares auth verifient `isBanned()` apres chaque cache-hit pour enforcement immediat (sans attendre expiration du JWT).
+- **Filtres de tags (frontend)** : L'etat `activeTag` dans `PictoGrid` est local. Utiliser une `key` dynamique sur `<PictoGrid>` dans App.tsx pour forcer le reset a chaque changement de galerie/collection/favoris : `key={\`\${selectedGalleryId}|\${selectedUserCollectionId}|\${showFavoritesOnly}\`}`.
 
 ## Working with BMAD
 
