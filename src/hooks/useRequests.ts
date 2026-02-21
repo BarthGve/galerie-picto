@@ -133,10 +133,15 @@ export function useRequests(isAuthenticated: boolean) {
       const token = getStoredToken();
       if (!token) return null;
 
-      const buffer = await file.arrayBuffer();
-      const base64 = btoa(
-        String.fromCharCode(...new Uint8Array(buffer)),
-      );
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const dataUrl = reader.result as string;
+          resolve(dataUrl.split(",")[1]);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
 
       try {
         const res = await fetch(`${API_URL}/api/requests/upload-reference`, {
@@ -259,11 +264,30 @@ export function useAdminRequests() {
     [fetchAll],
   );
 
+  const getRequestDetail = useCallback(
+    async (id: string): Promise<PictoRequest | null> => {
+      const token = getStoredToken();
+      if (!token) return null;
+      try {
+        const res = await fetch(`${API_URL}/api/requests/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) return null;
+        const data = await res.json();
+        return data.request;
+      } catch {
+        return null;
+      }
+    },
+    [],
+  );
+
   return {
     requests,
     loading,
     fetchAll,
     assignToMe,
     updateStatus,
+    getRequestDetail,
   };
 }

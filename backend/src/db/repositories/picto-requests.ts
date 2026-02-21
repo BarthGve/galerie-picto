@@ -141,38 +141,40 @@ export function updateRequestStatus(
     deliveredPictogramId?: string;
   },
 ): { success: boolean; error?: string } {
-  const request = db
-    .select({ status: pictoRequests.status })
-    .from(pictoRequests)
-    .where(eq(pictoRequests.id, id))
-    .get();
+  return db.transaction((tx) => {
+    const request = tx
+      .select({ status: pictoRequests.status })
+      .from(pictoRequests)
+      .where(eq(pictoRequests.id, id))
+      .get();
 
-  if (!request) return { success: false, error: "Request not found" };
+    if (!request) return { success: false, error: "Request not found" };
 
-  const currentStatus = request.status as RequestStatus;
-  const allowed = VALID_TRANSITIONS[currentStatus];
-  if (!allowed || !allowed.includes(newStatus)) {
-    return {
-      success: false,
-      error: `Cannot transition from '${currentStatus}' to '${newStatus}'`,
+    const currentStatus = request.status as RequestStatus;
+    const allowed = VALID_TRANSITIONS[currentStatus];
+    if (!allowed || !allowed.includes(newStatus)) {
+      return {
+        success: false,
+        error: `Cannot transition from '${currentStatus}' to '${newStatus}'`,
+      };
+    }
+
+    if (newStatus === "refusee" && !extra?.rejectionReason) {
+      return { success: false, error: "Rejection reason is required" };
+    }
+
+    const updates: Record<string, unknown> = {
+      status: newStatus,
+      updatedAt: new Date().toISOString(),
     };
-  }
+    if (extra?.assignedTo !== undefined) updates.assignedTo = extra.assignedTo;
+    if (extra?.rejectionReason) updates.rejectionReason = extra.rejectionReason;
+    if (extra?.deliveredPictogramId)
+      updates.deliveredPictogramId = extra.deliveredPictogramId;
 
-  if (newStatus === "refusee" && !extra?.rejectionReason) {
-    return { success: false, error: "Rejection reason is required" };
-  }
-
-  const updates: Record<string, unknown> = {
-    status: newStatus,
-    updatedAt: new Date().toISOString(),
-  };
-  if (extra?.assignedTo !== undefined) updates.assignedTo = extra.assignedTo;
-  if (extra?.rejectionReason) updates.rejectionReason = extra.rejectionReason;
-  if (extra?.deliveredPictogramId)
-    updates.deliveredPictogramId = extra.deliveredPictogramId;
-
-  db.update(pictoRequests).set(updates).where(eq(pictoRequests.id, id)).run();
-  return { success: true };
+    tx.update(pictoRequests).set(updates).where(eq(pictoRequests.id, id)).run();
+    return { success: true };
+  });
 }
 
 export function getActiveRequestCount(): number {
@@ -194,25 +196,27 @@ export function assignRequest(
   requestId: string,
   contributorLogin: string,
 ): boolean {
-  const request = db
-    .select({ status: pictoRequests.status })
-    .from(pictoRequests)
-    .where(eq(pictoRequests.id, requestId))
-    .get();
+  return db.transaction((tx) => {
+    const request = tx
+      .select({ status: pictoRequests.status })
+      .from(pictoRequests)
+      .where(eq(pictoRequests.id, requestId))
+      .get();
 
-  if (!request) return false;
+    if (!request) return false;
 
-  const status = request.status as RequestStatus;
-  if (status !== "nouvelle" && status !== "en_cours") return false;
+    const status = request.status as RequestStatus;
+    if (status !== "nouvelle" && status !== "en_cours") return false;
 
-  db.update(pictoRequests)
-    .set({
-      assignedTo: contributorLogin,
-      status: "en_cours",
-      updatedAt: new Date().toISOString(),
-    })
-    .where(eq(pictoRequests.id, requestId))
-    .run();
+    tx.update(pictoRequests)
+      .set({
+        assignedTo: contributorLogin,
+        status: "en_cours",
+        updatedAt: new Date().toISOString(),
+      })
+      .where(eq(pictoRequests.id, requestId))
+      .run();
 
-  return true;
+    return true;
+  });
 }

@@ -80,12 +80,16 @@ router.post(
       return;
     }
 
-    if (
-      referenceImageKey &&
-      (typeof referenceImageKey !== "string" || referenceImageKey.length > 500)
-    ) {
-      res.status(400).json({ error: "Invalid reference image key" });
-      return;
+    if (referenceImageKey) {
+      if (
+        typeof referenceImageKey !== "string" ||
+        referenceImageKey.length > 500 ||
+        !referenceImageKey.startsWith(config.minio.prefix + "requests/") ||
+        !/\.(jpg|png|webp)$/.test(referenceImageKey)
+      ) {
+        res.status(400).json({ error: "Invalid reference image key" });
+        return;
+      }
     }
 
     try {
@@ -116,10 +120,12 @@ router.get(
   (req: AuthenticatedRequest, res: Response): void => {
     try {
       const login = req.user!.login;
-      const requests = getRequestsByUser(login).map((r) => ({
-        ...r,
-        referenceImageUrl: buildImageUrl(r.referenceImageKey),
-      }));
+      const requests = getRequestsByUser(login).map(
+        ({ referenceImageKey, ...r }) => ({
+          ...r,
+          referenceImageUrl: buildImageUrl(referenceImageKey),
+        }),
+      );
       res.json({ requests });
     } catch {
       res.status(500).json({ error: "Failed to get requests" });
@@ -138,10 +144,12 @@ router.get(
         res.status(400).json({ error: "Invalid status filter" });
         return;
       }
-      const requests = getAllRequests(statusFilter).map((r) => ({
-        ...r,
-        referenceImageUrl: buildImageUrl(r.referenceImageKey),
-      }));
+      const requests = getAllRequests(statusFilter).map(
+        ({ referenceImageKey, ...r }) => ({
+          ...r,
+          referenceImageUrl: buildImageUrl(referenceImageKey),
+        }),
+      );
       res.json({ requests });
     } catch {
       res.status(500).json({ error: "Failed to get requests" });
@@ -149,22 +157,28 @@ router.get(
   },
 );
 
-// GET /api/requests/:id - Get request detail
+// GET /api/requests/:id - Get request detail (owner or collaborator only)
 router.get(
   "/:id",
   authAnyUser,
   (req: AuthenticatedRequest, res: Response): void => {
     try {
       const id = String(req.params.id);
+      const login = req.user!.login;
       const request = getRequestById(id);
       if (!request) {
         res.status(404).json({ error: "Request not found" });
         return;
       }
+      if (request.requesterLogin !== login && !req.user!.isCollaborator) {
+        res.status(403).json({ error: "Access denied" });
+        return;
+      }
+      const { referenceImageKey, ...rest } = request;
       res.json({
         request: {
-          ...request,
-          referenceImageUrl: buildImageUrl(request.referenceImageKey),
+          ...rest,
+          referenceImageUrl: buildImageUrl(referenceImageKey),
         },
       });
     } catch {
@@ -183,6 +197,16 @@ router.patch(
 
     if (!status || !VALID_STATUSES.includes(status)) {
       res.status(400).json({ error: "Invalid status" });
+      return;
+    }
+
+    if (
+      rejectionReason &&
+      (typeof rejectionReason !== "string" || rejectionReason.length > 2000)
+    ) {
+      res
+        .status(400)
+        .json({ error: "Rejection reason too long (max 2000 characters)" });
       return;
     }
 
@@ -318,13 +342,23 @@ router.get(
   },
 );
 
-// GET /api/requests/:id/comments - List comments for a request
+// GET /api/requests/:id/comments - List comments (owner or collaborator only)
 router.get(
   "/:id/comments",
   authAnyUser,
   (req: AuthenticatedRequest, res: Response): void => {
     try {
       const id = String(req.params.id);
+      const login = req.user!.login;
+      const request = getRequestById(id);
+      if (!request) {
+        res.status(404).json({ error: "Request not found" });
+        return;
+      }
+      if (request.requesterLogin !== login && !req.user!.isCollaborator) {
+        res.status(403).json({ error: "Access denied" });
+        return;
+      }
       const comments = getCommentsByRequestId(id);
       res.json({ comments });
     } catch {
@@ -357,6 +391,10 @@ router.post(
     const request = getRequestById(id);
     if (!request) {
       res.status(404).json({ error: "Request not found" });
+      return;
+    }
+    if (request.requesterLogin !== login && !req.user!.isCollaborator) {
+      res.status(403).json({ error: "Access denied" });
       return;
     }
 

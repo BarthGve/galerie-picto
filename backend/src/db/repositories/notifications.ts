@@ -29,6 +29,7 @@ export function createNotification(input: CreateNotificationInput): string {
       title: input.title,
       message: input.message,
       link: input.link || null,
+      createdAt: new Date().toISOString(),
     })
     .run();
   return id;

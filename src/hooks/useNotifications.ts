@@ -113,7 +113,7 @@ export function useNotifications(isAuthenticated: boolean) {
     setUnreadCount(0);
   }, []);
 
-  // Poll unread count
+  // Poll unread count (pauses when tab is hidden)
   useEffect(() => {
     if (!isAuthenticated) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- cleanup on logout
@@ -123,9 +123,29 @@ export function useNotifications(isAuthenticated: boolean) {
     }
 
     fetchUnreadCount();
-    intervalRef.current = setInterval(fetchUnreadCount, POLL_INTERVAL);
-    return () => {
+
+    const startPolling = () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
+      intervalRef.current = setInterval(fetchUnreadCount, POLL_INTERVAL);
+    };
+    const stopPolling = () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    };
+    const handleVisibility = () => {
+      if (document.hidden) {
+        stopPolling();
+      } else {
+        fetchUnreadCount();
+        startPolling();
+      }
+    };
+
+    startPolling();
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => {
+      stopPolling();
+      document.removeEventListener("visibilitychange", handleVisibility);
     };
   }, [isAuthenticated, fetchUnreadCount]);
 

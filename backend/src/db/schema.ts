@@ -209,6 +209,7 @@ export const pictoRequests = sqliteTable(
   (table) => [
     index("pr_requester_login_idx").on(table.requesterLogin),
     index("pr_status_idx").on(table.status),
+    index("pr_assigned_to_idx").on(table.assignedTo),
   ],
 );
 
@@ -235,7 +236,9 @@ export const pictoRequestHistory = sqliteTable(
     requestId: text("request_id")
       .notNull()
       .references(() => pictoRequests.id, { onDelete: "cascade" }),
-    actorLogin: text("actor_login").notNull(),
+    actorLogin: text("actor_login")
+      .notNull()
+      .references(() => users.githubLogin, { onDelete: "cascade" }),
     action: text("action").notNull(), // "created" | "assigned" | "status_changed"
     fromStatus: text("from_status"),
     toStatus: text("to_status"),

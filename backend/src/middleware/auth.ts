@@ -9,6 +9,7 @@ export interface GitHubUser {
   avatar_url: string;
   name: string | null;
   email: string | null;
+  isCollaborator: boolean;
 }
 
 interface JwtPayload {
@@ -43,6 +44,7 @@ export function authMiddleware(
       avatar_url: "https://api.dicebear.com/9.x/pixel-art/svg?seed=dev",
       name: "Dev User",
       email: "dev@localhost",
+      isCollaborator: true,
     };
     next();
     return;
@@ -88,6 +90,7 @@ export function authMiddleware(
       avatar_url: payload.avatar_url,
       name: payload.name,
       email: payload.email,
+      isCollaborator: payload.isCollaborator,
     };
     setCachedToken(token, user, payload.isCollaborator);
     req.user = user;

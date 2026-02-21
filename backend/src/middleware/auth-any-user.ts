@@ -34,6 +34,7 @@ export function authAnyUser(
       avatar_url: "https://api.dicebear.com/9.x/pixel-art/svg?seed=dev",
       name: "Dev User",
       email: "dev@localhost",
+      isCollaborator: true,
     };
     req.user = devUser;
     upsertUser({
@@ -71,6 +72,7 @@ export function authAnyUser(
       avatar_url: payload.avatar_url,
       name: payload.name,
       email: payload.email,
+      isCollaborator: payload.isCollaborator,
     };
 
     upsertUser({
