@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { Pictogram, Gallery, UserCollection } from "@/lib/types";
 import { fetchSvgText } from "@/lib/svg-to-png";
 import { usePictogramUrl } from "@/hooks/usePictogramUrl";
@@ -190,9 +190,14 @@ function PictoCardInner({
   const handlePaletteOpen = (open: boolean) => {
     setIsPaletteOpen(open);
     if (open && !svgCacheRef.current) {
-      fetchSvgText(pictogram.url).then((text) => {
-        svgCacheRef.current = text;
-      });
+      fetchSvgText(pictogram.url)
+        .then((text) => {
+          svgCacheRef.current = text;
+        })
+        .catch(() => {
+          toast.error("Impossible de charger ce pictogramme");
+          setIsPaletteOpen(false);
+        });
     }
   };
 
@@ -226,9 +231,8 @@ function PictoCardInner({
     onRemoveFromGallery;
 
   return (
-    <TooltipProvider delayDuration={400}>
-      <>
-        <Card
+    <>
+      <Card
           className={`group relative overflow-hidden rounded border border-border bg-card transition-all duration-300 hover:-translate-y-1 hover:shadow-xl cursor-pointer ${compact ? "p-0" : ""}`}
           draggable
           onDragStart={(e) => {
@@ -480,8 +484,7 @@ function PictoCardInner({
             />
           </Suspense>
         )}
-      </>
-    </TooltipProvider>
+    </>
   );
 }
 

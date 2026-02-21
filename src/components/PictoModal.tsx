@@ -25,7 +25,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -93,12 +93,13 @@ export function PictoModal({
   initialModifiedSvg,
 }: PictoModalProps) {
   const { pictograms: allPictograms } = usePictogramsCtx();
-  const [pngSize, setPngSize] = useState(128);
+  const [pngSize, setPngSize] = useState(512);
   const svgCacheRef = useRef<string | null>(null);
   const [svgLoaded, setSvgLoaded] = useState(false);
   const displayUrl = usePictogramUrl(pictogram);
   const [showColorPopover, setShowColorPopover] = useState(false);
-  const [modifiedSvg, setModifiedSvg] = useState<string | null>(null);
+  // Initialiser depuis la card si l'utilisateur a déjà personnalisé les couleurs
+  const [modifiedSvg, setModifiedSvg] = useState<string | null>(initialModifiedSvg ?? null);
   // Blob URL for the live preview when colors are modified
   const [previewBlobUrl, setPreviewBlobUrl] = useState<string | null>(null);
 
@@ -237,8 +238,7 @@ export function PictoModal({
       svgCacheRef.current = null;
       setSvgLoaded(false);
       setShowColorPopover(false);
-      setModifiedSvg(initialModifiedSvg ?? null);
-      setPreviewBlobUrl(null);
+      // modifiedSvg est déjà initialisé depuis initialModifiedSvg dans useState
       setTags(pictogram.tags || []);
       setTagInput("");
       setEditingName(false);
@@ -727,7 +727,6 @@ const handleDownloadSvg = () => {
                 className="w-48 h-48 object-contain drop-shadow-sm"
               />
               {isAuthenticated && svgLoaded && (
-              <TooltipProvider delayDuration={400}>
                 <Popover open={showColorPopover} onOpenChange={setShowColorPopover}>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -760,7 +759,6 @@ const handleDownloadSvg = () => {
                     </Suspense>
                   </PopoverContent>
                 </Popover>
-              </TooltipProvider>
             )}
             {!isAuthenticated && (
               <p className="absolute bottom-3 left-3 right-3 text-xs text-center text-muted-foreground">
