@@ -64,13 +64,6 @@
       "when": 1771655707810,
       "tag": "0008_mute_overlord",
       "breakpoints": true
-    },
-    {
-      "idx": 9,
-      "version": "6",
-      "when": 1771667449947,
-      "tag": "0009_eminent_slapstick",
-      "breakpoints": true
     }
   ]
 }
