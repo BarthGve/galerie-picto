@@ -8,7 +8,7 @@ let cachedManifest: { json: string; etag: string; updatedAt: number } | null =
   null;
 let manifestVersion = 0;
 
-function invalidateCache() {
+export function invalidateCache() {
   cachedManifest = null;
   manifestVersion++;
 }

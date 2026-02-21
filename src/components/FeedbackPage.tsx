@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { API_URL } from "@/lib/config";
-import { getStoredToken, verifyUploadPermission, type GitHubUser } from "@/lib/github-auth";
+import { getStoredToken, type GitHubUser } from "@/lib/github-auth";
 
 interface FeedbackItem {
   id: number;
@@ -42,24 +42,16 @@ function IssuesList({
   user,
   onLogin,
   onSignal,
+  isCollaborator,
 }: {
   user: GitHubUser | null;
   onLogin: () => void;
   onSignal: () => void;
+  isCollaborator: boolean;
 }) {
   const [items, setItems] = useState<FeedbackItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isCollaborator, setIsCollaborator] = useState(false);
-
-  useEffect(() => {
-    const token = getStoredToken();
-    if (token) {
-      verifyUploadPermission(token).then(setIsCollaborator);
-    } else {
-      setIsCollaborator(false);
-    }
-  }, [user]);
 
   useEffect(() => {
     fetch(`${API_URL}/api/feedback`)
@@ -608,18 +600,20 @@ function Field({
 export function FeedbackPage({
   user,
   onLogin,
+  isCollaborator = false,
 }: {
   user: GitHubUser | null;
   onLogin: () => void;
+  isCollaborator?: boolean;
 }) {
   const [view, setView] = useState<View>("list");
 
   return (
     <div className="min-h-full pb-16">
-      <div className="mx-auto max-w-2xl px-4 sm:px-6 pt-8">
+      <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8 pt-8">
         {/* Header */}
         <div className="mb-8 space-y-1">
-          <h1 className="text-2xl font-black tracking-tight text-foreground">
+          <h1 className="text-2xl font-black tracking-tight text-primary">
             Signalements
           </h1>
           <p className="text-sm text-muted-foreground">
@@ -631,6 +625,7 @@ export function FeedbackPage({
           <IssuesList
             user={user}
             onLogin={onLogin}
+            isCollaborator={isCollaborator}
             onSignal={() => {
               if (!user) {
                 onLogin();

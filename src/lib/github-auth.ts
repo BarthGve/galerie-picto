@@ -155,6 +155,26 @@ export async function getGitHubUser(token: string): Promise<GitHubUser | null> {
 }
 
 /**
+ * Lit isCollaborator directement depuis le payload JWT (synchrone, sans appel réseau).
+ * Le JWT est signé par le backend — la vérification de signature n'est pas nécessaire côté client.
+ */
+export function getIsCollaboratorFromToken(token: string): boolean {
+  if (DEV_MODE && token === "dev-token") return true;
+  const parts = token.split(".");
+  if (parts.length === 3) {
+    try {
+      const payload = JSON.parse(
+        atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")),
+      ) as { isCollaborator?: boolean };
+      return payload.isCollaborator ?? false;
+    } catch {
+      return false;
+    }
+  }
+  return false;
+}
+
+/**
  * Vérifie si l'utilisateur est autorisé à uploader
  */
 export async function verifyUploadPermission(token: string): Promise<boolean> {

@@ -23,6 +23,7 @@ import {
   getGitHubUser,
   logout,
   getStoredToken,
+  getIsCollaboratorFromToken,
   type GitHubUser,
 } from "@/lib/github-auth";
 import { API_URL } from "@/lib/config";
@@ -64,7 +65,10 @@ const ProfilePage = lazy(() =>
 const CookiesPage = lazy(() =>
   import("@/components/CookiesPage").then((m) => ({ default: m.CookiesPage })),
 );
-type Page = "home" | "discover" | "gallery" | "test-discover" | "feedback" | "privacy" | "cookies" | "profile";
+const AdminPage = lazy(() =>
+  import("@/components/AdminPage").then((m) => ({ default: m.AdminPage })),
+);
+type Page = "home" | "discover" | "gallery" | "test-discover" | "feedback" | "privacy" | "cookies" | "profile" | "admin";
 
 function getInitialPage(): Page {
   const path = window.location.pathname;
@@ -75,6 +79,7 @@ function getInitialPage(): Page {
   if (path === "/confidentialite") return "privacy";
   if (path === "/cookies") return "cookies";
   if (path === "/profil") return "profile";
+  if (path === "/admin") return "admin";
   // OAuth callback → go straight to discover
   if (new URLSearchParams(window.location.search).has("code")) return "discover";
   return "home";
@@ -104,6 +109,7 @@ function AppInner() {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [user, setUser] = useState<GitHubUser | null>(null);
+  const [isCollaborator, setIsCollaborator] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [selectedGalleryId, setSelectedGalleryId] = useState<string | null>(
@@ -161,6 +167,24 @@ function AppInner() {
   }, [refetchUserPictograms, refetchUserCollections]);
   const [userPictoUploadOpen, setUserPictoUploadOpen] = useState(false);
 
+  useEffect(() => {
+    const token = getStoredToken();
+    if (token && user) {
+      setIsCollaborator(getIsCollaboratorFromToken(token));
+    } else {
+      setIsCollaborator(false);
+    }
+  }, [user]);
+
+  // Rediriger vers home si page admin sans autorisation
+  useEffect(() => {
+    if (page === "admin" && !authLoading && !isCollaborator) {
+      navigateTo("home");
+    }
+  // navigateTo est redéfini à chaque render mais stable fonctionnellement
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, isCollaborator, authLoading]);
+
   // Handle browser back/forward
   useEffect(() => {
     const onPopState = () => {
@@ -171,6 +195,7 @@ function AppInner() {
       else if (path === "/confidentialite") setPage("privacy");
       else if (path === "/cookies") setPage("cookies");
       else if (path === "/profil") setPage("profile");
+      else if (path === "/admin") setPage("admin");
       else setPage("home");
     };
     window.addEventListener("popstate", onPopState);
@@ -193,7 +218,9 @@ function AppInner() {
                 ? "/cookies"
                 : target === "profile"
                   ? "/profil"
-                  : "/";
+                  : target === "admin"
+                    ? "/admin"
+                    : "/";
     window.history.pushState(null, "", path);
     setPage(target);
     if (target === "discover" || target === "home") {
@@ -214,7 +241,7 @@ function AppInner() {
     setSelectedUserCollectionId(null);
     setShowFavoritesOnly(false);
     setCurrentPage(1);
-    if (page === "discover") navigateTo("gallery");
+    if (page !== "gallery") navigateTo("gallery");
   };
 
   const handleSelectContributor = (contributor: string | null) => {
@@ -222,7 +249,7 @@ function AppInner() {
     setSelectedUserCollectionId(null);
     setShowFavoritesOnly(false);
     setCurrentPage(1);
-    if (page === "discover") navigateTo("gallery");
+    if (page !== "gallery") navigateTo("gallery");
   };
 
   const handleSelectUserCollection = (id: string | null) => {
@@ -231,7 +258,7 @@ function AppInner() {
     setSelectedContributor(null);
     setShowFavoritesOnly(false);
     setCurrentPage(1);
-    if (page === "discover") navigateTo("gallery");
+    if (page !== "gallery") navigateTo("gallery");
   };
   const [galleryDialogOpen, setGalleryDialogOpen] = useState(false);
   const [editingGallery, setEditingGallery] = useState<
@@ -537,6 +564,8 @@ function AppInner() {
           onGoDiscover={() => navigateTo("discover")}
           onGoFeedback={() => navigateTo("feedback")}
           onGoProfile={() => navigateTo("profile")}
+          onGoAdmin={() => navigateTo("admin")}
+          isCollaborator={isCollaborator}
           currentPage={page}
           favoritesCount={favoritesCount}
           showFavoritesOnly={showFavoritesOnly}
@@ -544,7 +573,7 @@ function AppInner() {
             setShowFavoritesOnly((prev) => !prev);
             setSelectedUserCollectionId(null);
             setCurrentPage(1);
-            if (page === "discover") navigateTo("gallery");
+            if (page !== "gallery") navigateTo("gallery");
           }}
           userCollections={userCollections}
           selectedUserCollectionId={selectedUserCollectionId}
@@ -577,9 +606,13 @@ function AppInner() {
                     onDeleted={() => { logout(); navigateTo("home"); }}
                   />
                 </Suspense>
+              ) : page === "admin" && isCollaborator ? (
+                <Suspense fallback={null}>
+                  <AdminPage />
+                </Suspense>
               ) : page === "feedback" ? (
                 <Suspense fallback={null}>
-                  <FeedbackPage user={user} onLogin={handleLogin} />
+                  <FeedbackPage user={user} onLogin={handleLogin} isCollaborator={isCollaborator} />
                 </Suspense>
               ) : page === "discover" ? (
                 <Suspense fallback={null}>
@@ -662,8 +695,21 @@ function AppInner() {
                       </>
                     );
                   })()}
+                  {/* En-tête Tous les pictos */}
+                  {!selectedGalleryId && !selectedUserCollectionId && !showFavoritesOnly && (
+                    <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8 pt-6 pb-2">
+                      <h2 className="font-extrabold text-lg text-primary leading-tight">Tous les pictos</h2>
+                    </div>
+                  )}
+                  {/* En-tête Mes Favoris */}
+                  {showFavoritesOnly && (
+                    <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8 pt-6 pb-2">
+                      <h2 className="font-extrabold text-lg text-primary leading-tight">Mes Favoris</h2>
+                    </div>
+                  )}
                   <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8">
                     <PictoGrid
+                      key={`${selectedGalleryId ?? "all"}|${selectedUserCollectionId ?? ""}|${showFavoritesOnly ? "fav" : ""}`}
                       pictograms={filteredPictograms}
                       galleries={galleries}
                       onAddToGallery={addPictogramToGallery}

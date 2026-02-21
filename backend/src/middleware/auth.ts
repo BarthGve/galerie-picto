@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { config } from "../config.js";
 import { getCachedToken, setCachedToken } from "./token-cache.js";
+import { isBanned } from "./ban-list.js";
 
 export interface GitHubUser {
   login: string;
@@ -50,6 +51,10 @@ export function authMiddleware(
   // Fast path: token already verified recently
   const cached = getCachedToken(token);
   if (cached) {
+    if (isBanned(cached.user.login)) {
+      res.status(403).json({ error: "Compte suspendu" });
+      return;
+    }
     if (
       !cached.isCollaborator &&
       cached.user.login !== config.github.allowedUsername
@@ -64,6 +69,11 @@ export function authMiddleware(
 
   try {
     const payload = jwt.verify(token, config.jwtSecret) as JwtPayload;
+
+    if (isBanned(payload.login)) {
+      res.status(403).json({ error: "Compte suspendu" });
+      return;
+    }
 
     if (
       !payload.isCollaborator &&

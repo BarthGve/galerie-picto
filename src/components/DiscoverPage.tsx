@@ -314,7 +314,7 @@ export function DiscoverPage({
                   </button>
                 }
               />
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {latestPictos.map((picto) => (
                   <div
                     key={picto.id}
@@ -504,7 +504,7 @@ export function DiscoverPage({
                           style={{ backgroundColor: gallery.color }}
                         />
                       )}
-                      <h3 className="text-base font-extrabold text-foreground truncate">
+                      <h3 className="text-base font-extrabold text-primary truncate">
                         {gallery.name}
                       </h3>
                     </div>
@@ -544,7 +544,7 @@ export function DiscoverPage({
                 <div className="w-10 h-10 rounded bg-primary/80 backdrop-blur-sm flex items-center justify-center text-primary-foreground shadow-lg ring-1 ring-primary/20">
                   <Tag className="w-5 h-5" />
                 </div>
-                <h2 className="text-xl font-extrabold tracking-tight text-foreground">
+                <h2 className="text-xl font-extrabold tracking-tight text-primary">
                   Tags populaires
                 </h2>
               </div>

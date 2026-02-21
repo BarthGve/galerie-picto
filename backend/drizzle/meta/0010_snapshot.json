@@ -1,0 +1,919 @@
+{
+  "version": "6",
+  "dialect": "sqlite",
+  "id": "0115ed78-d7b3-4b79-a80f-1c4d94b14808",
+  "prevId": "d14944c0-4661-4c7d-a828-05545e359e59",
+  "tables": {
+    "anonymous_downloads": {
+      "name": "anonymous_downloads",
+      "columns": {
+        "ip": {
+          "name": "ip",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "download_date": {
+          "name": "download_date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "count": {
+          "name": "count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "anonymous_downloads_ip_download_date_pk": {
+          "columns": [
+            "ip",
+            "download_date"
+          ],
+          "name": "anonymous_downloads_ip_download_date_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "downloads": {
+      "name": "downloads",
+      "columns": {
+        "pictogram_id": {
+          "name": "pictogram_id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "count": {
+          "name": "count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "downloads_pictogram_id_pictograms_id_fk": {
+          "name": "downloads_pictogram_id_pictograms_id_fk",
+          "tableFrom": "downloads",
+          "tableTo": "pictograms",
+          "columnsFrom": [
+            "pictogram_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "favorites": {
+      "name": "favorites",
+      "columns": {
+        "user_login": {
+          "name": "user_login",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "pictogram_id": {
+          "name": "pictogram_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "favorites_user_login_users_github_login_fk": {
+          "name": "favorites_user_login_users_github_login_fk",
+          "tableFrom": "favorites",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_login"
+          ],
+          "columnsTo": [
+            "github_login"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "favorites_pictogram_id_pictograms_id_fk": {
+          "name": "favorites_pictogram_id_pictograms_id_fk",
+          "tableFrom": "favorites",
+          "tableTo": "pictograms",
+          "columnsFrom": [
+            "pictogram_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "favorites_user_login_pictogram_id_pk": {
+          "columns": [
+            "user_login",
+            "pictogram_id"
+          ],
+          "name": "favorites_user_login_pictogram_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "feedback_seen": {
+      "name": "feedback_seen",
+      "columns": {
+        "user_login": {
+          "name": "user_login",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "issue_id": {
+          "name": "issue_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "seen_at": {
+          "name": "seen_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "feedback_seen_user_login_users_github_login_fk": {
+          "name": "feedback_seen_user_login_users_github_login_fk",
+          "tableFrom": "feedback_seen",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_login"
+          ],
+          "columnsTo": [
+            "github_login"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "feedback_seen_user_login_issue_id_pk": {
+          "columns": [
+            "user_login",
+            "issue_id"
+          ],
+          "name": "feedback_seen_user_login_issue_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "galleries": {
+      "name": "galleries",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "color": {
+          "name": "color",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "gallery_pictograms": {
+      "name": "gallery_pictograms",
+      "columns": {
+        "gallery_id": {
+          "name": "gallery_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "pictogram_id": {
+          "name": "pictogram_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "gp_pictogram_id_idx": {
+          "name": "gp_pictogram_id_idx",
+          "columns": [
+            "pictogram_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "gallery_pictograms_gallery_id_galleries_id_fk": {
+          "name": "gallery_pictograms_gallery_id_galleries_id_fk",
+          "tableFrom": "gallery_pictograms",
+          "tableTo": "galleries",
+          "columnsFrom": [
+            "gallery_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "gallery_pictograms_pictogram_id_pictograms_id_fk": {
+          "name": "gallery_pictograms_pictogram_id_pictograms_id_fk",
+          "tableFrom": "gallery_pictograms",
+          "tableTo": "pictograms",
+          "columnsFrom": [
+            "pictogram_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "gallery_pictograms_gallery_id_pictogram_id_pk": {
+          "columns": [
+            "gallery_id",
+            "pictogram_id"
+          ],
+          "name": "gallery_pictograms_gallery_id_pictogram_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "likes_counts": {
+      "name": "likes_counts",
+      "columns": {
+        "pictogram_id": {
+          "name": "pictogram_id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "count": {
+          "name": "count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "likes_counts_pictogram_id_pictograms_id_fk": {
+          "name": "likes_counts_pictogram_id_pictograms_id_fk",
+          "tableFrom": "likes_counts",
+          "tableTo": "pictograms",
+          "columnsFrom": [
+            "pictogram_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "pictogram_likes": {
+      "name": "pictogram_likes",
+      "columns": {
+        "user_login": {
+          "name": "user_login",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "pictogram_id": {
+          "name": "pictogram_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "pictogram_likes_user_login_users_github_login_fk": {
+          "name": "pictogram_likes_user_login_users_github_login_fk",
+          "tableFrom": "pictogram_likes",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_login"
+          ],
+          "columnsTo": [
+            "github_login"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "pictogram_likes_pictogram_id_pictograms_id_fk": {
+          "name": "pictogram_likes_pictogram_id_pictograms_id_fk",
+          "tableFrom": "pictogram_likes",
+          "tableTo": "pictograms",
+          "columnsFrom": [
+            "pictogram_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "pictogram_likes_user_login_pictogram_id_pk": {
+          "columns": [
+            "user_login",
+            "pictogram_id"
+          ],
+          "name": "pictogram_likes_user_login_pictogram_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "pictograms": {
+      "name": "pictograms",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "filename": {
+          "name": "filename",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "url": {
+          "name": "url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "size": {
+          "name": "size",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "last_modified": {
+          "name": "last_modified",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "tags": {
+          "name": "tags",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "contributor_username": {
+          "name": "contributor_username",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "contributor_avatar_url": {
+          "name": "contributor_avatar_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "user_collection_pictograms": {
+      "name": "user_collection_pictograms",
+      "columns": {
+        "collection_id": {
+          "name": "collection_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "pictogram_id": {
+          "name": "pictogram_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "added_at": {
+          "name": "added_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "ucp_pictogram_id_idx": {
+          "name": "ucp_pictogram_id_idx",
+          "columns": [
+            "pictogram_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "user_collection_pictograms_collection_id_user_collections_id_fk": {
+          "name": "user_collection_pictograms_collection_id_user_collections_id_fk",
+          "tableFrom": "user_collection_pictograms",
+          "tableTo": "user_collections",
+          "columnsFrom": [
+            "collection_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "user_collection_pictograms_pictogram_id_pictograms_id_fk": {
+          "name": "user_collection_pictograms_pictogram_id_pictograms_id_fk",
+          "tableFrom": "user_collection_pictograms",
+          "tableTo": "pictograms",
+          "columnsFrom": [
+            "pictogram_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "user_collection_pictograms_collection_id_pictogram_id_pk": {
+          "columns": [
+            "collection_id",
+            "pictogram_id"
+          ],
+          "name": "user_collection_pictograms_collection_id_pictogram_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "user_collection_user_pictograms": {
+      "name": "user_collection_user_pictograms",
+      "columns": {
+        "collection_id": {
+          "name": "collection_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "user_pictogram_id": {
+          "name": "user_pictogram_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "added_at": {
+          "name": "added_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "ucup_user_pictogram_id_idx": {
+          "name": "ucup_user_pictogram_id_idx",
+          "columns": [
+            "user_pictogram_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "user_collection_user_pictograms_collection_id_user_collections_id_fk": {
+          "name": "user_collection_user_pictograms_collection_id_user_collections_id_fk",
+          "tableFrom": "user_collection_user_pictograms",
+          "tableTo": "user_collections",
+          "columnsFrom": [
+            "collection_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "user_collection_user_pictograms_user_pictogram_id_user_pictograms_id_fk": {
+          "name": "user_collection_user_pictograms_user_pictogram_id_user_pictograms_id_fk",
+          "tableFrom": "user_collection_user_pictograms",
+          "tableTo": "user_pictograms",
+          "columnsFrom": [
+            "user_pictogram_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "user_collection_user_pictograms_collection_id_user_pictogram_id_pk": {
+          "columns": [
+            "collection_id",
+            "user_pictogram_id"
+          ],
+          "name": "user_collection_user_pictograms_collection_id_user_pictogram_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "user_collections": {
+      "name": "user_collections",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "user_login": {
+          "name": "user_login",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "color": {
+          "name": "color",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "user_collections_user_login_users_github_login_fk": {
+          "name": "user_collections_user_login_users_github_login_fk",
+          "tableFrom": "user_collections",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_login"
+          ],
+          "columnsTo": [
+            "github_login"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "user_pictograms": {
+      "name": "user_pictograms",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "owner_login": {
+          "name": "owner_login",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "filename": {
+          "name": "filename",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "minio_key": {
+          "name": "minio_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "size": {
+          "name": "size",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "tags": {
+          "name": "tags",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "up_owner_login_idx": {
+          "name": "up_owner_login_idx",
+          "columns": [
+            "owner_login"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "user_pictograms_owner_login_users_github_login_fk": {
+          "name": "user_pictograms_owner_login_users_github_login_fk",
+          "tableFrom": "user_pictograms",
+          "tableTo": "users",
+          "columnsFrom": [
+            "owner_login"
+          ],
+          "columnsTo": [
+            "github_login"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "users": {
+      "name": "users",
+      "columns": {
+        "github_login": {
+          "name": "github_login",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "github_name": {
+          "name": "github_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "github_avatar_url": {
+          "name": "github_avatar_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "github_email": {
+          "name": "github_email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "first_seen_at": {
+          "name": "first_seen_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "last_seen_at": {
+          "name": "last_seen_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "banned_at": {
+          "name": "banned_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    }
+  },
+  "views": {},
+  "enums": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "internal": {
+    "indexes": {}
+  }
+}
