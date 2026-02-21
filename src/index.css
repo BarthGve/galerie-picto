@@ -127,11 +127,11 @@
     --muted: #2a2a2a;
     --muted-foreground: #929292;
 
-    /* ── Tertiary : Blue France Sun 113 ── */
-    --tertiary: var(--dsfr-blue-france-sun);
-    --tertiary-hover: var(--dsfr-blue-france-sun-hover);
-    --tertiary-active: var(--dsfr-blue-france-sun-active);
-    --tertiary-foreground: #ffffff;
+    /* ── Tertiary : Blue France 625 (dark) ── */
+    --tertiary: var(--dsfr-blue-france-625);
+    --tertiary-hover: var(--dsfr-blue-france-625-hover);
+    --tertiary-active: var(--dsfr-blue-france-625-active);
+    --tertiary-foreground: #000000;
 
     /* ── Accent ── */
     --accent: #1b1b35;

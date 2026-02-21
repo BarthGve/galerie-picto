@@ -32,6 +32,9 @@
   --dsfr-blue-france-main: #6a6af4;   /* main-525 */
   --dsfr-blue-france-main-hover: #9898f8;
   --dsfr-blue-france-main-active: #aeaef9;
+  --dsfr-blue-france-625: #8585f6;    /* 625 (dark text/emphasis) */
+  --dsfr-blue-france-625-hover: #b1b1f9;
+  --dsfr-blue-france-625-active: #c6c6fb;
   --dsfr-blue-france-sun: #000091;    /* sun-113 (strong light) */
   --dsfr-blue-france-sun-hover: #1212ff;
   --dsfr-blue-france-sun-active: #2323ff;

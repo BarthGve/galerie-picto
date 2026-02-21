@@ -513,52 +513,6 @@ function AppInner() {
     [selectedUserCollectionId, userCollections],
   );
 
-  // Legal pages — avec header/footer landing
-  if (page === "privacy") {
-    return (
-      <>
-        <SEOHead
-          title="Politique de confidentialité"
-          description="Politique de confidentialité de La Boite à Pictos. Découvrez comment vos données sont traitées."
-          path="/confidentialite"
-        />
-        <Suspense fallback={null}>
-          <PrivacyPage user={user} onLogin={handleLogin} onLogout={logout} />
-        </Suspense>
-      </>
-    );
-  }
-
-  if (page === "cookies") {
-    return (
-      <>
-        <SEOHead
-          title="Gestion des cookies"
-          description="Politique de gestion des cookies de La Boite à Pictos."
-          path="/cookies"
-        />
-        <Suspense fallback={null}>
-          <CookiesPage user={user} onLogin={handleLogin} onLogout={logout} />
-        </Suspense>
-      </>
-    );
-  }
-
-  if (page === "guides") {
-    return (
-      <>
-        <SEOHead
-          title="Guides"
-          description="Tutoriels pas-à-pas pour utiliser La Boite à Pictos : personnaliser les couleurs, télécharger, créer des collections et plus."
-          path="/guides"
-        />
-        <Suspense fallback={null}>
-          <GuidesPage user={user} onLogin={handleLogin} onLogout={logout} />
-        </Suspense>
-      </>
-    );
-  }
-
   // Home page — rendered before gallery data is needed
   if (page === "home") {
     return (
@@ -650,6 +604,12 @@ function AppInner() {
         return <SEOHead title="Mon profil" path="/profil" />;
       case "admin":
         return <SEOHead title="Administration" path="/admin" />;
+      case "privacy":
+        return <SEOHead title="Politique de confidentialité" description="Politique de confidentialité de La Boite à Pictos. Découvrez comment vos données sont traitées." path="/confidentialite" />;
+      case "cookies":
+        return <SEOHead title="Gestion des cookies" description="Politique de gestion des cookies de La Boite à Pictos." path="/cookies" />;
+      case "guides":
+        return <SEOHead title="Guides" description="Tutoriels pas-à-pas pour utiliser La Boite à Pictos : personnaliser les couleurs, télécharger, créer des collections et plus." path="/guides" />;
       default:
         return null;
     }
@@ -739,7 +699,19 @@ function AppInner() {
           />
           <main id="main-content" className="flex flex-1 flex-col">
             <div className="@container/main flex flex-1 flex-col gap-2">
-              {page === "profile" ? (
+              {page === "privacy" ? (
+                <Suspense fallback={null}>
+                  <PrivacyPage />
+                </Suspense>
+              ) : page === "cookies" ? (
+                <Suspense fallback={null}>
+                  <CookiesPage />
+                </Suspense>
+              ) : page === "guides" ? (
+                <Suspense fallback={null}>
+                  <GuidesPage />
+                </Suspense>
+              ) : page === "profile" ? (
                 <Suspense fallback={null}>
                   <ProfilePage
                     onDeleted={() => { logout(); navigateTo("home"); }}
