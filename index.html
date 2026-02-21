@@ -7,18 +7,21 @@
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#09090b" />
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' https://cdn.kerjean.net https://*.githubusercontent.com https://github.com https://api.dicebear.com data: blob:; connect-src 'self' https: http://localhost:* blob:; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'" />
+    <link rel="canonical" href="https://laboiteapictos.fr/" />
+    <link rel="manifest" href="/site.webmanifest" />
     <link rel="preconnect" href="https://cdn.kerjean.net" crossorigin />
     <link rel="dns-prefetch" href="https://cdn.kerjean.net" />
     <link rel="preconnect" href="https://api.github.com" crossorigin />
     <link rel="dns-prefetch" href="https://api.github.com" />
-    <title>La Boite à Pictos</title>
+    <title>La Boite à Pictos — Pictogrammes SVG libres et personnalisables</title>
     <meta name="description" content="La Boite à Pictos — bibliothèque de pictogrammes SVG libres et personnalisables. Recherchez, personnalisez les couleurs et téléchargez en un clic." />
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://laboiteapictos.fr" />
     <meta property="og:site_name" content="La Boite à Pictos" />
-    <meta property="og:title" content="La Boite à Pictos — Pictogrammes SVG prêts à l'emploi" />
+    <meta property="og:title" content="La Boite à Pictos — Pictogrammes SVG libres et personnalisables" />
     <meta property="og:description" content="Une bibliothèque de pictogrammes SVG libres et personnalisables. Recherchez, changez les couleurs et téléchargez en SVG ou PNG en un clic." />
     <meta property="og:image" content="https://laboiteapictos.fr/og-image.png" />
     <meta property="og:image:width" content="1200" />
@@ -27,11 +30,35 @@
     <meta property="og:locale" content="fr_FR" />
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="La Boite à Pictos — Pictogrammes SVG prêts à l'emploi" />
+    <meta name="twitter:title" content="La Boite à Pictos — Pictogrammes SVG libres et personnalisables" />
     <meta name="twitter:description" content="Une bibliothèque de pictogrammes SVG libres et personnalisables. Recherchez, changez les couleurs et téléchargez en SVG ou PNG en un clic." />
     <meta name="twitter:image" content="https://laboiteapictos.fr/og-image.png" />
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "La Boite à Pictos",
+      "url": "https://laboiteapictos.fr",
+      "description": "Bibliothèque de pictogrammes SVG libres et personnalisables. Recherchez, personnalisez les couleurs et téléchargez en SVG ou PNG.",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://laboiteapictos.fr/gallery?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "ImageGallery",
+      "name": "La Boite à Pictos",
+      "url": "https://laboiteapictos.fr/gallery",
+      "description": "Galerie de pictogrammes SVG libres : recherchez par mot-clé, personnalisez les couleurs et téléchargez en SVG ou PNG.",
+      "inLanguage": "fr"
+    }
+    </script>
     <script>
-      if(window.location.hostname.includes('railway.app')){window.location.replace('https://laboiteapictos.fr'+window.location.pathname+window.location.search);}
       (function(){var t=localStorage.getItem('theme')||'dark';if(t==='system')t=matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';document.documentElement.classList.toggle('dark',t==='dark')})()
     </script>
   </head>

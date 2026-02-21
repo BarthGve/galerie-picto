@@ -73,7 +73,7 @@ function TopList({
   if (items.length === 0) {
     return (
       <div>
-        <h3 className="text-sm font-semibold mb-3 text-primary">{title}</h3>
+        <h3 className="text-base font-extrabold tracking-tight text-tertiary mb-3">{title}</h3>
         <p className="text-xs text-muted-foreground">Aucune donnée.</p>
       </div>
     );
@@ -81,7 +81,7 @@ function TopList({
   const max = items[0].count;
   return (
     <div>
-      <h3 className="text-sm font-semibold mb-3 text-primary">{title}</h3>
+      <h3 className="text-base font-extrabold tracking-tight text-tertiary mb-3">{title}</h3>
       <div className="space-y-2">
         {items.map((item, idx) => {
           const pct = max > 0 ? Math.round((item.count / max) * 100) : 0;
@@ -413,7 +413,7 @@ export function AdminPage() {
               <LayoutDashboard className="size-3.5" />
               Administration
             </div>
-            <h1 className="text-2xl font-black tracking-tight text-primary">
+            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-tertiary">
               Tableau de bord
             </h1>
           </div>
@@ -446,7 +446,7 @@ export function AdminPage() {
             onClick={() => setActiveTab("dashboard")}
             className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
               activeTab === "dashboard"
-                ? "border-primary text-primary"
+                ? "border-tertiary text-tertiary"
                 : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
@@ -459,7 +459,7 @@ export function AdminPage() {
             onClick={() => setActiveTab("users")}
             className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
               activeTab === "users"
-                ? "border-primary text-primary"
+                ? "border-tertiary text-tertiary"
                 : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
@@ -533,9 +533,9 @@ export function AdminPage() {
                   <TopList title="Top téléchargements" items={stats.downloads.topPictograms} />
                   {stats.pictograms.neverDownloaded.length > 0 && (
                     <div>
-                      <h3 className="text-sm font-semibold mb-3 flex items-center gap-2 text-primary">
+                      <h3 className="text-base font-extrabold tracking-tight text-tertiary mb-3 flex items-center gap-2">
                         Jamais téléchargés
-                        <span className="inline-flex items-center justify-center rounded-full bg-primary/10 text-primary text-[10px] font-bold px-2 py-0.5 leading-none">
+                        <span className="inline-flex items-center justify-center rounded-full bg-tertiary/10 text-tertiary text-[10px] font-bold px-2 py-0.5 leading-none">
                           {stats.pictograms.neverDownloaded.length}
                         </span>
                       </h3>
@@ -569,7 +569,7 @@ export function AdminPage() {
               </div>
             ) : stats ? (
               <div className="rounded-xl border border-border bg-card p-5 space-y-4">
-                <h3 className="text-sm font-semibold text-primary">
+                <h3 className="text-base font-extrabold tracking-tight text-tertiary">
                   Activité récente
                 </h3>
                 <div className="space-y-3">

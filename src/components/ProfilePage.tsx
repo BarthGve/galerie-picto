@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Heart, FolderOpen, ThumbsUp, Mail, Calendar, AlertTriangle } from "lucide-react";
+import { Heart, FolderOpen, ThumbsUp, Mail, Calendar, AlertTriangle, User, BarChart2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -74,9 +74,9 @@ export function ProfilePage({ onDeleted }: ProfilePageProps) {
   const canDelete = profile && confirmInput === profile.githubLogin;
 
   return (
-    <div className="flex-1 overflow-y-auto pb-12">
-      <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 pt-6">
-        <h1 className="text-2xl font-bold text-primary mb-8">Mon profil</h1>
+    <div className="flex flex-col gap-8 py-6">
+      <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8">
+        <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-tertiary mb-8">Mon profil</h1>
 
         {loading && (
           <div className="flex items-center justify-center py-24">
@@ -87,11 +87,19 @@ export function ProfilePage({ onDeleted }: ProfilePageProps) {
         {!loading && profile && (
           <div className="space-y-8">
 
+            {/* Identité + Stats — 1/2 1/2 */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
+
             {/* Identité */}
-            <section className="border border-border rounded-[4px] p-6">
-              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-5">
-                Données personnelles détenues
-              </h2>
+            <section className="rounded-xl border border-border bg-card p-5">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded bg-tertiary/80 backdrop-blur-sm flex items-center justify-center text-tertiary-foreground shadow-lg ring-1 ring-tertiary/20 shrink-0">
+                  <User className="w-5 h-5" />
+                </div>
+                <h2 className="text-xl font-extrabold tracking-tight text-tertiary">
+                  Données personnelles détenues
+                </h2>
+              </div>
               <div className="flex items-start gap-5">
                 <Avatar className="h-16 w-16 shrink-0 rounded-full border border-border">
                   <AvatarImage src={profile.githubAvatarUrl ?? undefined} alt={profile.githubLogin} />
@@ -100,7 +108,7 @@ export function ProfilePage({ onDeleted }: ProfilePageProps) {
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 space-y-3">
-                  <div className="grid grid-cols-[140px_1fr] gap-y-3 text-sm">
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
                     <span className="text-muted-foreground">Login GitHub</span>
                     <span className="font-mono font-medium">@{profile.githubLogin}</span>
 
@@ -127,10 +135,15 @@ export function ProfilePage({ onDeleted }: ProfilePageProps) {
             </section>
 
             {/* Stats */}
-            <section className="border border-border rounded-[4px] p-6">
-              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-5">
-                Données d'utilisation
-              </h2>
+            <section className="rounded-xl border border-border bg-card p-5">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded bg-tertiary/80 backdrop-blur-sm flex items-center justify-center text-tertiary-foreground shadow-lg ring-1 ring-tertiary/20 shrink-0">
+                  <BarChart2 className="w-5 h-5" />
+                </div>
+                <h2 className="text-xl font-extrabold tracking-tight text-tertiary">
+                  Données d'utilisation
+                </h2>
+              </div>
               <div className="grid grid-cols-3 gap-4">
                 <div className="flex flex-col items-center gap-2 p-4 bg-muted/30 rounded-[4px]">
                   <Heart className="size-5 text-muted-foreground" />
@@ -150,11 +163,15 @@ export function ProfilePage({ onDeleted }: ProfilePageProps) {
               </div>
             </section>
 
+            </div>{/* Fin grid 1/2 1/2 */}
+
             {/* Danger zone */}
-            <section className="border border-destructive/40 rounded-[4px] p-6">
-              <div className="flex items-center gap-2 mb-1">
-                <AlertTriangle className="size-4 text-destructive" />
-                <h2 className="text-sm font-semibold text-destructive uppercase tracking-wide">
+            <section className="rounded-xl border border-destructive/40 bg-card p-5">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded bg-destructive/80 backdrop-blur-sm flex items-center justify-center text-white shadow-lg ring-1 ring-destructive/20 shrink-0">
+                  <AlertTriangle className="w-5 h-5" />
+                </div>
+                <h2 className="text-xl font-extrabold tracking-tight text-destructive">
                   Zone de danger
                 </h2>
               </div>
