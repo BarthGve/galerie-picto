@@ -58,6 +58,7 @@ export const users = sqliteTable("users", {
   githubEmail: text("github_email"),
   firstSeenAt: text("first_seen_at").$defaultFn(() => new Date().toISOString()),
   lastSeenAt: text("last_seen_at").$defaultFn(() => new Date().toISOString()),
+  bannedAt: text("banned_at"),
 });
 
 export const favorites = sqliteTable(

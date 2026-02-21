@@ -8,6 +8,8 @@ import { config } from "./config.js";
 import { readFileSync } from "fs";
 import { runMigrations, closeDb } from "./db/index.js";
 import { autoSeedIfEmpty } from "./db/seed-from-minio.js";
+import { initBanList } from "./middleware/ban-list.js";
+import { getBannedLogins } from "./db/repositories/users.js";
 
 const pkg = JSON.parse(
   readFileSync(new URL("../package.json", import.meta.url), "utf-8"),
@@ -26,6 +28,7 @@ import userPictogramsRoutes from "./routes/user-pictograms.js";
 import likesRoutes from "./routes/likes.js";
 import feedbackRoutes from "./routes/feedback.js";
 import accountRoutes from "./routes/account.js";
+import adminRoutes from "./routes/admin.js";
 
 const app = express();
 
@@ -141,8 +144,20 @@ app.use("/api/proxy/svg-batch", svgBatchLimiter);
 app.use("/api/feedback", feedbackRoutes);
 app.use("/api/user", accountRoutes);
 
+const adminLimiter = rateLimit({
+  windowMs: 60_000,
+  limit: 20,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+});
+app.use("/api/admin", adminLimiter);
+app.use("/api/admin", adminRoutes);
+
 // Run migrations then start server
 runMigrations();
+
+// Init in-memory ban list from DB
+initBanList(getBannedLogins());
 
 // Cleanup old anonymous download entries
 import { cleanupOldEntries } from "./db/repositories/anonymous-downloads.js";

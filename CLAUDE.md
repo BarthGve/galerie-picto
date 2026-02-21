@@ -64,7 +64,7 @@ This project uses the BMAD framework for structured development workflows. The f
 - **Database**: SQLite (via Drizzle ORM + better-sqlite3)
 - **Storage**: Minio S3-compatible (cdn.kerjean.net) — uniquement pour les fichiers SVG
 - **Authentification**: GitHub OAuth (2 niveaux : `authMiddleware` pour collaborateurs, `authAnyUser` pour tout utilisateur connecte)
-- **Deploiement**: Railway (frontend + backend, volume persistant pour SQLite)
+- **Deploiement**: VPS (CI/CD via GitHub Actions → push sur le VPS)
 
 ### Build Commands
 ```bash
@@ -89,9 +89,8 @@ pnpm build            # Construire le frontend pour la production
   - `DATABASE_PATH` (optionnel, defaut `./data/galerie.db`)
 
 ### Deployment
-- Heberge sur Railway
-- Frontend : service `galerie-picto` (RAILPACK/Vite)
-- Backend : service `galerie-backend` (Dockerfile, root directory = `backend/`)
+- Heberge sur un VPS via CI/CD GitHub Actions
+- Ne jamais utiliser les outils Railway ni mentionner Railway
 
 ## Bonnes pratiques Performance
 
@@ -103,13 +102,19 @@ pnpm build            # Construire le frontend pour la production
 - **Fetch** : Ne PAS utiliser `cache: "no-store"` sur les requetes GET. Laisser le navigateur gerer le cache HTTP (ETag/304)
 - **Source maps** : Desactivees en production (`build.sourcemap: false` dans `vite.config.ts`)
 - **No-cache** : Seules les reponses aux mutations (POST/PUT/DELETE) ont `Cache-Control: no-store`
+- **Refs stables** : Pour les callbacks qui accedent a un state sans en etre dependants, utiliser `useRef` + mise a jour synchrone (`countsRef.current = counts`) plutot que de les mettre dans les deps du `useCallback`
+- **Motion** : Toujours preferer `motion-safe:animate-*` pour respecter les preferences utilisateur (`prefers-reduced-motion`)
+- **Promise.allSettled** : Utiliser pour les refetch paralleles independants, mais logger les echecs pour eviter les donnees perimees silencieuses
 
 ### Backend
 - **SQLite + Drizzle ORM** : Toutes les donnees (pictogrammes, galleries, downloads, users, favoris) sont stockees dans SQLite via Drizzle ORM. Les fichiers JSON sur Minio ne sont plus utilises.
 - **Minio** : Utilise uniquement pour le stockage des fichiers SVG binaires (`writeSvgFile`, `deleteFile`, `readFileAsText`)
 - **Cache en memoire** : Les repositories `pictograms.ts` et `galleries.ts` maintiennent un cache avec TTL de 30s et JSON pre-serialise
+- **Token cache** : `backend/src/middleware/token-cache.ts` — cache les JWT verifies 5 min (evite `jwt.verify()` + `upsertUser()` a chaque requete). Toujours utiliser `getCachedToken` / `setCachedToken` dans les middlewares auth.
 - **ETag/304** : Les endpoints GET `/api/pictograms/manifest` et `/api/galleries` supportent `If-None-Match` et renvoient 304 si le contenu n'a pas change
-- **WAL mode** : SQLite est configure en WAL pour de meilleures performances en lecture concurrente
+- **WAL mode + pragmas** : SQLite configure en WAL avec `synchronous=NORMAL`, `cache_size=-20000`, `busy_timeout=5000`. Ne pas modifier ces pragmas sans raison.
+- **Serialisation JSON** : Les repositories retournent du JSON pre-serialise (string). Ne PAS re-parser puis re-serialiser dans les routes (double overhead). Si une route agregee a besoin d'un objet, le parser une seule fois.
+- **Index SQLite** : Toujours ajouter un index sur les colonnes utilisees en `WHERE` ou `JOIN` frequents (foreign keys notamment). Generer via Drizzle Kit.
 - **Seed script** : `backend/src/db/seed-from-minio.ts` permet de migrer les donnees existantes depuis les fichiers JSON Minio vers SQLite
 - **Compression** : Le middleware `compression()` est actif sur toutes les reponses
 
@@ -118,6 +123,7 @@ pnpm build            # Construire le frontend pour la production
 ### Frontend
 - **CSP** : Une meta tag Content-Security-Policy est definie dans `index.html`. La mettre a jour si de nouvelles origines sont ajoutees
 - **Pas de secrets** : Aucun secret cote client. Le token GitHub est stocke en `localStorage` et envoye via header `Authorization: Bearer`
+- **JWT frontend** : Le frontend decode le JWT localement pour lire les infos utilisateur (expiration, login) — c'est acceptable car le frontend n'est PAS une frontiere de securite. La verification de signature se fait uniquement cote backend.
 
 ### Backend
 - **Sanitisation SVG** : Tous les SVG uploades sont sanitises via DOMPurify (`backend/src/services/svg-sanitizer.js`). Ne JAMAIS servir de SVG non sanitise
@@ -133,9 +139,15 @@ pnpm build            # Construire le frontend pour la production
   - Noms de fichiers SVG : valides via `isValidSvgFilename()`
   - Taille SVG : validee via `isValidSvgContent()`
 - **Proxy** : Le proxy CDN (`backend/src/routes/proxy.ts`) a un timeout de 10s et une limite de 2MB
-- **Variables d'environnement** : Les variables requises sont validees au demarrage dans `backend/src/config.ts` (crash si manquantes)
+- **Variables d'environnement** : Les variables requises sont validees au demarrage dans `backend/src/config.ts` (crash si manquantes). `JWT_SECRET` leve une exception immediate si absent en prod (ne pas utiliser de fallback vide).
 - **OAuth** : Le parametre `state` est utilise pour prevenir les attaques CSRF lors du flow GitHub OAuth
 - **Path traversal** : Les cles S3 sont construites a partir du prefix configure, pas depuis l'input utilisateur brut
+- **Webhook GitHub** : Toujours verifier la signature HMAC `x-hub-signature-256`. Si `GITHUB_WEBHOOK_SECRET` n'est pas configure, retourner 503 (ne jamais skipper la validation).
+- **Middlewares auth — lequel utiliser** :
+  - `authMiddleware` (`backend/src/middleware/auth.ts`) : verifie `isCollaborator` ou `allowedUsername`. Utiliser pour upload, routes admin, operations sensibles.
+  - `authAnyUser` (`backend/src/middleware/auth-any-user.ts`) : accepte tout utilisateur GitHub connecte. Utiliser pour likes, feedback, collections utilisateur.
+- **JWT — revocation** : Les JWT ont une TTL de 24h. La perte de statut collaborateur n'est pas effective avant expiration du token (design stateless assume). Ne pas essayer de verifier le statut collaborateur a chaque requete.
+- **Codes HTTP auth** : Utiliser `401` pour toutes les erreurs d'authentification (token invalide/expire/manquant). Utiliser `403` pour les erreurs d'autorisation (token valide mais acces refuse). Ne jamais renvoyer `500` pour une erreur auth.
 
 ## Working with BMAD
 

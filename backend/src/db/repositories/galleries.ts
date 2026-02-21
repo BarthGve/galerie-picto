@@ -7,7 +7,7 @@ import type { Gallery, GalleriesFile } from "../../types.js";
 let cachedGalleries: { json: string; etag: string; updatedAt: number } | null =
   null;
 
-function invalidateCache() {
+export function invalidateCache() {
   cachedGalleries = null;
 }
 

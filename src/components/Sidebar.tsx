@@ -1,4 +1,4 @@
-import { Palette, Plus, Github, ArrowRight, MessageCircleWarning, LayoutList } from "lucide-react";
+import { Palette, Plus, Github, ArrowRight, MessageCircleWarning, LayoutList, LayoutDashboard } from "lucide-react";
 
 import { NavGalleries } from "@/components/nav-galleries";
 import { NavContributors } from "@/components/nav-contributors";
@@ -51,6 +51,8 @@ export function AppSidebar({
   onAddToUserCollection,
   onGoFeedback,
   onGoProfile,
+  onGoAdmin,
+  isCollaborator = false,
   ...props
 }: React.ComponentProps<typeof Sidebar> & {
   galleries: Gallery[];
@@ -83,6 +85,8 @@ export function AppSidebar({
   onAddToUserCollection?: (collectionId: string, pictogramId: string) => Promise<boolean>;
   onGoFeedback?: () => void;
   onGoProfile?: () => void;
+  onGoAdmin?: () => void;
+  isCollaborator?: boolean;
 }) {
   return (
     <Sidebar collapsible="offcanvas" {...props}>
@@ -214,6 +218,17 @@ export function AppSidebar({
       {/* ── Footer : Signaler + user ── */}
       <SidebarFooter>
         <SidebarMenu>
+          {isCollaborator && (
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                onClick={() => onGoAdmin?.()}
+                className="text-muted-foreground hover:text-foreground hover:bg-accent/60"
+              >
+                <LayoutDashboard className="size-4" />
+                <span>Administration</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          )}
           <SidebarMenuItem>
             <SidebarMenuButton
               onClick={onGoFeedback}
