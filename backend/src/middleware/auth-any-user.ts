@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import { AuthenticatedRequest, GitHubUser } from "./auth.js";
 import { upsertUser } from "../db/repositories/users.js";
 import { config } from "../config.js";
+import { getCachedToken, setCachedToken } from "./token-cache.js";
 
 interface JwtPayload {
   login: string;
@@ -44,6 +45,14 @@ export function authAnyUser(
     return;
   }
 
+  // Fast path: token already verified recently
+  const cached = getCachedToken(token);
+  if (cached) {
+    req.user = cached.user;
+    next();
+    return;
+  }
+
   try {
     const payload = jwt.verify(token, config.jwtSecret) as JwtPayload;
 
@@ -61,6 +70,7 @@ export function authAnyUser(
       githubEmail: user.email,
     });
 
+    setCachedToken(token, user, payload.isCollaborator);
     req.user = user;
     next();
   } catch {

@@ -422,28 +422,31 @@ router.get(
 
 // ─── POST /api/feedback/webhook — GitHub webhook ─────────────────────────────
 router.post("/webhook", async (req: Request, res: Response) => {
+  // Webhook secret is mandatory — reject if not configured
+  if (!config.feedback.webhookSecret) {
+    return void res.status(503).json({ error: "Webhook not configured" });
+  }
+
   const event = req.headers["x-github-event"] as string;
   const signature = req.headers["x-hub-signature-256"] as string | undefined;
 
-  // Verify HMAC signature if secret configured
-  if (config.feedback.webhookSecret) {
-    if (!signature) {
-      return void res.status(401).json({ error: "Missing webhook signature" });
-    }
-    const rawBody = (req as RequestWithRawBody).rawBody;
-    if (rawBody) {
-      const expected =
-        "sha256=" +
-        crypto
-          .createHmac("sha256", config.feedback.webhookSecret)
-          .update(rawBody)
-          .digest("hex");
-      if (
-        signature.length !== expected.length ||
-        !crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))
-      ) {
-        return void res.status(401).json({ error: "Invalid signature" });
-      }
+  if (!signature) {
+    return void res.status(401).json({ error: "Missing webhook signature" });
+  }
+
+  const rawBody = (req as RequestWithRawBody).rawBody;
+  if (rawBody) {
+    const expected =
+      "sha256=" +
+      crypto
+        .createHmac("sha256", config.feedback.webhookSecret)
+        .update(rawBody)
+        .digest("hex");
+    if (
+      signature.length !== expected.length ||
+      !crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))
+    ) {
+      return void res.status(401).json({ error: "Invalid signature" });
     }
   }
 

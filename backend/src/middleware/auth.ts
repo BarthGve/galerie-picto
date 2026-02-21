@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { config } from "../config.js";
+import { getCachedToken, setCachedToken } from "./token-cache.js";
 
 export interface GitHubUser {
   login: string;
@@ -46,6 +47,21 @@ export function authMiddleware(
     return;
   }
 
+  // Fast path: token already verified recently
+  const cached = getCachedToken(token);
+  if (cached) {
+    if (
+      !cached.isCollaborator &&
+      cached.user.login !== config.github.allowedUsername
+    ) {
+      res.status(403).json({ error: "User not authorized" });
+      return;
+    }
+    req.user = cached.user;
+    next();
+    return;
+  }
+
   try {
     const payload = jwt.verify(token, config.jwtSecret) as JwtPayload;
 
@@ -57,12 +73,14 @@ export function authMiddleware(
       return;
     }
 
-    req.user = {
+    const user: GitHubUser = {
       login: payload.login,
       avatar_url: payload.avatar_url,
       name: payload.name,
       email: payload.email,
     };
+    setCachedToken(token, user, payload.isCollaborator);
+    req.user = user;
     next();
   } catch {
     res.status(401).json({ error: "Invalid or expired token" });

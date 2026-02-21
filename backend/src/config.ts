@@ -3,9 +3,12 @@ const DEV_JWT_SECRET = "dev-jwt-secret-not-for-production";
 export const config = {
   port: parseInt(process.env.PORT || "3000", 10),
   corsOrigin: process.env.CORS_ORIGIN || "http://localhost:5173",
-  jwtSecret:
-    process.env.JWT_SECRET ||
-    (process.env.NODE_ENV !== "production" ? DEV_JWT_SECRET : ""),
+  jwtSecret: (() => {
+    if (process.env.JWT_SECRET) return process.env.JWT_SECRET;
+    if (process.env.NODE_ENV === "production")
+      throw new Error("[config] JWT_SECRET is required in production");
+    return DEV_JWT_SECRET;
+  })(),
 
   github: {
     clientId: process.env.GITHUB_CLIENT_ID || "",
