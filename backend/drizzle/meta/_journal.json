@@ -68,15 +68,8 @@
     {
       "idx": 9,
       "version": "6",
-      "when": 1740096000000,
-      "tag": "0009_user_banned_at",
-      "breakpoints": true
-    },
-    {
-      "idx": 10,
-      "version": "6",
       "when": 1771667449947,
-      "tag": "0010_eminent_slapstick",
+      "tag": "0009_eminent_slapstick",
       "breakpoints": true
     }
   ]
