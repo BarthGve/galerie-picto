@@ -72,6 +72,29 @@ router.post("/github", async (req: Request, res: Response): Promise<void> => {
 
     const ghUser = (await userRes.json()) as GitHubUser;
 
+    // Fetch primary verified email if not public
+    if (!ghUser.email) {
+      try {
+        const emailsRes = await fetch("https://api.github.com/user/emails", {
+          headers: {
+            Authorization: `Bearer ${githubToken}`,
+            Accept: "application/json",
+          },
+        });
+        if (emailsRes.ok) {
+          const emails = (await emailsRes.json()) as {
+            email: string;
+            primary: boolean;
+            verified: boolean;
+          }[];
+          const primary = emails.find((e) => e.primary && e.verified);
+          if (primary) ghUser.email = primary.email;
+        }
+      } catch {
+        // ignore — email stays null
+      }
+    }
+
     // Check if user is an authorized collaborator
     const isAllowedUser =
       config.github.allowedUsername &&
