@@ -72,10 +72,11 @@ export function PictoGrid({
   const [sortKey, setSortKey] = useState<SortKey>("date");
   const [activeTag, setActiveTag] = useState<string | null>(null);
 
-  // Extract top tags from pictograms
+  // Extract top tags from pictograms — exclure les pictos privés
   const topTags = useMemo(() => {
     const tagCounts = new Map<string, number>();
     for (const p of pictograms) {
+      if (privateIds?.has(p.id)) continue;
       for (const t of p.tags ?? []) {
         tagCounts.set(t, (tagCounts.get(t) ?? 0) + 1);
       }
@@ -84,7 +85,7 @@ export function PictoGrid({
       .sort((a, b) => b[1] - a[1])
       .slice(0, 6)
       .map(([tag]) => tag);
-  }, [pictograms]);
+  }, [pictograms, privateIds]);
 
   // Filter by tag
   const tagFiltered = useMemo(() => {
