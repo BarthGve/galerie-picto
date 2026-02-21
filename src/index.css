@@ -20,9 +20,11 @@
     --popover: var(--dsfr-grey-1000);
     --popover-foreground: var(--dsfr-grey-50);
 
-    /* ── Primary : Blue France Sun ── */
-    --primary: var(--dsfr-blue-france-sun);
-    --primary-foreground: var(--dsfr-grey-1000);
+    /* ── Primary : Blue France Main 525 ── */
+    --primary: var(--dsfr-blue-france-main);
+    --primary-hover: var(--dsfr-blue-france-main-hover);
+    --primary-active: var(--dsfr-blue-france-main-active);
+    --primary-foreground: #ffffff;
 
     /* ── Secondary : DSFR grey-975 ── */
     --secondary: var(--dsfr-grey-975);
@@ -41,7 +43,7 @@
     /* ── Borders & inputs ── */
     --border: var(--dsfr-grey-900);
     --input: var(--dsfr-grey-900);
-    --ring: var(--dsfr-blue-france-sun);
+    --ring: var(--dsfr-blue-france-main);
 
     /* ── Charts (tricolore palette) ── */
     --chart-1: #6a6af4;
@@ -105,8 +107,10 @@
     --popover: #1e1e1e;
     --popover-foreground: #e5e5e5;
 
-    /* ── Primary : Blue France (lighter in dark) ── */
-    --primary: #5b7de8;
+    /* ── Primary : Blue France Main 525 ── */
+    --primary: var(--dsfr-blue-france-main);
+    --primary-hover: var(--dsfr-blue-france-main-hover);
+    --primary-active: var(--dsfr-blue-france-main-active);
     --primary-foreground: #ffffff;
 
     /* ── Secondary ── */
@@ -126,7 +130,7 @@
     /* ── Borders & inputs ── */
     --border: rgba(255, 255, 255, 0.1);
     --input: rgba(255, 255, 255, 0.12);
-    --ring: #5b7de8;
+    --ring: var(--dsfr-blue-france-main);
 
     /* ── Charts ── */
     --chart-1: #5b7de8;
