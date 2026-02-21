@@ -25,6 +25,7 @@ import {
   getStoredToken,
   type GitHubUser,
 } from "@/lib/github-auth";
+import { API_URL } from "@/lib/config";
 
 const GalleryDialog = lazy(() =>
   import("@/components/GalleryDialog").then((m) => ({
@@ -129,6 +130,25 @@ function AppInner() {
   const { userPictograms, blobUrls, refetch: refetchUserPictograms } = useUserPictograms(!!user);
   const handleUserPictoUploadSuccess = useCallback(async () => {
     await Promise.allSettled([refetchUserPictograms(), refetchUserCollections()]);
+  }, [refetchUserPictograms, refetchUserCollections]);
+
+  const handleDeleteUserPictogram = useCallback(async (id: string) => {
+    const token = getStoredToken();
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_URL}/api/user/pictograms/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        await Promise.allSettled([refetchUserPictograms(), refetchUserCollections()]);
+        toast.success("Pictogramme supprimé");
+      } else {
+        toast.error("Erreur lors de la suppression");
+      }
+    } catch {
+      toast.error("Erreur réseau");
+    }
   }, [refetchUserPictograms, refetchUserCollections]);
   const [userPictoUploadOpen, setUserPictoUploadOpen] = useState(false);
 
@@ -660,6 +680,7 @@ function AppInner() {
                       privateIds={selectedUserCollectionId ? new Set(
                         userCollections.find(c => c.id === selectedUserCollectionId)?.userPictogramIds ?? []
                       ) : undefined}
+                      onDeletePrivatePictogram={selectedUserCollectionId ? handleDeleteUserPictogram : undefined}
                     />
                   </div>
                 </div>
