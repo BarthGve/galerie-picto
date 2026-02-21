@@ -24,7 +24,8 @@ const downloadLimiter = rateLimit({
 const router = Router();
 
 const DAILY_ANONYMOUS_LIMIT = 1;
-const DEFAULT_PNG_SIZE = 256;
+// Taille PNG pour les utilisateurs anonymes — jamais overridable côté backend
+const DEFAULT_PNG_SIZE = 128;
 const ALLOWED_SIZES = [64, 128, 256, 512, 1024];
 
 // POST /api/pictograms/:id/download - Track a download (legacy, still used by frontend SVG/PNG downloads for authenticated users)
