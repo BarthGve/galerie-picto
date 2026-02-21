@@ -29,8 +29,8 @@ export function DeleteConfirmDialog({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent className="rounded-[4px] border-border">
         <AlertDialogHeader>
-          <AlertDialogTitle className="flex items-center gap-2 text-tertiary">
-            <Trash2 className="size-4 text-tertiary" />
+          <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+            <Trash2 className="size-4 text-destructive" />
             {title}
           </AlertDialogTitle>
           <AlertDialogDescription asChild>
