@@ -1,6 +1,11 @@
 import { Router, Request, Response } from "express";
+import jwt from "jsonwebtoken";
 import { config } from "../config.js";
-import { authMiddleware, AuthenticatedRequest } from "../middleware/auth.js";
+import {
+  authMiddleware,
+  AuthenticatedRequest,
+  GitHubUser,
+} from "../middleware/auth.js";
 
 const router = Router();
 
@@ -50,7 +55,63 @@ router.post("/github", async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    res.json({ access_token: data.access_token });
+    const githubToken = data.access_token!;
+
+    // Fetch user profile from GitHub
+    const userRes = await fetch("https://api.github.com/user", {
+      headers: {
+        Authorization: `Bearer ${githubToken}`,
+        Accept: "application/json",
+      },
+    });
+
+    if (!userRes.ok) {
+      res.status(502).json({ error: "Failed to fetch GitHub user profile" });
+      return;
+    }
+
+    const ghUser = (await userRes.json()) as GitHubUser;
+
+    // Check if user is an authorized collaborator
+    const isAllowedUser =
+      config.github.allowedUsername &&
+      ghUser.login === config.github.allowedUsername;
+    let isCollaborator = !!isAllowedUser;
+
+    if (!isCollaborator && config.github.repo && config.feedback.token) {
+      try {
+        const collabRes = await fetch(
+          `https://api.github.com/repos/${config.github.repo}/collaborators`,
+          {
+            headers: {
+              Authorization: `Bearer ${config.feedback.token}`,
+              Accept: "application/vnd.github.v3+json",
+            },
+          },
+        );
+        if (collabRes.ok) {
+          const collaborators = (await collabRes.json()) as { login: string }[];
+          isCollaborator = collaborators.some((c) => c.login === ghUser.login);
+        }
+      } catch {
+        // ignore — keep isCollaborator false
+      }
+    }
+
+    // Sign JWT (TTL 24h)
+    const appToken = jwt.sign(
+      {
+        login: ghUser.login,
+        name: ghUser.name,
+        avatar_url: ghUser.avatar_url,
+        email: ghUser.email,
+        isCollaborator,
+      },
+      config.jwtSecret,
+      { expiresIn: "24h" },
+    );
+
+    res.json({ access_token: appToken });
   } catch {
     res
       .status(500)
@@ -111,9 +172,10 @@ router.get(
       return;
     }
 
-    const token = req.headers.authorization?.slice(7);
-    if (!token) {
-      res.status(401).json({ error: "Missing token" });
+    if (!config.feedback.token) {
+      res.json([
+        { login: currentUser.login, avatar_url: currentUser.avatar_url },
+      ]);
       return;
     }
 
@@ -122,7 +184,7 @@ router.get(
         `https://api.github.com/repos/${config.github.repo}/collaborators`,
         {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${config.feedback.token}`,
             Accept: "application/vnd.github.v3+json",
           },
         },

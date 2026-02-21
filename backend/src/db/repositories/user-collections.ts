@@ -281,17 +281,20 @@ export function reorderCollections(
   userLogin: string,
   collectionIds: string[],
 ): void {
-  for (let i = 0; i < collectionIds.length; i++) {
-    db.update(userCollections)
-      .set({ position: i, updatedAt: new Date().toISOString() })
-      .where(
-        and(
-          eq(userCollections.id, collectionIds[i]),
-          eq(userCollections.userLogin, userLogin),
-        ),
-      )
-      .run();
-  }
+  const now = new Date().toISOString();
+  db.transaction((tx) => {
+    for (let i = 0; i < collectionIds.length; i++) {
+      tx.update(userCollections)
+        .set({ position: i, updatedAt: now })
+        .where(
+          and(
+            eq(userCollections.id, collectionIds[i]),
+            eq(userCollections.userLogin, userLogin),
+          ),
+        )
+        .run();
+    }
+  });
 }
 
 export function reorderPictogramsInCollection(
@@ -311,16 +314,18 @@ export function reorderPictogramsInCollection(
     .get();
   if (!col) return false;
 
-  for (let i = 0; i < pictogramIds.length; i++) {
-    db.update(userCollectionPictograms)
-      .set({ position: i })
-      .where(
-        and(
-          eq(userCollectionPictograms.collectionId, collectionId),
-          eq(userCollectionPictograms.pictogramId, pictogramIds[i]),
-        ),
-      )
-      .run();
-  }
+  db.transaction((tx) => {
+    for (let i = 0; i < pictogramIds.length; i++) {
+      tx.update(userCollectionPictograms)
+        .set({ position: i })
+        .where(
+          and(
+            eq(userCollectionPictograms.collectionId, collectionId),
+            eq(userCollectionPictograms.pictogramId, pictogramIds[i]),
+          ),
+        )
+        .run();
+    }
+  });
   return true;
 }

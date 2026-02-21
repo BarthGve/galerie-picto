@@ -134,16 +134,19 @@ export function addPictogramsToGallery(
   galleryId: string,
   pictogramIds: string[],
 ): void {
-  for (const pictoId of pictogramIds) {
-    db.insert(galleryPictograms)
-      .values({ galleryId, pictogramId: pictoId })
-      .onConflictDoNothing()
+  const now = new Date().toISOString();
+  db.transaction((tx) => {
+    for (const pictoId of pictogramIds) {
+      tx.insert(galleryPictograms)
+        .values({ galleryId, pictogramId: pictoId })
+        .onConflictDoNothing()
+        .run();
+    }
+    tx.update(galleries)
+      .set({ updatedAt: now })
+      .where(eq(galleries.id, galleryId))
       .run();
-  }
-  db.update(galleries)
-    .set({ updatedAt: new Date().toISOString() })
-    .where(eq(galleries.id, galleryId))
-    .run();
+  });
   invalidateCache();
 }
 

@@ -8,22 +8,7 @@ export interface FeedbackNotification {
   title: string;
   resolution: string;
   url: string;
-}
-
-const SEEN_KEY = "feedback_seen_issues";
-
-function getSeenIds(): Set<number> {
-  try {
-    const raw = localStorage.getItem(SEEN_KEY);
-    const arr = raw ? (JSON.parse(raw) as number[]) : [];
-    return new Set(arr);
-  } catch {
-    return new Set();
-  }
-}
-
-function saveSeenIds(ids: Set<number>) {
-  localStorage.setItem(SEEN_KEY, JSON.stringify([...ids]));
+  isRead: boolean;
 }
 
 export function useFeedbackNotifications(isAuthenticated: boolean) {
@@ -31,15 +16,7 @@ export function useFeedbackNotifications(isAuthenticated: boolean) {
     [],
   );
   const [unreadCount, setUnreadCount] = useState(0);
-  const seenRef = useRef<Set<number>>(getSeenIds());
 
-  // Stable ref pour refreshUnread — pas de dépendance externe
-  const refreshUnread = useCallback((notifs: FeedbackNotification[]) => {
-    const seen = seenRef.current;
-    setUnreadCount(notifs.filter((n) => !seen.has(n.id)).length);
-  }, []);
-
-  // Stable ref pour fetchNotifications — accès via ref dans l'effet SSE
   const fetchNotifications = useCallback(async () => {
     const token = getStoredToken();
     if (!token) return;
@@ -50,17 +27,17 @@ export function useFeedbackNotifications(isAuthenticated: boolean) {
       if (!res.ok) return;
       const data = (await res.json()) as FeedbackNotification[];
       setNotifications(data);
-      refreshUnread(data);
+      setUnreadCount(data.filter((n) => !n.isRead).length);
     } catch {
       // silently ignore
     }
-  }, [refreshUnread]);
+  }, []);
 
-  // Refs pour éviter que l'effet SSE ne se reconnecte quand les callbacks changent
+  // Ref pour éviter que l'effet SSE ne se reconnecte quand le callback change
   const fetchNotificationsRef = useRef(fetchNotifications);
-  const refreshUnreadRef = useRef(refreshUnread);
-  useEffect(() => { fetchNotificationsRef.current = fetchNotifications; }, [fetchNotifications]);
-  useEffect(() => { refreshUnreadRef.current = refreshUnread; }, [refreshUnread]);
+  useEffect(() => {
+    fetchNotificationsRef.current = fetchNotifications;
+  }, [fetchNotifications]);
 
   // SSE connection — ne dépend que de isAuthenticated
   useEffect(() => {
@@ -69,7 +46,10 @@ export function useFeedbackNotifications(isAuthenticated: boolean) {
     fetchNotificationsRef.current();
 
     // Poll every 60s as fallback (dev: no webhook, prod: redundancy)
-    const pollInterval = setInterval(() => fetchNotificationsRef.current(), 60_000);
+    const pollInterval = setInterval(
+      () => fetchNotificationsRef.current(),
+      60_000,
+    );
 
     const token = getStoredToken();
     if (!token) return () => clearInterval(pollInterval);
@@ -103,12 +83,17 @@ export function useFeedbackNotifications(isAuthenticated: boolean) {
             for (const line of lines) {
               if (!line.startsWith("data: ")) continue;
               try {
-                const notif = JSON.parse(line.slice(6)) as FeedbackNotification;
+                const payload = JSON.parse(line.slice(6)) as Omit<
+                  FeedbackNotification,
+                  "isRead"
+                >;
+                const notif: FeedbackNotification = {
+                  ...payload,
+                  isRead: false,
+                };
                 setNotifications((prev) => {
                   if (prev.some((n) => n.id === notif.id)) return prev;
-                  const next = [notif, ...prev];
-                  refreshUnreadRef.current(next);
-                  return next;
+                  return [notif, ...prev];
                 });
                 setUnreadCount((c) => c + 1);
               } catch {
@@ -133,24 +118,44 @@ export function useFeedbackNotifications(isAuthenticated: boolean) {
     };
   }, [isAuthenticated]); // Seule vraie dépendance : login/logout
 
-  const markAsRead = useCallback(
-    (id: number) => {
-      seenRef.current.add(id);
-      saveSeenIds(seenRef.current);
-      refreshUnread(notifications);
-    },
-    [notifications, refreshUnread],
-  );
+  const markAsRead = useCallback((id: number) => {
+    setNotifications((prev) => {
+      const next = prev.map((n) => (n.id === id ? { ...n, isRead: true } : n));
+      setUnreadCount(next.filter((n) => !n.isRead).length);
+      return next;
+    });
+    const token = getStoredToken();
+    if (token) {
+      fetch(`${API_URL}/api/feedback/seen/${id}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      }).catch(() => {});
+    }
+  }, []);
 
   const markAllAsRead = useCallback(() => {
-    notifications.forEach((n) => seenRef.current.add(n.id));
-    saveSeenIds(seenRef.current);
+    setNotifications((prev) => {
+      const unreadIds = prev.filter((n) => !n.isRead).map((n) => n.id);
+      if (unreadIds.length > 0) {
+        const token = getStoredToken();
+        if (token) {
+          fetch(`${API_URL}/api/feedback/seen/all`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ ids: unreadIds }),
+          }).catch(() => {});
+        }
+      }
+      return prev.map((n) => ({ ...n, isRead: true }));
+    });
     setUnreadCount(0);
-  }, [notifications]);
+  }, []);
 
   const isRead = useCallback(
-    (id: number) => seenRef.current.has(id),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    (id: number) => notifications.find((n) => n.id === id)?.isRead ?? true,
     [notifications],
   );
 

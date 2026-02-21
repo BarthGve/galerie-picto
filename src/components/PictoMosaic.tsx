@@ -1,7 +1,5 @@
 import { useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { DarkAwarePicto } from "@/components/DarkAwarePicto";
-import { useDarkPrefetch } from "@/hooks/useDarkPrefetch";
 import type { Pictogram } from "@/lib/types";
 
 interface PictoMosaicProps {
@@ -13,10 +11,6 @@ const COLUMN_COUNT = 5;
 const ITEMS_PER_COLUMN = 8;
 
 export function PictoMosaic({ pictograms, loading }: PictoMosaicProps) {
-  // Prefetch batch des SVGs dark pour toutes les URLs uniques de la mosaïque
-  const urls = useMemo(() => pictograms.map((p) => p.url), [pictograms]);
-  useDarkPrefetch(urls);
-
   const columns = useMemo(() => {
     if (!pictograms.length) return [];
     const cols: Pictogram[][] = [];
@@ -63,8 +57,13 @@ export function PictoMosaic({ pictograms, loading }: PictoMosaicProps) {
                 key={`${colIdx}-${i}`}
                 className="w-[100px] h-[100px] shrink-0 rounded-2xl bg-card border border-border shadow-sm flex items-center justify-center p-3"
               >
-                <DarkAwarePicto
-                  pictogram={picto}
+                <img
+                  src={picto.url}
+                  alt=""
+                  width={64}
+                  height={64}
+                  loading="lazy"
+                  decoding="async"
                   className="w-16 h-16 object-contain drop-shadow-sm"
                 />
               </div>

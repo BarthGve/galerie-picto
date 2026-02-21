@@ -15,6 +15,10 @@ const sqlite = new Database(DB_PATH);
 // Enable WAL mode for better concurrent read performance
 sqlite.pragma("journal_mode = WAL");
 sqlite.pragma("foreign_keys = ON");
+sqlite.pragma("synchronous = NORMAL");
+sqlite.pragma("cache_size = -20000");
+sqlite.pragma("busy_timeout = 5000");
+sqlite.pragma("wal_autocheckpoint = 1000");
 
 export const db = drizzle(sqlite, { schema });
 

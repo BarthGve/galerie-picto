@@ -226,11 +226,7 @@ export function PictoGrid({
               onPictogramUpdated={onPictogramUpdated}
               onDeletePictogram={onDeletePictogram}
               isFavorite={isFavorite?.(pictogram.id)}
-              onToggleFavorite={
-                isAuthenticated && onToggleFavorite
-                  ? () => onToggleFavorite(pictogram.id)
-                  : undefined
-              }
+              onToggleFavorite={isAuthenticated ? onToggleFavorite : undefined}
               onLogin={onLogin}
               compact={compact}
               userCollections={userCollections}
@@ -238,7 +234,7 @@ export function PictoGrid({
               onRemoveFromUserCollection={onRemoveFromUserCollection}
               likeCount={getLikeCount?.(pictogram.id)}
               hasLiked={hasLiked?.(pictogram.id)}
-              onToggleLike={onToggleLike ? () => onToggleLike(pictogram.id) : undefined}
+              onToggleLike={onToggleLike}
               isPrivate={privateIds?.has(pictogram.id)}
               onDeletePrivatePictogram={onDeletePrivatePictogram}
             />

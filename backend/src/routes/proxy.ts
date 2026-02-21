@@ -1,6 +1,31 @@
 import { Router } from "express";
 import { config } from "../config.js";
 
+const SVG_CACHE_MAX = 500;
+const SVG_CACHE_TTL = 5 * 60_000;
+const svgCache = new Map<string, { svgText: string; expiresAt: number }>();
+
+function getCachedSvg(url: string): string | undefined {
+  const entry = svgCache.get(url);
+  if (!entry) return undefined;
+  if (Date.now() > entry.expiresAt) {
+    svgCache.delete(url);
+    return undefined;
+  }
+  svgCache.delete(url);
+  svgCache.set(url, entry);
+  return entry.svgText;
+}
+
+function setCachedSvg(url: string, svgText: string): void {
+  if (svgCache.has(url)) svgCache.delete(url);
+  else if (svgCache.size >= SVG_CACHE_MAX) {
+    const firstKey = svgCache.keys().next().value;
+    if (firstKey !== undefined) svgCache.delete(firstKey);
+  }
+  svgCache.set(url, { svgText, expiresAt: Date.now() + SVG_CACHE_TTL });
+}
+
 const router = Router();
 
 /**
@@ -66,6 +91,10 @@ router.get("/svg", async (req, res) => {
 
     res.setHeader("Content-Type", "image/svg+xml");
     res.setHeader("Cache-Control", "public, max-age=86400");
+    res.setHeader(
+      "Content-Security-Policy",
+      "default-src 'none'; style-src 'unsafe-inline'",
+    );
     res.send(svgText);
   } catch {
     res.status(500).json({ error: "Failed to fetch SVG" });
@@ -117,6 +146,11 @@ router.post("/svg-batch", async (req, res) => {
     while (idx < validatedUrls.length) {
       const i = idx++;
       const url = validatedUrls[i];
+      const cached = getCachedSvg(url);
+      if (cached) {
+        settled[i] = { status: "fulfilled", value: { url, svgText: cached } };
+        continue;
+      }
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 10_000);
       try {
@@ -128,6 +162,7 @@ router.post("/svg-batch", async (req, res) => {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const svgText = await response.text();
         if (svgText.length > 2_097_152) throw new Error("Too large");
+        setCachedSvg(url, svgText);
         settled[i] = { status: "fulfilled", value: { url, svgText } };
       } catch (reason) {
         clearTimeout(timeout);

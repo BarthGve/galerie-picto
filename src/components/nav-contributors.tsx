@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import {
   SidebarGroup,
   SidebarMenu,
@@ -22,23 +23,24 @@ export function NavContributors({
   selectedContributor: string | null;
   onSelectContributor: (login: string | null) => void;
 }) {
-  // Extract unique contributors with counts
-  const contributors: Contributor[] = [];
-  const seen = new Set<string>();
-
-  for (const picto of pictograms) {
-    if (picto.contributor && !seen.has(picto.contributor.githubUsername)) {
-      seen.add(picto.contributor.githubUsername);
-      contributors.push({
-        login: picto.contributor.githubUsername,
-        avatarUrl: picto.contributor.githubAvatarUrl,
-        count: pictograms.filter(
-          (p) =>
-            p.contributor?.githubUsername === picto.contributor!.githubUsername,
-        ).length,
-      });
+  const contributors = useMemo<Contributor[]>(() => {
+    const countMap = new Map<string, { avatarUrl: string; count: number }>();
+    for (const picto of pictograms) {
+      if (!picto.contributor) continue;
+      const { githubUsername, githubAvatarUrl } = picto.contributor;
+      const entry = countMap.get(githubUsername);
+      if (entry) {
+        entry.count++;
+      } else {
+        countMap.set(githubUsername, { avatarUrl: githubAvatarUrl, count: 1 });
+      }
     }
-  }
+    return Array.from(countMap.entries()).map(([login, { avatarUrl, count }]) => ({
+      login,
+      avatarUrl,
+      count,
+    }));
+  }, [pictograms]);
 
   if (contributors.length === 0) return null;
 

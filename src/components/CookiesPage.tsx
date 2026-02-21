@@ -74,13 +74,6 @@ export function CookiesPage({ user, onLogin, onLogout }: CookiesPageProps) {
                   required: true,
                 },
                 {
-                  name: "feedback_seen_issues",
-                  storage: "localStorage",
-                  purpose: "Mémorise les identifiants des notifications de retours que vous avez déjà lues, pour ne pas les afficher de nouveau.",
-                  duration: "Indéfinie — persiste jusqu'à la déconnexion ou l'effacement du stockage.",
-                  required: true,
-                },
-                {
                   name: "github_oauth_state",
                   storage: "sessionStorage",
                   purpose: "Jeton aléatoire généré lors de l'initiation de la connexion GitHub. Permet de vérifier que la réponse de GitHub correspond bien à la demande initiale (protection contre les attaques CSRF).",

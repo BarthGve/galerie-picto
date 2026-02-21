@@ -2,6 +2,7 @@ import { Router, Response } from "express";
 import { v4 as uuidv4 } from "uuid";
 import { config } from "../config.js";
 import { authMiddleware, AuthenticatedRequest } from "../middleware/auth.js";
+import { logger } from "../lib/logger.js";
 import { readFileAsText, writeSvgFile } from "../services/minio.js";
 import {
   sanitizeSvg,
@@ -50,6 +51,9 @@ router.post(
   },
 );
 
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 // POST /api/upload/complete - Register pictogram in DB after upload
 router.post(
   "/complete",
@@ -64,10 +68,62 @@ router.post(
       return;
     }
 
+    // S24 — Input validation
+    if (!UUID_RE.test(String(id))) {
+      res.status(400).json({ error: "Invalid id: must be a UUID v4" });
+      return;
+    }
+    if (typeof name !== "string" || name.trim() === "" || name.length > 200) {
+      res
+        .status(400)
+        .json({ error: "Invalid name: non-empty string, max 200 characters" });
+      return;
+    }
+    if (tags !== undefined) {
+      if (!Array.isArray(tags) || tags.length > 30) {
+        res.status(400).json({ error: "Invalid tags: max 30 tags allowed" });
+        return;
+      }
+      if (tags.some((t) => typeof t !== "string" || t.length > 50)) {
+        res.status(400).json({
+          error: "Invalid tags: each tag must be a string of max 50 characters",
+        });
+        return;
+      }
+    }
+    if (contributor !== undefined && contributor !== null) {
+      if (
+        typeof contributor !== "object" ||
+        typeof contributor.githubUsername !== "string" ||
+        contributor.githubUsername.length > 100
+      ) {
+        res.status(400).json({
+          error:
+            "Invalid contributor: must have githubUsername (max 100 chars)",
+        });
+        return;
+      }
+    }
+
     try {
+      // S25 — Validate S3 URL to prevent path traversal
+      const expectedPrefix = `${config.minio.endpoint}/${config.minio.bucket}/${config.minio.prefix}`;
+      if (!String(url).startsWith(expectedPrefix)) {
+        res
+          .status(400)
+          .json({ error: "Invalid url: must point to the configured storage" });
+        return;
+      }
+
       // Calculate real size from stored file
       const urlPath = new URL(url).pathname;
       const fileKey = urlPath.replace(`/${config.minio.bucket}/`, "");
+
+      // Extra guard: reject any path traversal sequences
+      if (fileKey.includes("../") || fileKey.includes("..\\")) {
+        res.status(400).json({ error: "Invalid url: path traversal detected" });
+        return;
+      }
       const storedContent = await readFileAsText(fileKey);
       const realSize = storedContent
         ? Buffer.byteLength(storedContent, "utf-8")
@@ -121,6 +177,12 @@ router.post(
         galleryIds,
         contributor,
       };
+      logger.info({
+        action: "pictogram_created",
+        resourceId: id,
+        userLogin: req.user?.login,
+        ip: req.ip,
+      });
       res.json({ success: true, pictogram: picto });
     } catch {
       res.status(500).json({ error: "Failed to update manifest" });

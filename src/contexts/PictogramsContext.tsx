@@ -3,6 +3,8 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
+  useRef,
   useState,
 } from "react";
 import { API_URL } from "@/lib/config";
@@ -30,14 +32,23 @@ export function PictogramsProvider({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+  const etagRef = useRef<string | null>(null);
 
   const refetchPictograms = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_URL}/api/pictograms/manifest`);
+      const headers: HeadersInit = {};
+      if (etagRef.current) headers["If-None-Match"] = etagRef.current;
+      const response = await fetch(`${API_URL}/api/pictograms/manifest`, { headers });
+      if (response.status === 304) {
+        setError(null);
+        return;
+      }
       if (!response.ok) {
         throw new Error("Failed to fetch pictograms manifest");
       }
+      const etag = response.headers.get("ETag");
+      if (etag) etagRef.current = etag;
       const data: PictogramManifest = await response.json();
       setPictograms(data.pictograms.filter((p) => !p.filename.endsWith("_dark.svg")));
       setLastUpdated(data.lastUpdated);
@@ -78,15 +89,19 @@ export function PictogramsProvider({
     [pictograms],
   );
 
+  const value = useMemo(
+    () => ({ pictograms, loading, error, lastUpdated, refetchPictograms, deletePictogram }),
+    [pictograms, loading, error, lastUpdated, refetchPictograms, deletePictogram],
+  );
+
   return (
-    <PictogramsContext.Provider
-      value={{ pictograms, loading, error, lastUpdated, refetchPictograms, deletePictogram }}
-    >
+    <PictogramsContext.Provider value={value}>
       {children}
     </PictogramsContext.Provider>
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function usePictogramsCtx(): PictogramsContextValue {
   const ctx = useContext(PictogramsContext);
   if (!ctx) {

@@ -25,7 +25,7 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          vendor: ["react", "react-dom", "radix-ui", "cmdk"],
+          vendor: ["react", "react-dom", "cmdk"],
           "react-aria": ["react-aria-components"],
         },
       },

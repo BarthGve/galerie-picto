@@ -13,6 +13,7 @@ const pkg = JSON.parse(
   readFileSync(new URL("../package.json", import.meta.url), "utf-8"),
 );
 import authRoutes from "./routes/auth.js";
+import initRoutes from "./routes/init.js";
 import uploadRoutes from "./routes/upload.js";
 import galleriesRoutes from "./routes/galleries.js";
 import pictogramsRoutes from "./routes/pictograms.js";
@@ -57,7 +58,9 @@ app.use(
   express.json({
     limit: "2mb",
     verify: (req: express.Request & { rawBody?: Buffer }, _res, buf) => {
-      req.rawBody = buf;
+      if (req.url?.endsWith("/feedback/webhook")) {
+        req.rawBody = buf;
+      }
     },
   }),
 );
@@ -106,6 +109,7 @@ app.get("/health", (_req, res) => {
 });
 
 // Routes
+app.use("/api/init", initRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/galleries", galleriesRoutes);
@@ -121,10 +125,19 @@ const userUploadLimiter = rateLimit({
   limit: 10,
   standardHeaders: "draft-8",
   legacyHeaders: false,
+  skip: (req) => req.method === "GET", // Ne rate-limiter que les mutations (POST/PUT/DELETE)
 });
 app.use("/api/user/pictograms", userUploadLimiter);
 app.use("/api/user", userPictogramsRoutes);
 app.use("/api/pictograms", likesRoutes);
+
+const svgBatchLimiter = rateLimit({
+  windowMs: 60_000,
+  limit: 20,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+});
+app.use("/api/proxy/svg-batch", svgBatchLimiter);
 app.use("/api/feedback", feedbackRoutes);
 app.use("/api/user", accountRoutes);
 
