@@ -4,6 +4,7 @@ import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import { mkdirSync } from "fs";
 import { dirname } from "path";
 import * as schema from "./schema.js";
+import { runMigrationPreflight } from "./migration-preflight.js";
 
 const DB_PATH = process.env.DATABASE_PATH || "./data/galerie.db";
 
@@ -23,16 +24,9 @@ sqlite.pragma("wal_autocheckpoint = 1000");
 export const db = drizzle(sqlite, { schema });
 
 export function runMigrations() {
+  // Detect partially-applied migrations and register them before Drizzle runs
+  runMigrationPreflight(sqlite);
   migrate(db, { migrationsFolder: "./drizzle" });
-
-  // Ajout idempotent de banned_at : la colonne a pu être créée en prod lors
-  // d'un déploiement partiel avant crash, rendant toute migration Drizzle inutilisable.
-  type ColInfo = { name: string };
-  const columns = sqlite.pragma("table_info(users)") as ColInfo[];
-  if (!columns.some((c) => c.name === "banned_at")) {
-    sqlite.prepare("ALTER TABLE `users` ADD `banned_at` text").run();
-    console.log("[db] Column banned_at added to users");
-  }
 
   console.log(`Database ready at ${DB_PATH}`);
 }
