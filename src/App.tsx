@@ -695,8 +695,21 @@ function AppInner() {
                       </>
                     );
                   })()}
+                  {/* En-tête Tous les pictos */}
+                  {!selectedGalleryId && !selectedUserCollectionId && !showFavoritesOnly && (
+                    <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8 pt-6 pb-2">
+                      <h2 className="font-extrabold text-lg text-primary leading-tight">Tous les pictos</h2>
+                    </div>
+                  )}
+                  {/* En-tête Mes Favoris */}
+                  {showFavoritesOnly && (
+                    <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8 pt-6 pb-2">
+                      <h2 className="font-extrabold text-lg text-primary leading-tight">Mes Favoris</h2>
+                    </div>
+                  )}
                   <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8">
                     <PictoGrid
+                      key={`${selectedGalleryId ?? "all"}|${selectedUserCollectionId ?? ""}|${showFavoritesOnly ? "fav" : ""}`}
                       pictograms={filteredPictograms}
                       galleries={galleries}
                       onAddToGallery={addPictogramToGallery}

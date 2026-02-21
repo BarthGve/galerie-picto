@@ -268,25 +268,25 @@ function UsersSection() {
           <table className="w-full text-left">
             <thead>
               <tr className="border-b border-border bg-muted/40">
-                <th className="py-2.5 px-4 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
+                <th className="py-2.5 px-4 text-[11px] font-semibold text-primary uppercase tracking-wide">
                   Utilisateur
                 </th>
-                <th className="py-2.5 px-4 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide text-center">
+                <th className="py-2.5 px-4 text-[11px] font-semibold text-primary uppercase tracking-wide text-center">
                   Favoris
                 </th>
-                <th className="py-2.5 px-4 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide text-center">
+                <th className="py-2.5 px-4 text-[11px] font-semibold text-primary uppercase tracking-wide text-center">
                   Likes
                 </th>
-                <th className="py-2.5 px-4 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide text-center">
+                <th className="py-2.5 px-4 text-[11px] font-semibold text-primary uppercase tracking-wide text-center">
                   Pictos
                 </th>
-                <th className="py-2.5 px-4 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
+                <th className="py-2.5 px-4 text-[11px] font-semibold text-primary uppercase tracking-wide">
                   Inscrit le
                 </th>
-                <th className="py-2.5 px-4 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
+                <th className="py-2.5 px-4 text-[11px] font-semibold text-primary uppercase tracking-wide">
                   Vu le
                 </th>
-                <th className="py-2.5 px-4 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide text-right">
+                <th className="py-2.5 px-4 text-[11px] font-semibold text-primary uppercase tracking-wide text-right">
                   Actions
                 </th>
               </tr>
@@ -505,7 +505,7 @@ export function AdminPage() {
                   <KpiCard icon={Download} label="Téléchargements" value={stats.downloads.total} />
                   <KpiCard
                     icon={MessageSquare}
-                    label="Signalements ouverts"
+                    label="Tickets ouverts"
                     value={openTickets ?? "—"}
                   />
                 </>
