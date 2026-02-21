@@ -9,6 +9,8 @@ export interface HistoryEntry {
   fromStatus: string | null;
   toStatus: string | null;
   detail: string | null;
+  detailAvatar: string | null;
+  detailName: string | null;
   createdAt: string;
 }
 

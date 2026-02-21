@@ -330,7 +330,11 @@ function RequestDetail({
                         <p className="text-xs font-bold text-slate-700">
                           {ACTION_LABELS[entry.action] ?? entry.action}
                           {entry.action === "assigned" && entry.detail && entry.detail !== entry.actorLogin && (
-                            <span className="ml-1 font-semibold text-indigo-600">à @{entry.detail}</span>
+                            <span className="ml-1 font-semibold text-indigo-600 inline-flex items-center gap-1">
+                              à
+                              {entry.detailAvatar && <img src={entry.detailAvatar} alt="" className="size-4 rounded-full inline" decoding="async" />}
+                              {entry.detailName || entry.detail}
+                            </span>
                           )}
                           {toLabel && (
                             <span className={`ml-1 font-semibold ${STATUS_TEXT_COLORS[entry.toStatus ?? ""] ?? "text-slate-500"}`}>
