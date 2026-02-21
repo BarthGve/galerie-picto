@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, lazy, Suspense } from "react";
-import { Loader2, UserCheck, MessageSquare, X, Check, AlertTriangle, Send, Clock, Paperclip } from "lucide-react";
+import { Loader2, UserCheck, UserPlus, MessageSquare, X, Check, AlertTriangle, Send, Clock, Paperclip, ChevronDown } from "lucide-react";
 import { useAdminRequests } from "@/hooks/useRequests";
 import { toast } from "sonner";
 import type { PictoRequest, PictoRequestStatus, PictoRequestComment } from "@/lib/types";
@@ -35,7 +35,7 @@ function RequestDetailPanel({
 }: {
   request: PictoRequest;
   onClose: () => void;
-  onAssign: (id: string) => Promise<boolean>;
+  onAssign: (id: string, assignTo?: string) => Promise<boolean>;
   onUpdateStatus: (id: string, status: PictoRequestStatus, extra?: { rejectionReason?: string; comment?: string; deliveredPictogramId?: string }) => Promise<boolean>;
 }) {
   const [comments, setComments] = useState<PictoRequestComment[]>([]);
@@ -47,6 +47,10 @@ function RequestDetailPanel({
   const [precisionComment, setPrecisionComment] = useState("");
   const [showPrecisionForm, setShowPrecisionForm] = useState(false);
   const [showUploadForDelivery, setShowUploadForDelivery] = useState(false);
+  const [showAssignDropdown, setShowAssignDropdown] = useState(false);
+  const [showTeamPicker, setShowTeamPicker] = useState(false);
+  const [teamMembers, setTeamMembers] = useState<{ login: string; avatar_url: string }[]>([]);
+  const [loadingTeam, setLoadingTeam] = useState(false);
 
   // Decode user from JWT for UploadDialog
   const user = (() => {
@@ -141,6 +145,23 @@ function RequestDetailPanel({
     }
   };
 
+  const fetchTeamMembers = useCallback(async () => {
+    const token = getStoredToken();
+    if (!token) return;
+    setLoadingTeam(true);
+    try {
+      const res = await fetch(`${API_URL}/api/auth/team`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const currentLogin = user?.login;
+        setTeamMembers(currentLogin ? data.filter((m: { login: string }) => m.login !== currentLogin) : data);
+      }
+    } catch { /* ignore */ }
+    setLoadingTeam(false);
+  }, [user?.login]);
+
   const afterAction = () => { fetchHistory(); };
 
   return (
@@ -194,16 +215,86 @@ function RequestDetailPanel({
           {request.status !== "livree" && request.status !== "refusee" && (
             <div className="flex flex-wrap gap-2">
               {!request.assignedTo && (
-                <button
-                  onClick={async () => {
-                    const ok = await onAssign(request.id);
-                    if (ok) { toast.success("Demande assignée"); afterAction(); }
-                  }}
-                  className="px-4 py-2 rounded-xl bg-indigo-50 text-indigo-700 font-bold text-sm hover:bg-indigo-100 flex items-center gap-2"
-                >
-                  <UserCheck className="w-4 h-4" />
-                  Me l'assigner
-                </button>
+                <div className="relative">
+                  {!showTeamPicker ? (
+                    <div className="flex items-center">
+                      <button
+                        onClick={async () => {
+                          const ok = await onAssign(request.id);
+                          if (ok) { toast.success("Demande assignée"); afterAction(); }
+                        }}
+                        className="px-4 py-2 rounded-l-xl bg-indigo-50 text-indigo-700 font-bold text-sm hover:bg-indigo-100 flex items-center gap-2"
+                      >
+                        <UserCheck className="w-4 h-4" />
+                        Me l'assigner
+                      </button>
+                      <button
+                        onClick={() => { setShowAssignDropdown((v) => !v); }}
+                        className="px-2 py-2 rounded-r-xl bg-indigo-50 text-indigo-700 font-bold text-sm hover:bg-indigo-100 border-l border-indigo-200"
+                      >
+                        <ChevronDown className="w-4 h-4" />
+                      </button>
+                      {showAssignDropdown && (
+                        <div className="absolute top-full left-0 mt-1 bg-white rounded-xl border border-slate-200 shadow-lg z-10 min-w-[200px]">
+                          <button
+                            onClick={async () => {
+                              setShowAssignDropdown(false);
+                              const ok = await onAssign(request.id);
+                              if (ok) { toast.success("Demande assignée"); afterAction(); }
+                            }}
+                            className="w-full px-4 py-2.5 text-left text-sm hover:bg-slate-50 flex items-center gap-2 rounded-t-xl"
+                          >
+                            <UserCheck className="w-4 h-4 text-indigo-600" />
+                            Me l'assigner
+                          </button>
+                          <button
+                            onClick={() => {
+                              setShowAssignDropdown(false);
+                              setShowTeamPicker(true);
+                              fetchTeamMembers();
+                            }}
+                            className="w-full px-4 py-2.5 text-left text-sm hover:bg-slate-50 flex items-center gap-2 rounded-b-xl border-t border-slate-100"
+                          >
+                            <UserPlus className="w-4 h-4 text-indigo-600" />
+                            Assigner à un membre
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="bg-indigo-50 rounded-xl p-3 space-y-2 min-w-[220px]">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-indigo-700">Assigner à :</span>
+                        <button onClick={() => setShowTeamPicker(false)} className="text-slate-400 hover:text-slate-600">
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                      {loadingTeam ? (
+                        <div className="flex justify-center py-2">
+                          <Loader2 className="w-4 h-4 animate-spin text-indigo-400" />
+                        </div>
+                      ) : teamMembers.length === 0 ? (
+                        <p className="text-xs text-slate-400">Aucun autre membre disponible.</p>
+                      ) : (
+                        <div className="space-y-1">
+                          {teamMembers.map((member) => (
+                            <button
+                              key={member.login}
+                              onClick={async () => {
+                                const ok = await onAssign(request.id, member.login);
+                                if (ok) { toast.success(`Assignée à ${member.login}`); setShowTeamPicker(false); afterAction(); }
+                              }}
+                              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-indigo-100 text-sm text-slate-700"
+                            >
+                              <img src={member.avatar_url} alt="" className="w-6 h-6 rounded-full" />
+                              <span className="font-medium">{member.login}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               )}
               {request.status === "en_cours" && (
                 <>
@@ -396,7 +487,7 @@ function RequestDetailPanel({
 }
 
 export function AdminRequestsSection() {
-  const { requests, loading, fetchAll, assignToMe, updateStatus, getRequestDetail } = useAdminRequests();
+  const { requests, loading, fetchAll, assignRequest: assignReq, updateStatus, getRequestDetail } = useAdminRequests();
   const [filter, setFilter] = useState<PictoRequestStatus | "all">("all");
   const [selectedRequest, setSelectedRequest] = useState<PictoRequest | null>(null);
 
@@ -427,8 +518,8 @@ export function AdminRequestsSection() {
           setSelectedRequest(null);
           fetchAll(filter === "all" ? undefined : filter);
         }}
-        onAssign={async (id) => {
-          const ok = await assignToMe(id);
+        onAssign={async (id, assignTo) => {
+          const ok = await assignReq(id, assignTo);
           if (ok) {
             const updated = await getRequestDetail(id);
             if (updated) setSelectedRequest(updated);

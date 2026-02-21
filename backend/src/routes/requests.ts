@@ -294,6 +294,29 @@ router.patch(
         });
       }
 
+      if (status === "livree") {
+        const allowedLogins = config.github.allowedUsername
+          ? config.github.allowedUsername
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean)
+          : [];
+        for (const collabLogin of allowedLogins) {
+          if (
+            collabLogin !== request.requesterLogin &&
+            collabLogin !== req.user!.login
+          ) {
+            createNotification({
+              recipientLogin: collabLogin,
+              type: "request_delivered",
+              title: request.title,
+              message: `${contributorName} a livré une demande`,
+              link,
+            });
+          }
+        }
+      }
+
       res.json({ success: true });
     } catch {
       res.status(500).json({ error: "Failed to update request status" });
@@ -301,13 +324,21 @@ router.patch(
   },
 );
 
-// POST /api/requests/:id/assign - Assign request to self (contributors only)
+// POST /api/requests/:id/assign - Assign request (contributors only)
 router.post(
   "/:id/assign",
   authMiddleware,
   (req: AuthenticatedRequest, res: Response): void => {
     const id = String(req.params.id);
-    const login = req.user!.login;
+    const actorLogin = req.user!.login;
+    const { assignTo } = req.body as { assignTo?: string };
+
+    if (assignTo && (typeof assignTo !== "string" || assignTo.length > 100)) {
+      res.status(400).json({ error: "Invalid assignTo value" });
+      return;
+    }
+
+    const targetLogin = assignTo || actorLogin;
 
     try {
       const request = getRequestById(id);
@@ -317,28 +348,40 @@ router.post(
       }
 
       const prevStatus = request.status;
-      const success = assignRequest(id, login);
+      const success = assignRequest(id, targetLogin);
       if (!success) {
         res.status(400).json({ error: "Cannot assign this request" });
         return;
       }
 
+      const actorName = req.user!.name || actorLogin;
+
       addHistoryEntry({
         requestId: id,
-        actorLogin: login,
+        actorLogin,
         action: "assigned",
         fromStatus: prevStatus,
         toStatus: "en_cours",
-        detail: login,
+        detail: targetLogin,
       });
 
       createNotification({
         recipientLogin: request.requesterLogin,
         type: "request_assigned",
         title: request.title,
-        message: `${req.user!.name || login} traite votre demande`,
+        message: `${actorName} traite votre demande`,
         link: `/requests/${id}`,
       });
+
+      if (targetLogin !== actorLogin) {
+        createNotification({
+          recipientLogin: targetLogin,
+          type: "request_assigned",
+          title: request.title,
+          message: `${actorName} vous a assigné cette demande`,
+          link: `/requests/${id}`,
+        });
+      }
 
       res.json({ success: true });
     } catch {

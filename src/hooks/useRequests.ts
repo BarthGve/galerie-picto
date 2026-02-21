@@ -220,13 +220,14 @@ export function useAdminRequests() {
     }
   }, []);
 
-  const assignToMe = useCallback(async (requestId: string): Promise<boolean> => {
+  const assignRequest = useCallback(async (requestId: string, assignTo?: string): Promise<boolean> => {
     const token = getStoredToken();
     if (!token) return false;
     try {
       const res = await fetch(`${API_URL}/api/requests/${requestId}/assign`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify(assignTo ? { assignTo } : {}),
       });
       if (res.ok) await fetchAll();
       return res.ok;
@@ -286,7 +287,7 @@ export function useAdminRequests() {
     requests,
     loading,
     fetchAll,
-    assignToMe,
+    assignRequest,
     updateStatus,
     getRequestDetail,
   };
