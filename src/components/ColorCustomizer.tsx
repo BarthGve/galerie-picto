@@ -67,7 +67,7 @@ export function ColorCustomizer({ svgText, onModifiedSvgChange }: ColorCustomize
   }
 
   return (
-    <div className="space-y-3 pt-1">
+    <div className="space-y-3">
       <div className="flex items-center justify-between">
         <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
           Remplacer les couleurs

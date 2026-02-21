@@ -1,4 +1,4 @@
-import { lazy, memo, Suspense, useRef, useState } from "react";
+import { lazy, memo, Suspense, useEffect, useRef, useState } from "react";
 import { Copy, Check, Download, Heart, BookmarkPlus, Bookmark, ThumbsUp, Lock, Trash2, Palette } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -161,9 +161,21 @@ function PictoCardInner({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [cardModifiedSvg, setCardModifiedSvg] = useState<string | null>(null);
+  const [cardPreviewUrl, setCardPreviewUrl] = useState<string | null>(null);
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
   const svgCacheRef = useRef<string | null>(null);
   const displayUrl = usePictogramUrl(pictogram);
+
+  // Blob URL pour la preview dans la card quand les couleurs sont modifiées
+  useEffect(() => {
+    if (cardModifiedSvg) {
+      const blob = new Blob([cardModifiedSvg], { type: "image/svg+xml" });
+      const url = URL.createObjectURL(blob);
+      setCardPreviewUrl(url);
+      return () => URL.revokeObjectURL(url);
+    }
+    setCardPreviewUrl(null);
+  }, [cardModifiedSvg]);
   const { getCount } = useDownloads();
   const downloadCount = getCount(pictogram.id);
 
@@ -228,7 +240,7 @@ function PictoCardInner({
         >
           <div className={`relative flex items-center justify-center ${compact ? "aspect-square p-2" : "aspect-[4/3] p-4"}`}>
             <img
-              src={displayUrl}
+              src={cardPreviewUrl || displayUrl}
               alt={pictogram.name || pictogram.filename.replace(/\.svg$/i, "")}
               loading="lazy"
               decoding="async"
@@ -353,7 +365,7 @@ function PictoCardInner({
                   </TooltipContent>
                 </Tooltip>
                 <PopoverContent
-                  className="w-80 p-0"
+                  className="w-80"
                   align="end"
                   sideOffset={8}
                   onClick={(e) => e.stopPropagation()}

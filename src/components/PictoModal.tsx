@@ -743,7 +743,7 @@ const handleDownloadSvg = () => {
                       {modifiedSvg ? "Couleurs personnalisées" : "Personnaliser les couleurs"}
                     </TooltipContent>
                   </Tooltip>
-                  <PopoverContent className="w-80 p-0" side="right" align="end" sideOffset={8}>
+                  <PopoverContent className="w-80" side="right" align="end" sideOffset={8}>
                     <Suspense
                       fallback={
                         <div className="h-20 flex items-center justify-center text-xs text-muted-foreground">
