@@ -106,6 +106,26 @@ router.post(
         action: "created",
         toStatus: "nouvelle",
       });
+
+      // Notify all collaborators about the new request
+      const allowedLogins = config.github.allowedUsername
+        ? config.github.allowedUsername
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : [];
+      for (const collabLogin of allowedLogins) {
+        if (collabLogin !== login) {
+          createNotification({
+            recipientLogin: collabLogin,
+            type: "request_new",
+            title: title.trim(),
+            message: `Nouvelle demande de ${req.user!.name || login}`,
+            link: `/requests/${id}`,
+          });
+        }
+      }
+
       res.json({ success: true, id });
     } catch {
       res.status(500).json({ error: "Failed to create request" });
