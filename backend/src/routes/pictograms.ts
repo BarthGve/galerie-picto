@@ -1,5 +1,6 @@
 import { Router, Request, Response } from "express";
 import { authMiddleware, AuthenticatedRequest } from "../middleware/auth.js";
+import { logger } from "../lib/logger.js";
 import { deleteFile } from "../services/minio.js";
 import {
   getManifestCached,
@@ -102,6 +103,13 @@ router.delete(
 
       // Delete from DB (cascade handles gallery_pictograms and downloads)
       dbDeletePictogram(id);
+
+      logger.info({
+        action: "pictogram_deleted",
+        resourceId: id,
+        userLogin: req.user?.login,
+        ip: req.ip,
+      });
 
       res.json({ success: true });
     } catch {

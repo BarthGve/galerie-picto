@@ -3,6 +3,11 @@ import crypto from "node:crypto";
 import { config } from "../config.js";
 import { authAnyUser } from "../middleware/auth-any-user.js";
 import type { AuthenticatedRequest, GitHubUser } from "../middleware/auth.js";
+import {
+  getSeenIssueIds,
+  markIssueSeen,
+  markIssuesSeen,
+} from "../db/repositories/feedback-seen.js";
 
 interface GitHubLabel {
   name: string;
@@ -317,6 +322,8 @@ router.get(
         issue.body?.includes(`@${user.login}`),
       );
 
+      const seenIds = getSeenIssueIds(user.login);
+
       const notifications = await Promise.all(
         myIssues.map(async (issue) => ({
           id: issue.number,
@@ -327,6 +334,7 @@ router.get(
           closedAt: issue.closed_at,
           resolution: await getIssueResolution(issue.number),
           url: issue.html_url,
+          isRead: seenIds.has(issue.number),
         })),
       );
 
@@ -335,6 +343,38 @@ router.get(
       console.error("GitHub error:", err);
       res.json([]);
     }
+  },
+);
+
+// ─── POST /api/feedback/seen/all — Mark all notifications as read ────────────
+router.post(
+  "/seen/all",
+  authAnyUser,
+  (req: AuthenticatedRequest, res: Response) => {
+    const user = req.user as GitHubUser;
+    const { ids } = req.body as { ids: number[] };
+    if (!Array.isArray(ids) || ids.some((id) => typeof id !== "number")) {
+      return void res
+        .status(400)
+        .json({ error: "ids doit être un tableau de nombres" });
+    }
+    markIssuesSeen(user.login, ids);
+    res.status(204).end();
+  },
+);
+
+// ─── POST /api/feedback/seen/:id — Mark one notification as read ─────────────
+router.post(
+  "/seen/:id",
+  authAnyUser,
+  (req: AuthenticatedRequest, res: Response) => {
+    const user = req.user as GitHubUser;
+    const issueId = parseInt(req.params.id as string, 10);
+    if (isNaN(issueId) || issueId <= 0) {
+      return void res.status(400).json({ error: "ID invalide" });
+    }
+    markIssueSeen(user.login, issueId);
+    res.status(204).end();
   },
 );
 
@@ -382,25 +422,31 @@ router.get(
 
 // ─── POST /api/feedback/webhook — GitHub webhook ─────────────────────────────
 router.post("/webhook", async (req: Request, res: Response) => {
+  // Webhook secret is mandatory — reject if not configured
+  if (!config.feedback.webhookSecret) {
+    return void res.status(503).json({ error: "Webhook not configured" });
+  }
+
   const event = req.headers["x-github-event"] as string;
   const signature = req.headers["x-hub-signature-256"] as string | undefined;
 
-  // Verify HMAC signature if secret configured
-  if (config.feedback.webhookSecret && signature) {
-    const rawBody = (req as RequestWithRawBody).rawBody;
-    if (rawBody) {
-      const expected =
-        "sha256=" +
-        crypto
-          .createHmac("sha256", config.feedback.webhookSecret)
-          .update(rawBody)
-          .digest("hex");
-      if (
-        signature.length !== expected.length ||
-        !crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))
-      ) {
-        return void res.status(401).json({ error: "Invalid signature" });
-      }
+  if (!signature) {
+    return void res.status(401).json({ error: "Missing webhook signature" });
+  }
+
+  const rawBody = (req as RequestWithRawBody).rawBody;
+  if (rawBody) {
+    const expected =
+      "sha256=" +
+      crypto
+        .createHmac("sha256", config.feedback.webhookSecret)
+        .update(rawBody)
+        .digest("hex");
+    if (
+      signature.length !== expected.length ||
+      !crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))
+    ) {
+      return void res.status(401).json({ error: "Invalid signature" });
     }
   }
 

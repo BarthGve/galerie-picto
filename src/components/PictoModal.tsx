@@ -71,6 +71,7 @@ interface PictoModalProps {
   onPictogramUpdated?: () => void;
   onDeletePictogram?: (id: string) => Promise<boolean>;
   onLogin?: () => void;
+  isPrivate?: boolean;
 }
 
 export function PictoModal({
@@ -85,6 +86,7 @@ export function PictoModal({
   onPictogramUpdated,
   onDeletePictogram,
   onLogin,
+  isPrivate,
 }: PictoModalProps) {
   const { pictograms: allPictograms } = usePictogramsCtx();
   const [pngSize, setPngSize] = useState(512);
@@ -272,7 +274,7 @@ const handleDownloadSvg = () => {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    trackDownload(pictogram.id);
+    if (!isPrivate) trackDownload(pictogram.id);
   };
 
   const handleDownloadPng = async () => {
@@ -313,7 +315,7 @@ const handleDownloadSvg = () => {
         document.body.removeChild(link);
         URL.revokeObjectURL(pngUrl);
         URL.revokeObjectURL(url);
-        trackDownload(pictogram.id);
+        if (!isPrivate) trackDownload(pictogram.id);
       }, "image/png");
     } catch {
       toast.error("Erreur lors de la conversion PNG");
@@ -337,17 +339,18 @@ const handleDownloadSvg = () => {
 
     setSavingName(true);
     try {
-      const response = await fetch(
-        `${API_URL}/api/pictograms/${pictogram.id}`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ name: trimmedName }),
+      const url = isPrivate
+        ? `${API_URL}/api/user/pictograms/${pictogram.id}`
+        : `${API_URL}/api/pictograms/${pictogram.id}`;
+      const method = isPrivate ? "PATCH" : "PUT";
+      const response = await fetch(url, {
+        method,
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
-      );
+        body: JSON.stringify({ name: trimmedName }),
+      });
 
       if (response.ok) {
         toast.success("Titre mis à jour");
@@ -369,8 +372,12 @@ const handleDownloadSvg = () => {
     if (!token) return;
     setSavingTags(true);
     try {
-      const response = await fetch(`${API_URL}/api/pictograms/${pictogram.id}`, {
-        method: "PUT",
+      const url = isPrivate
+        ? `${API_URL}/api/user/pictograms/${pictogram.id}`
+        : `${API_URL}/api/pictograms/${pictogram.id}`;
+      const method = isPrivate ? "PATCH" : "PUT";
+      const response = await fetch(url, {
+        method,
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -478,6 +485,7 @@ const handleDownloadSvg = () => {
   };
 
   const showGallerySelector =
+    !isPrivate &&
     isAuthenticated &&
     galleries &&
     galleries.length > 0 &&
@@ -725,8 +733,8 @@ const handleDownloadSvg = () => {
               )}
             </div>
 
-            {/* Contributor */}
-            {renderContributorSection()}
+            {/* Contributor — masqué pour les pictos privés */}
+            {!isPrivate && renderContributorSection()}
           </div>
 
           {/* Right column - Info & Actions */}

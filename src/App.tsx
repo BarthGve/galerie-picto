@@ -25,6 +25,7 @@ import {
   getStoredToken,
   type GitHubUser,
 } from "@/lib/github-auth";
+import { API_URL } from "@/lib/config";
 
 const GalleryDialog = lazy(() =>
   import("@/components/GalleryDialog").then((m) => ({
@@ -129,6 +130,34 @@ function AppInner() {
   const { userPictograms, blobUrls, refetch: refetchUserPictograms } = useUserPictograms(!!user);
   const handleUserPictoUploadSuccess = useCallback(async () => {
     await Promise.allSettled([refetchUserPictograms(), refetchUserCollections()]);
+  }, [refetchUserPictograms, refetchUserCollections]);
+
+  // Quand on est dans une collection utilisateur, rafraîchir aussi les userPictograms
+  // (les pictos privés ont leur nom/tags stockés dans userPictograms, pas dans pictograms)
+  const handlePictogramUpdatedInGallery = useCallback(async () => {
+    await refetchPictograms();
+    if (selectedUserCollectionId) {
+      await refetchUserPictograms();
+    }
+  }, [refetchPictograms, refetchUserPictograms, selectedUserCollectionId]);
+
+  const handleDeleteUserPictogram = useCallback(async (id: string) => {
+    const token = getStoredToken();
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_URL}/api/user/pictograms/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        await Promise.allSettled([refetchUserPictograms(), refetchUserCollections()]);
+        toast.success("Pictogramme supprimé");
+      } else {
+        toast.error("Erreur lors de la suppression");
+      }
+    } catch {
+      toast.error("Erreur réseau");
+    }
   }, [refetchUserPictograms, refetchUserCollections]);
   const [userPictoUploadOpen, setUserPictoUploadOpen] = useState(false);
 
@@ -469,11 +498,11 @@ function AppInner() {
         {/* ── Background orbs + dot grid (Proposition B) ── */}
         <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
           <div
-            className="absolute -top-[10%] -right-[5%] w-[40vw] h-[40vw] rounded-full bg-gradient-to-br from-[#fddede] to-[#c83f49] blur-3xl opacity-8 animate-pulse"
+            className="absolute -top-[10%] -right-[5%] w-[40vw] h-[40vw] rounded-full bg-gradient-to-br from-[#fddede] to-[#c83f49] blur-3xl opacity-8 motion-safe:animate-pulse"
             style={{ animationDuration: "15s" }}
           />
           <div
-            className="absolute -bottom-[10%] -left-[5%] w-[35vw] h-[35vw] rounded-full bg-gradient-to-tr from-[#e3e3fd] to-[#6a6af4] blur-3xl opacity-8 animate-pulse"
+            className="absolute -bottom-[10%] -left-[5%] w-[35vw] h-[35vw] rounded-full bg-gradient-to-tr from-[#e3e3fd] to-[#6a6af4] blur-3xl opacity-8 motion-safe:animate-pulse"
             style={{ animationDuration: "20s" }}
           />
           <div className="absolute inset-0 bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:32px_32px] opacity-[0.03]" />
@@ -642,7 +671,7 @@ function AppInner() {
                       isAuthenticated={!!user}
                       user={user}
                       selectedGalleryId={selectedGalleryId}
-                      onPictogramUpdated={refetchPictograms}
+                      onPictogramUpdated={handlePictogramUpdatedInGallery}
                       onDeletePictogram={
                         user ? handleDeletePictogram : undefined
                       }
@@ -660,6 +689,7 @@ function AppInner() {
                       privateIds={selectedUserCollectionId ? new Set(
                         userCollections.find(c => c.id === selectedUserCollectionId)?.userPictogramIds ?? []
                       ) : undefined}
+                      onDeletePrivatePictogram={selectedUserCollectionId ? handleDeleteUserPictogram : undefined}
                     />
                   </div>
                 </div>

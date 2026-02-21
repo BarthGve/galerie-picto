@@ -41,6 +41,7 @@ interface PictoGridProps {
   hasLiked?: (id: string) => boolean;
   onToggleLike?: (id: string) => void;
   privateIds?: Set<string>;
+  onDeletePrivatePictogram?: (id: string) => void;
 }
 
 export function PictoGrid({
@@ -65,15 +66,17 @@ export function PictoGrid({
   hasLiked,
   onToggleLike,
   privateIds,
+  onDeletePrivatePictogram,
 }: PictoGridProps) {
   const [compact, setCompact] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>("date");
   const [activeTag, setActiveTag] = useState<string | null>(null);
 
-  // Extract top tags from pictograms
+  // Extract top tags from pictograms — exclure les pictos privés
   const topTags = useMemo(() => {
     const tagCounts = new Map<string, number>();
     for (const p of pictograms) {
+      if (privateIds?.has(p.id)) continue;
       for (const t of p.tags ?? []) {
         tagCounts.set(t, (tagCounts.get(t) ?? 0) + 1);
       }
@@ -82,7 +85,7 @@ export function PictoGrid({
       .sort((a, b) => b[1] - a[1])
       .slice(0, 6)
       .map(([tag]) => tag);
-  }, [pictograms]);
+  }, [pictograms, privateIds]);
 
   // Filter by tag
   const tagFiltered = useMemo(() => {
@@ -223,11 +226,7 @@ export function PictoGrid({
               onPictogramUpdated={onPictogramUpdated}
               onDeletePictogram={onDeletePictogram}
               isFavorite={isFavorite?.(pictogram.id)}
-              onToggleFavorite={
-                isAuthenticated && onToggleFavorite
-                  ? () => onToggleFavorite(pictogram.id)
-                  : undefined
-              }
+              onToggleFavorite={isAuthenticated ? onToggleFavorite : undefined}
               onLogin={onLogin}
               compact={compact}
               userCollections={userCollections}
@@ -235,8 +234,9 @@ export function PictoGrid({
               onRemoveFromUserCollection={onRemoveFromUserCollection}
               likeCount={getLikeCount?.(pictogram.id)}
               hasLiked={hasLiked?.(pictogram.id)}
-              onToggleLike={onToggleLike ? () => onToggleLike(pictogram.id) : undefined}
+              onToggleLike={onToggleLike}
               isPrivate={privateIds?.has(pictogram.id)}
+              onDeletePrivatePictogram={onDeletePrivatePictogram}
             />
           ))}
         </div>

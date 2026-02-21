@@ -1,5 +1,5 @@
-import { lazy, Suspense, useRef, useState } from "react";
-import { Copy, Check, Download, Heart, BookmarkPlus, Bookmark, ThumbsUp, Lock } from "lucide-react";
+import { lazy, memo, Suspense, useRef, useState } from "react";
+import { Copy, Check, Download, Heart, BookmarkPlus, Bookmark, ThumbsUp, Lock, Trash2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -112,7 +112,7 @@ interface PictoCardProps {
   onPictogramUpdated?: () => void;
   onDeletePictogram?: (id: string) => Promise<boolean>;
   isFavorite?: boolean;
-  onToggleFavorite?: () => void;
+  onToggleFavorite?: (id: string) => void;
   onLogin?: () => void;
   compact?: boolean;
   userCollections?: UserCollection[];
@@ -120,11 +120,12 @@ interface PictoCardProps {
   onRemoveFromUserCollection?: (collectionId: string, pictogramId: string) => Promise<void>;
   likeCount?: number;
   hasLiked?: boolean;
-  onToggleLike?: () => void;
+  onToggleLike?: (id: string) => void;
   isPrivate?: boolean;
+  onDeletePrivatePictogram?: (id: string) => void;
 }
 
-export function PictoCard({
+function PictoCardInner({
   pictogram,
   galleries,
   onAddToGallery,
@@ -144,6 +145,7 @@ export function PictoCard({
   hasLiked,
   onToggleLike,
   isPrivate,
+  onDeletePrivatePictogram,
 }: PictoCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -220,7 +222,7 @@ export function PictoCard({
             className={`absolute top-2 left-2 z-10 transition-opacity ${isFavorite ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
             onClick={(e) => {
               e.stopPropagation();
-              onToggleFavorite();
+              onToggleFavorite(pictogram.id);
             }}
           >
             <Heart
@@ -243,8 +245,22 @@ export function PictoCard({
           </span>
         )}
 
-        {/* Quick actions overlay */}
-        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-1 z-20">
+        {/* Bouton suppression picto privé */}
+        {isPrivate && onDeletePrivatePictogram && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDeletePrivatePictogram(pictogram.id);
+            }}
+            className="absolute top-2 right-2 z-20 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded bg-background/80 border border-border text-muted-foreground hover:text-destructive"
+            title="Supprimer"
+          >
+            <Trash2 className="size-3.5" />
+          </button>
+        )}
+
+        {/* Quick actions overlay (pictos publics uniquement) */}
+        <div className={`absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-1 z-20 ${isPrivate ? "hidden" : ""}`}>
           {showGallerySelector && (
             <GallerySelector
               galleries={galleries}
@@ -291,11 +307,11 @@ export function PictoCard({
               <h3 className="font-extrabold text-sm text-foreground truncate leading-tight flex-1">
                 {pictogram.name || pictogram.filename.replace(/\.svg$/i, "")}
               </h3>
-              {(likeCount > 0 || isAuthenticated) && (
+              {!isPrivate && (likeCount > 0 || isAuthenticated) && (
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    onToggleLike?.();
+                    onToggleLike?.(pictogram.id);
                   }}
                   disabled={!isAuthenticated}
                   className={`flex items-center gap-0.5 text-[10px] shrink-0 transition-colors ${
@@ -351,11 +367,14 @@ export function PictoCard({
             isAuthenticated={isAuthenticated}
             user={user}
             onPictogramUpdated={onPictogramUpdated}
-            onDeletePictogram={onDeletePictogram}
+            onDeletePictogram={isPrivate ? undefined : onDeletePictogram}
             onLogin={onLogin}
+            isPrivate={isPrivate}
           />
         </Suspense>
       )}
     </>
   );
 }
+
+export const PictoCard = memo(PictoCardInner);

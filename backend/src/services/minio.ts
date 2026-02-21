@@ -21,13 +21,17 @@ function buildUrl(key: string): string {
 }
 
 export async function readFileAsText(key: string): Promise<string | null> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10_000);
   try {
-    const response = await fetch(buildUrl(key));
+    const response = await fetch(buildUrl(key), { signal: controller.signal });
     if (response.status === 404) return null;
     if (!response.ok) return null;
     return await response.text();
   } catch {
     return null;
+  } finally {
+    clearTimeout(timeout);
   }
 }
 

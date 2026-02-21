@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { API_URL } from "@/lib/config";
-import { getStoredToken, type GitHubUser } from "@/lib/github-auth";
+import { getStoredToken, verifyUploadPermission, type GitHubUser } from "@/lib/github-auth";
 
 interface FeedbackItem {
   id: number;
@@ -50,6 +50,16 @@ function IssuesList({
   const [items, setItems] = useState<FeedbackItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isCollaborator, setIsCollaborator] = useState(false);
+
+  useEffect(() => {
+    const token = getStoredToken();
+    if (token) {
+      verifyUploadPermission(token).then(setIsCollaborator);
+    } else {
+      setIsCollaborator(false);
+    }
+  }, [user]);
 
   useEffect(() => {
     fetch(`${API_URL}/api/feedback`)
@@ -72,7 +82,7 @@ function IssuesList({
           </p>
           <Button size="sm" className="rounded" onClick={onSignal}>
             <Send className="size-3.5 mr-1.5" />
-            Faire un signalement
+            Initier un ticket
           </Button>
         </div>
       ) : (
@@ -122,14 +132,8 @@ function IssuesList({
 
       {!loading && !error && items.length > 0 && (
         <div className="space-y-3">
-          {items.map((item) => (
-            <a
-              key={item.id}
-              href={item.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block rounded border border-border bg-card px-4 py-4 hover:border-primary/40 hover:shadow-sm transition-all group"
-            >
+          {items.map((item) => {
+            const inner = (
               <div className="flex items-start gap-3">
                 <div className="mt-0.5 shrink-0">
                   {item.type === "bug" ? (
@@ -140,7 +144,7 @@ function IssuesList({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-medium text-sm text-foreground truncate group-hover:text-primary transition-colors">
+                    <span className={`font-medium text-sm text-foreground truncate${isCollaborator ? " group-hover:text-primary transition-colors" : ""}`}>
                       {item.title}
                     </span>
                     {item.status === "resolved" ? (
@@ -172,8 +176,23 @@ function IssuesList({
                   )}
                 </div>
               </div>
-            </a>
-          ))}
+            );
+            return isCollaborator ? (
+              <a
+                key={item.id}
+                href={item.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block rounded bg-transparent group"
+              >
+                {inner}
+              </a>
+            ) : (
+              <div key={item.id} className="block rounded bg-transparent">
+                {inner}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

@@ -1,11 +1,6 @@
 import { eq, sql } from "drizzle-orm";
 import { db } from "../index.js";
-import {
-  users,
-  favorites,
-  userCollections,
-  pictogramLikes,
-} from "../schema.js";
+import { users } from "../schema.js";
 
 export interface UserProfile {
   githubLogin: string;
@@ -58,42 +53,36 @@ export function getUserByLogin(
 }
 
 export function getUserProfile(login: string): UserProfile | null {
-  const user = db
-    .select()
+  const row = db
+    .select({
+      githubLogin: users.githubLogin,
+      githubName: users.githubName,
+      githubAvatarUrl: users.githubAvatarUrl,
+      githubEmail: users.githubEmail,
+      firstSeenAt: users.firstSeenAt,
+      lastSeenAt: users.lastSeenAt,
+      favoritesCount: sql<number>`(SELECT COUNT(*) FROM favorites WHERE user_login = ${login})`,
+      collectionsCount: sql<number>`(SELECT COUNT(*) FROM user_collections WHERE user_login = ${login})`,
+      likesCount: sql<number>`(SELECT COUNT(*) FROM pictogram_likes WHERE user_login = ${login})`,
+    })
     .from(users)
     .where(eq(users.githubLogin, login))
     .get();
-  if (!user) return null;
 
-  const favoritesCount =
-    db
-      .select({ count: sql<number>`count(*)` })
-      .from(favorites)
-      .where(eq(favorites.userLogin, login))
-      .get()?.count ?? 0;
-
-  const collectionsCount =
-    db
-      .select({ count: sql<number>`count(*)` })
-      .from(userCollections)
-      .where(eq(userCollections.userLogin, login))
-      .get()?.count ?? 0;
-
-  const likesCount =
-    db
-      .select({ count: sql<number>`count(*)` })
-      .from(pictogramLikes)
-      .where(eq(pictogramLikes.userLogin, login))
-      .get()?.count ?? 0;
+  if (!row) return null;
 
   return {
-    githubLogin: user.githubLogin,
-    githubName: user.githubName ?? null,
-    githubAvatarUrl: user.githubAvatarUrl ?? null,
-    githubEmail: user.githubEmail ?? null,
-    firstSeenAt: user.firstSeenAt ?? null,
-    lastSeenAt: user.lastSeenAt ?? null,
-    stats: { favoritesCount, collectionsCount, likesCount },
+    githubLogin: row.githubLogin,
+    githubName: row.githubName ?? null,
+    githubAvatarUrl: row.githubAvatarUrl ?? null,
+    githubEmail: row.githubEmail ?? null,
+    firstSeenAt: row.firstSeenAt ?? null,
+    lastSeenAt: row.lastSeenAt ?? null,
+    stats: {
+      favoritesCount: Number(row.favoritesCount),
+      collectionsCount: Number(row.collectionsCount),
+      likesCount: Number(row.likesCount),
+    },
   };
 }
 

@@ -22,6 +22,7 @@ export function DarkAwarePicto({
       alt=""
       width={width}
       height={height}
+      loading="lazy"
       decoding="async"
       className={className}
     />

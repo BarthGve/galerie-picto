@@ -38,7 +38,10 @@ export const galleryPictograms = sqliteTable(
       .notNull()
       .references(() => pictograms.id, { onDelete: "cascade" }),
   },
-  (table) => [primaryKey({ columns: [table.galleryId, table.pictogramId] })],
+  (table) => [
+    primaryKey({ columns: [table.galleryId, table.pictogramId] }),
+    index("gp_pictogram_id_idx").on(table.pictogramId),
+  ],
 );
 
 export const downloads = sqliteTable("downloads", {
@@ -96,7 +99,10 @@ export const userCollectionPictograms = sqliteTable(
     position: integer("position").notNull().default(0),
     addedAt: text("added_at").$defaultFn(() => new Date().toISOString()),
   },
-  (table) => [primaryKey({ columns: [table.collectionId, table.pictogramId] })],
+  (table) => [
+    primaryKey({ columns: [table.collectionId, table.pictogramId] }),
+    index("ucp_pictogram_id_idx").on(table.pictogramId),
+  ],
 );
 
 export const pictogramLikes = sqliteTable(
@@ -164,4 +170,16 @@ export const userCollectionUserPictograms = sqliteTable(
     primaryKey({ columns: [table.collectionId, table.userPictogramId] }),
     index("ucup_user_pictogram_id_idx").on(table.userPictogramId),
   ],
+);
+
+export const feedbackSeen = sqliteTable(
+  "feedback_seen",
+  {
+    userLogin: text("user_login")
+      .notNull()
+      .references(() => users.githubLogin, { onDelete: "cascade" }),
+    issueId: integer("issue_id").notNull(),
+    seenAt: text("seen_at").$defaultFn(() => new Date().toISOString()),
+  },
+  (table) => [primaryKey({ columns: [table.userLogin, table.issueId] })],
 );

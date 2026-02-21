@@ -1,4 +1,3 @@
-import { createHash } from "crypto";
 import { eq } from "drizzle-orm";
 import { db } from "../index.js";
 import { pictograms, galleryPictograms } from "../schema.js";
@@ -7,9 +6,11 @@ import type { Pictogram, Contributor } from "../../types.js";
 // In-memory cache for manifest endpoint
 let cachedManifest: { json: string; etag: string; updatedAt: number } | null =
   null;
+let manifestVersion = 0;
 
 function invalidateCache() {
   cachedManifest = null;
+  manifestVersion++;
 }
 
 function rowToPictogram(row: typeof pictograms.$inferSelect): Pictogram {
@@ -63,7 +64,7 @@ export function getManifestCached(): { json: string; etag: string } {
     totalCount: pictos.length,
   };
   const json = JSON.stringify(manifest);
-  const etag = `"${createHash("sha256").update(json).digest("hex").slice(0, 32)}"`;
+  const etag = `"v${manifestVersion}"`;
 
   cachedManifest = { json, etag, updatedAt: Date.now() };
   return { json, etag };
@@ -95,28 +96,30 @@ export function insertPictogram(data: {
   galleryIds?: string[];
   contributor?: Contributor;
 }): void {
-  db.insert(pictograms)
-    .values({
-      id: data.id,
-      name: data.name,
-      filename: data.filename,
-      url: data.url,
-      size: data.size,
-      lastModified: data.lastModified,
-      tags: data.tags ? JSON.stringify(data.tags) : null,
-      contributorUsername: data.contributor?.githubUsername || null,
-      contributorAvatarUrl: data.contributor?.githubAvatarUrl || null,
-    })
-    .run();
+  db.transaction((tx) => {
+    tx.insert(pictograms)
+      .values({
+        id: data.id,
+        name: data.name,
+        filename: data.filename,
+        url: data.url,
+        size: data.size,
+        lastModified: data.lastModified,
+        tags: data.tags ? JSON.stringify(data.tags) : null,
+        contributorUsername: data.contributor?.githubUsername || null,
+        contributorAvatarUrl: data.contributor?.githubAvatarUrl || null,
+      })
+      .run();
 
-  if (data.galleryIds && data.galleryIds.length > 0) {
-    for (const galleryId of data.galleryIds) {
-      db.insert(galleryPictograms)
-        .values({ galleryId, pictogramId: data.id })
-        .onConflictDoNothing()
-        .run();
+    if (data.galleryIds && data.galleryIds.length > 0) {
+      for (const galleryId of data.galleryIds) {
+        tx.insert(galleryPictograms)
+          .values({ galleryId, pictogramId: data.id })
+          .onConflictDoNothing()
+          .run();
+      }
     }
-  }
+  });
 
   invalidateCache();
 }

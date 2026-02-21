@@ -42,39 +42,43 @@ export function toggleLike(
 
   if (existing) {
     // Unlike
-    db.delete(pictogramLikes)
-      .where(
-        and(
-          eq(pictogramLikes.userLogin, userLogin),
-          eq(pictogramLikes.pictogramId, pictogramId),
-        ),
-      )
-      .run();
+    const newCount = db.transaction((tx) => {
+      tx.delete(pictogramLikes)
+        .where(
+          and(
+            eq(pictogramLikes.userLogin, userLogin),
+            eq(pictogramLikes.pictogramId, pictogramId),
+          ),
+        )
+        .run();
 
-    const newCount = db
-      .insert(likesCounts)
-      .values({ pictogramId, count: 0 })
-      .onConflictDoUpdate({
-        target: likesCounts.pictogramId,
-        set: { count: sql`MAX(0, ${likesCounts.count} - 1)` },
-      })
-      .returning()
-      .get();
+      return tx
+        .insert(likesCounts)
+        .values({ pictogramId, count: 0 })
+        .onConflictDoUpdate({
+          target: likesCounts.pictogramId,
+          set: { count: sql`MAX(0, ${likesCounts.count} - 1)` },
+        })
+        .returning()
+        .get();
+    });
 
     return { liked: false, count: newCount?.count ?? 0 };
   } else {
     // Like
-    db.insert(pictogramLikes).values({ userLogin, pictogramId }).run();
+    const newCount = db.transaction((tx) => {
+      tx.insert(pictogramLikes).values({ userLogin, pictogramId }).run();
 
-    const newCount = db
-      .insert(likesCounts)
-      .values({ pictogramId, count: 1 })
-      .onConflictDoUpdate({
-        target: likesCounts.pictogramId,
-        set: { count: sql`${likesCounts.count} + 1` },
-      })
-      .returning()
-      .get();
+      return tx
+        .insert(likesCounts)
+        .values({ pictogramId, count: 1 })
+        .onConflictDoUpdate({
+          target: likesCounts.pictogramId,
+          set: { count: sql`${likesCounts.count} + 1` },
+        })
+        .returning()
+        .get();
+    });
 
     return { liked: true, count: newCount?.count ?? 1 };
   }

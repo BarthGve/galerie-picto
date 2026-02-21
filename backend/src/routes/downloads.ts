@@ -1,5 +1,6 @@
 import { Router, Request, Response } from "express";
 import { Resvg } from "@resvg/resvg-js";
+import rateLimit from "express-rate-limit";
 import {
   incrementDownload,
   getDownloads,
@@ -12,6 +13,14 @@ import { getPictogramById } from "../db/repositories/pictograms.js";
 import { readFileAsText } from "../services/minio.js";
 import { config } from "../config.js";
 
+const downloadLimiter = rateLimit({
+  windowMs: 60_000,
+  limit: 60,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  message: { error: "Too many requests, please try again later" },
+});
+
 const router = Router();
 
 const DAILY_ANONYMOUS_LIMIT = 1;
@@ -19,16 +28,27 @@ const DEFAULT_PNG_SIZE = 256;
 const ALLOWED_SIZES = [64, 128, 256, 512, 1024];
 
 // POST /api/pictograms/:id/download - Track a download (legacy, still used by frontend SVG/PNG downloads for authenticated users)
-router.post("/:id/download", (req: Request, res: Response): void => {
-  const id = req.params.id as string;
-  if (!id || id.length > 200) {
-    res.status(400).json({ error: "Invalid pictogram ID" });
-    return;
-  }
+router.post(
+  "/:id/download",
+  downloadLimiter,
+  (req: Request, res: Response): void => {
+    const id = req.params.id as string;
+    if (!id || id.length > 200) {
+      res.status(400).json({ error: "Invalid pictogram ID" });
+      return;
+    }
 
-  const count = incrementDownload(id);
-  res.json({ id, downloads: count });
-});
+    // S28 — Verify pictogram exists before incrementing counter
+    const picto = getPictogramById(id);
+    if (!picto) {
+      res.status(404).json({ error: "Pictogram not found" });
+      return;
+    }
+
+    const count = incrementDownload(id);
+    res.json({ id, downloads: count });
+  },
+);
 
 // GET /api/pictograms/downloads - Get all download counts
 router.get("/downloads", (_req: Request, res: Response): void => {
@@ -113,8 +133,12 @@ router.post(
 
       // Send PNG
       const filename = picto.filename.replace(/\.svg$/i, `.${size}px.png`);
+      const encodedFilename = encodeURIComponent(filename);
       res.set("Content-Type", "image/png");
-      res.set("Content-Disposition", `attachment; filename="${filename}"`);
+      res.set(
+        "Content-Disposition",
+        `attachment; filename*=UTF-8''${encodedFilename}`,
+      );
       res.set("Content-Length", String(pngBuffer.length));
       if (!isAuthenticated) {
         res.set("X-Downloads-Remaining", "0");

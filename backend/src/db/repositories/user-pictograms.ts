@@ -109,6 +109,29 @@ export function updateUserPictogramName(
   return getUserPictogramById(id, ownerLogin);
 }
 
+export function updateUserPictogram(
+  id: string,
+  ownerLogin: string,
+  data: { name?: string; tags?: string[] },
+): UserPictogram | null {
+  const updates: Record<string, unknown> = {
+    updatedAt: new Date().toISOString(),
+  };
+  if (data.name !== undefined) updates.name = data.name;
+  if (data.tags !== undefined) updates.tags = JSON.stringify(data.tags);
+
+  if (Object.keys(updates).length <= 1)
+    return getUserPictogramById(id, ownerLogin);
+
+  db.update(userPictograms)
+    .set(updates)
+    .where(
+      and(eq(userPictograms.id, id), eq(userPictograms.ownerLogin, ownerLogin)),
+    )
+    .run();
+  return getUserPictogramById(id, ownerLogin);
+}
+
 export function deleteUserPictogram(
   id: string,
   ownerLogin: string,

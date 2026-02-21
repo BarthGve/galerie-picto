@@ -36,7 +36,7 @@ export function SiteHeader({
     const value = e.target.value;
     setQuery(value);
     if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => onSearch(value), 250);
+    timerRef.current = setTimeout(() => onSearch(value), 350);
   };
 
   const hasNotifs = (unreadCount ?? 0) > 0;

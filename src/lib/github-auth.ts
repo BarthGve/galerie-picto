@@ -89,7 +89,8 @@ export async function handleGitHubCallback(): Promise<string | null> {
 }
 
 /**
- * Récupère les informations de l'utilisateur GitHub
+ * Récupère les informations de l'utilisateur depuis le JWT applicatif.
+ * Le JWT est signé par le backend — on décode simplement le payload (pas de secret nécessaire côté client).
  */
 export async function getGitHubUser(token: string): Promise<GitHubUser | null> {
   if (DEV_MODE && token === "dev-token") {
@@ -102,23 +103,49 @@ export async function getGitHubUser(token: string): Promise<GitHubUser | null> {
     return null;
   }
 
+  // Décoder le JWT applicatif (3 segments séparés par des points)
+  const parts = token.split(".");
+  if (parts.length === 3) {
+    try {
+      const payload = JSON.parse(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/"))) as {
+        login?: string;
+        name?: string | null;
+        avatar_url?: string;
+        email?: string | null;
+        exp?: number;
+      };
+
+      // Vérifier l'expiration
+      if (payload.exp && payload.exp * 1000 < Date.now()) {
+        localStorage.removeItem("github_token");
+        return null;
+      }
+
+      if (payload.login && payload.avatar_url) {
+        return {
+          login: payload.login,
+          name: payload.name ?? payload.login,
+          avatar_url: payload.avatar_url,
+          email: payload.email ?? "",
+        };
+      }
+    } catch {
+      // payload invalide — continuer vers la vérification serveur
+    }
+  }
+
+  // Fallback : vérification via l'endpoint /api/auth/verify
   try {
-    const response = await fetch("https://api.github.com/user", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/vnd.github.v3+json",
-      },
+    const response = await fetch(`${API_URL}/api/auth/verify`, {
+      headers: { Authorization: `Bearer ${token}` },
     });
 
     if (response.status === 401) {
-      // Token expiré ou révoqué — déconnecter proprement
       localStorage.removeItem("github_token");
       return null;
     }
 
-    if (!response.ok) {
-      throw new Error("Failed to fetch user info");
-    }
+    if (!response.ok) return null;
 
     return await response.json();
   } catch (error) {
@@ -149,7 +176,6 @@ export async function verifyUploadPermission(token: string): Promise<boolean> {
  */
 export function logout() {
   localStorage.removeItem("github_token");
-  localStorage.removeItem("feedback_seen_issues");
   window.location.href = "/";
 }
 
@@ -161,10 +187,39 @@ export function getStoredToken(): string | null {
 }
 
 /**
+ * Vérifie si le token stocké est un JWT applicatif valide (3 segments base64url).
+ * Les anciens tokens GitHub (ghp_xxx) ne sont pas des JWT et sont purgés automatiquement.
+ */
+function isJwt(token: string): boolean {
+  const parts = token.split(".");
+  return parts.length === 3;
+}
+
+/**
  * Vérifie si l'utilisateur est connecté
  */
 export function isAuthenticated(): boolean {
-  return !!getStoredToken();
+  const token = getStoredToken();
+  if (!token) return false;
+  // Token de dev toujours valide
+  if (token === "dev-token") return true;
+  // Purger les anciens tokens GitHub (non-JWT)
+  if (!isJwt(token)) {
+    localStorage.removeItem("github_token");
+    return false;
+  }
+  // Vérifier l'expiration côté client
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/"))) as { exp?: number };
+    if (payload.exp && payload.exp * 1000 < Date.now()) {
+      localStorage.removeItem("github_token");
+      return false;
+    }
+  } catch {
+    localStorage.removeItem("github_token");
+    return false;
+  }
+  return true;
 }
 
 function generateRandomState(): string {
