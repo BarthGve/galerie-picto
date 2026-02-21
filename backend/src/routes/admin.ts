@@ -184,7 +184,7 @@ router.post(
   "/users/:login/ban",
   authMiddleware,
   (req: AuthenticatedRequest, res: Response): void => {
-    const { login } = req.params;
+    const login = String(req.params.login);
     if (login === config.github.allowedUsername) {
       res
         .status(403)
@@ -205,7 +205,7 @@ router.post(
   "/users/:login/unban",
   authMiddleware,
   (req: AuthenticatedRequest, res: Response): void => {
-    const { login } = req.params;
+    const login = String(req.params.login);
     const ok = unbanUser(login);
     if (!ok) {
       res.status(404).json({ error: "Utilisateur introuvable" });
@@ -220,7 +220,7 @@ router.delete(
   "/users/:login",
   authMiddleware,
   async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-    const { login } = req.params;
+    const login = String(req.params.login);
     if (login === config.github.allowedUsername) {
       res
         .status(403)
