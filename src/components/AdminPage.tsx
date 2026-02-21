@@ -120,7 +120,7 @@ function UserRow({
 }) {
   const [busy, setBusy] = useState(false);
 
-  async function handle(action: () => Promise<void>) {
+  async function handle(action: () => void | Promise<void>) {
     setBusy(true);
     try {
       await action();
