@@ -89,7 +89,7 @@ export function AppSidebar({
   isCollaborator?: boolean;
 }) {
   return (
-    <Sidebar collapsible="offcanvas" {...props}>
+    <Sidebar collapsible="offcanvas" {...props} aria-label="Navigation principale">
       {/* ── Header : Logo compact style B ── */}
       <SidebarHeader>
         <SidebarMenu>

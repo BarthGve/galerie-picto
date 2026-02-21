@@ -261,6 +261,7 @@ function PictoCardInner({
               <TooltipTrigger asChild>
                 <button
                   className={`absolute top-2 left-2 z-10 transition-opacity ${isFavorite ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
+                  aria-label={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
                   onClick={(e) => {
                     e.stopPropagation();
                     onToggleFavorite(pictogram.id);

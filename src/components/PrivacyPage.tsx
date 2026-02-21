@@ -1,5 +1,5 @@
-import { ArrowLeft } from "lucide-react";
 import { LandingLayout } from "@/components/LandingLayout";
+import { BreadcrumbNav } from "@/components/Breadcrumb";
 import type { GitHubUser } from "@/lib/github-auth";
 
 interface PrivacyPageProps {
@@ -12,13 +12,10 @@ export function PrivacyPage({ user, onLogin, onLogout }: PrivacyPageProps) {
   return (
     <LandingLayout user={user} onLogin={onLogin} onLogout={onLogout}>
       <div className="mx-auto max-w-3xl px-6 py-12">
-        <a
-          href="/"
-          className="inline-flex items-center gap-1.5 mb-8 text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ArrowLeft className="size-4" />
-          Retour à l'accueil
-        </a>
+        <BreadcrumbNav items={[
+          { label: "Accueil", href: "/" },
+          { label: "Confidentialité" },
+        ]} />
 
         <h1 className="text-3xl font-bold text-foreground mb-2">
           Politique de confidentialité

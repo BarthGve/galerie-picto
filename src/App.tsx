@@ -74,11 +74,16 @@ const CollectionsPage = lazy(() =>
     default: m.CollectionsPage,
   })),
 );
+const NotFoundPage = lazy(() =>
+  import("@/components/NotFoundPage").then((m) => ({
+    default: m.NotFoundPage,
+  })),
+);
 
 const normalizeSearch = (s: string) =>
   s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-type Page = "home" | "discover" | "gallery" | "collections" | "test-discover" | "feedback" | "privacy" | "cookies" | "profile" | "admin";
+type Page = "home" | "discover" | "gallery" | "collections" | "test-discover" | "feedback" | "privacy" | "cookies" | "profile" | "admin" | "404";
 
 function getInitialPage(): Page {
   const path = window.location.pathname;
@@ -93,7 +98,8 @@ function getInitialPage(): Page {
   if (path === "/collections") return "collections";
   // OAuth callback → go straight to discover
   if (new URLSearchParams(window.location.search).has("code")) return "discover";
-  return "home";
+  if (path === "/") return "home";
+  return "404";
 }
 
 function AppInner() {
@@ -117,20 +123,22 @@ function AppInner() {
     refetchGalleries,
   } = useGalleriesCtx();
   const downloadsValue = useDownloadsProvider();
-  const [searchQuery, setSearchQuery] = useState("");
+  // Restore state from URL query params on initial load
+  const initialParams = useMemo(() => new URLSearchParams(window.location.search), []);
+  const [searchQuery, setSearchQuery] = useState(initialParams.get("q") ?? "");
   const [currentPage, setCurrentPage] = useState(1);
   const [user, setUser] = useState<GitHubUser | null>(null);
   const [isCollaborator, setIsCollaborator] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [selectedGalleryId, setSelectedGalleryId] = useState<string | null>(
-    null,
+    initialParams.get("galleryId"),
   );
   const [selectedContributor, setSelectedContributor] = useState<string | null>(
-    null,
+    initialParams.get("contributor"),
   );
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
-  const [selectedUserCollectionId, setSelectedUserCollectionId] = useState<string | null>(null);
+  const [selectedUserCollectionId, setSelectedUserCollectionId] = useState<string | null>(initialParams.get("collectionId"));
   const { isFavorite, toggleFavorite, favoritesCount } = useFavorites(!!user);
   const { getLikeCount, hasLiked, toggleLike } = useLikes(!!user);
   const { notifications, unreadCount, markAsRead, markAllAsRead } =
@@ -208,7 +216,8 @@ function AppInner() {
       else if (path === "/profil") setPage("profile");
       else if (path === "/admin") setPage("admin");
       else if (path === "/collections") setPage("collections");
-      else setPage("home");
+      else if (path === "/") setPage("home");
+      else setPage("404");
     };
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
@@ -250,12 +259,29 @@ function AppInner() {
     setCurrentPage(1);
   };
 
+  // Sync URL query params with gallery/collection/search state
+  const updateUrlParams = useCallback((path: string, params: Record<string, string | null>) => {
+    const url = new URL(window.location.href);
+    url.pathname = path;
+    // Clear old params
+    for (const key of ["galleryId", "contributor", "collectionId", "q"]) {
+      url.searchParams.delete(key);
+    }
+    for (const [key, value] of Object.entries(params)) {
+      if (value) url.searchParams.set(key, value);
+    }
+    window.history.pushState(null, "", url.pathname + url.search);
+  }, []);
+
   const handleSelectGallery = (id: string | null) => {
     setSelectedGalleryId(id);
     setSelectedUserCollectionId(null);
     setShowFavoritesOnly(false);
     setCurrentPage(1);
-    if (page !== "gallery") navigateTo("gallery");
+    if (page !== "gallery") {
+      navigateTo("gallery");
+    }
+    updateUrlParams("/gallery", { galleryId: id });
   };
 
   const handleSelectContributor = (contributor: string | null) => {
@@ -263,7 +289,10 @@ function AppInner() {
     setSelectedUserCollectionId(null);
     setShowFavoritesOnly(false);
     setCurrentPage(1);
-    if (page !== "gallery") navigateTo("gallery");
+    if (page !== "gallery") {
+      navigateTo("gallery");
+    }
+    updateUrlParams("/gallery", { contributor });
   };
 
   const handleSelectUserCollection = (id: string | null) => {
@@ -272,7 +301,10 @@ function AppInner() {
     setSelectedContributor(null);
     setShowFavoritesOnly(false);
     setCurrentPage(1);
-    if (id && page !== "collections") navigateTo("collections");
+    if (id && page !== "collections") {
+      navigateTo("collections");
+    }
+    updateUrlParams("/collections", { collectionId: id });
   };
   const [galleryDialogOpen, setGalleryDialogOpen] = useState(false);
   const [editingGallery, setEditingGallery] = useState<
@@ -526,6 +558,15 @@ function AppInner() {
     );
   }
 
+  // 404 page
+  if (page === "404") {
+    return (
+      <Suspense fallback={null}>
+        <NotFoundPage onGoHome={() => navigateTo("home")} onGoGallery={() => navigateTo("gallery")} />
+      </Suspense>
+    );
+  }
+
   // Test Discover Showcase page
   if (page === "test-discover") {
     return (
@@ -671,7 +712,7 @@ function AppInner() {
             onMarkAllRead={markAllAsRead}
             onGoFeedback={() => navigateTo("feedback")}
           />
-          <div className="flex flex-1 flex-col">
+          <main id="main-content" className="flex flex-1 flex-col">
             <div className="@container/main flex flex-1 flex-col gap-2">
               {page === "profile" ? (
                 <Suspense fallback={null}>
@@ -801,7 +842,7 @@ function AppInner() {
                 </div>
               )}
             </div>
-          </div>
+          </main>
         </SidebarInset>
 
         {uploadDialogOpen && (

@@ -445,19 +445,12 @@ export function HomePage({
             </div>
             <span className="text-xl font-black tracking-tighter">La Boite à Pictos</span>
           </div>
-          <div className="flex items-center gap-4">
-            <a
-              href="/confidentialite"
-              className="text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors"
-            >
-              Confidentialité
-            </a>
-            <a
-              href="/cookies"
-              className="text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors"
-            >
-              Cookies
-            </a>
+          <nav aria-label="Liens du pied de page" className="flex items-center gap-4 flex-wrap">
+            <a href="/discover" className="text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors">Découvrir</a>
+            <a href="/gallery" className="text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors">Galerie</a>
+            <a href="/feedback" className="text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors">Feedback</a>
+            <a href="/confidentialite" className="text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors">Confidentialité</a>
+            <a href="/cookies" className="text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors">Cookies</a>
             <span className="inline-flex items-center rounded-full border border-border bg-muted/50 px-2 py-0.5 text-[10px] font-mono text-muted-foreground/60 select-none">
               v{__APP_VERSION__}
             </span>
@@ -470,7 +463,7 @@ export function HomePage({
             >
               <Github className="w-4 h-4" />
             </a>
-          </div>
+          </nav>
         </div>
       </footer>
     </div>

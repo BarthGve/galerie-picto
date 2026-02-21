@@ -4,4 +4,4 @@ Disallow: /admin
 Disallow: /profil
 Disallow: /api/
 
-Sitemap: https://laboiteapictos.fr/sitemap.xml
+Sitemap: https://laboiteapictos.fr/api/sitemap.xml

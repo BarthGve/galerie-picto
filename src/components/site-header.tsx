@@ -54,6 +54,9 @@ export function SiteHeader({
 
   return (
     <header className="sticky top-0 z-30 flex shrink-0 items-center justify-between gap-2 px-6 py-4">
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded">
+        Aller au contenu principal
+      </a>
       <div className="flex items-center gap-4">
         <SidebarTrigger className="-ml-1" />
         <Separator orientation="vertical" className="mx-1 h-4" />
@@ -62,8 +65,9 @@ export function SiteHeader({
         <div className="relative group">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
           <input
-            type="text"
+            type="search"
             placeholder={`Rechercher parmi ${totalCount} pictogrammes...`}
+            aria-label="Rechercher des pictogrammes"
             value={query}
             onChange={handleChange}
             className="w-full md:w-[400px] h-11 bg-white border border-border rounded pl-11 pr-4 text-sm font-medium focus:outline-none focus:ring-4 focus:ring-ring/10 focus:border-primary transition-all shadow-sm dark:bg-card"
@@ -166,6 +170,7 @@ export function SiteHeader({
         <button
           onClick={() => setTheme(isDark ? "light" : "dark")}
           className="p-2 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+          aria-label={isDark ? "Passer en mode clair" : "Passer en mode sombre"}
         >
           {isDark ? <Sun className="size-4" /> : <Moon className="size-4" />}
         </button>

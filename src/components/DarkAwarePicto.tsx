@@ -6,6 +6,7 @@ interface DarkAwarePictoProps {
   className?: string;
   width?: number;
   height?: number;
+  alt?: string;
 }
 
 export function DarkAwarePicto({
@@ -13,13 +14,14 @@ export function DarkAwarePicto({
   className,
   width = 64,
   height = 64,
+  alt,
 }: DarkAwarePictoProps) {
   const url = usePictogramUrl(pictogram);
 
   return (
     <img
       src={url}
-      alt=""
+      alt={alt ?? pictogram.name ?? pictogram.filename.replace(/\.svg$/i, "")}
       width={width}
       height={height}
       loading="lazy"
