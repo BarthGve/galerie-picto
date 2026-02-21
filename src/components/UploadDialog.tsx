@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Upload, X, Plus, Loader2, FileUp, Check } from "lucide-react";
 import {
   Dialog,
@@ -22,6 +22,7 @@ import {
 import { uploadPictogram } from "@/lib/upload";
 import { API_URL } from "@/lib/config";
 import type { Gallery } from "@/lib/types";
+import { usePictogramsCtx } from "@/contexts/PictogramsContext";
 import { useTheme } from "@/hooks/use-theme";
 import { transformSvgToDark } from "@/lib/svg-dark-transform";
 
@@ -53,6 +54,29 @@ export function UploadDialog({
   // Tags state
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
+  const [showTagSuggestions, setShowTagSuggestions] = useState(false);
+
+  const { pictograms: allPictograms } = usePictogramsCtx();
+  const allExistingTags = useMemo(() => {
+    const set = new Set<string>();
+    for (const p of allPictograms) {
+      for (const tag of p.tags ?? []) set.add(tag);
+    }
+    return Array.from(set);
+  }, [allPictograms]);
+
+  const normalizeTag = (s: string) =>
+    s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+  const tagSuggestions = useMemo(() => {
+    const raw = tagInput.split(";").pop() ?? "";
+    const term = raw.trim();
+    if (!term) return [];
+    const normTerm = normalizeTag(term);
+    return allExistingTags
+      .filter((t) => !tags.includes(t) && normalizeTag(t).includes(normTerm))
+      .slice(0, 6);
+  }, [tagInput, allExistingTags, tags]);
 
   // Galleries state
   const [galleries, setGalleries] = useState<Gallery[]>([]);
@@ -214,11 +238,15 @@ export function UploadDialog({
   }, []);
 
   const handleAddTag = () => {
-    const trimmed = tagInput.trim();
-    if (trimmed && !tags.includes(trimmed)) {
-      setTags([...tags, trimmed]);
+    const newItems = tagInput
+      .split(";")
+      .map((t) => t.trim())
+      .filter((t) => t && !tags.includes(t));
+    if (newItems.length > 0) {
+      setTags([...tags, ...newItems]);
     }
     setTagInput("");
+    setShowTagSuggestions(false);
   };
 
   const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -549,14 +577,45 @@ export function UploadDialog({
                 <label className="block text-xs text-muted-foreground mb-1">
                   Tags / Mots-clés
                 </label>
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Ajouter un tag..."
-                    value={tagInput}
-                    onChange={(e) => setTagInput(e.target.value)}
-                    onKeyDown={handleTagKeyDown}
-                    disabled={uploading}
-                  />
+                <div className="relative flex gap-2">
+                  <div className="relative flex-1">
+                    <Input
+                      placeholder="Ajouter un tag… ou plusieurs séparés par ;"
+                      value={tagInput}
+                      onChange={(e) => {
+                        setTagInput(e.target.value);
+                        setShowTagSuggestions(true);
+                      }}
+                      onKeyDown={handleTagKeyDown}
+                      onFocus={() => setShowTagSuggestions(true)}
+                      onBlur={() => setTimeout(() => setShowTagSuggestions(false), 150)}
+                      disabled={uploading}
+                    />
+                    {showTagSuggestions && tagSuggestions.length > 0 && (
+                      <ul className="absolute z-50 top-full left-0 right-0 mt-1 bg-popover border border-border rounded shadow-md overflow-hidden text-sm">
+                        {tagSuggestions.map((suggestion) => (
+                          <li
+                            key={suggestion}
+                            onMouseDown={() => {
+                              const parts = tagInput.split(";");
+                              parts[parts.length - 1] = suggestion;
+                              const newItems = parts
+                                .map((t) => t.trim())
+                                .filter((t) => t && !tags.includes(t));
+                              if (newItems.length > 0) {
+                                setTags([...tags, ...newItems]);
+                              }
+                              setTagInput("");
+                              setShowTagSuggestions(false);
+                            }}
+                            className="px-3 py-1.5 cursor-pointer hover:bg-accent"
+                          >
+                            {suggestion}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                   <Button
                     type="button"
                     variant="outline"
