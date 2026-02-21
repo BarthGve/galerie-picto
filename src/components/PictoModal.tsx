@@ -485,6 +485,7 @@ const handleDownloadSvg = () => {
   };
 
   const showGallerySelector =
+    !isPrivate &&
     isAuthenticated &&
     galleries &&
     galleries.length > 0 &&
