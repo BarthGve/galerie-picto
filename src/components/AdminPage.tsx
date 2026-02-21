@@ -55,7 +55,7 @@ function KpiCard({
         <Icon className="size-3.5" />
         {label}
       </div>
-      <p className="text-2xl font-extrabold tracking-tight" style={{ color: "var(--dsfr-blue-france-main)" }}>
+      <p className="text-2xl font-extrabold tracking-tight text-primary">
         {value.toLocaleString("fr-FR")}
       </p>
       {sub && <p className="text-xs text-muted-foreground">{sub}</p>}
@@ -73,7 +73,7 @@ function TopList({
   if (items.length === 0) {
     return (
       <div>
-        <h3 className="text-sm font-semibold mb-3" style={{ color: "var(--dsfr-blue-france-main)" }}>{title}</h3>
+        <h3 className="text-sm font-semibold mb-3 text-primary">{title}</h3>
         <p className="text-xs text-muted-foreground">Aucune donnée.</p>
       </div>
     );
@@ -81,7 +81,7 @@ function TopList({
   const max = items[0].count;
   return (
     <div>
-      <h3 className="text-sm font-semibold mb-3" style={{ color: "var(--dsfr-blue-france-main)" }}>{title}</h3>
+      <h3 className="text-sm font-semibold mb-3 text-primary">{title}</h3>
       <div className="space-y-2">
         {items.map((item, idx) => {
           const pct = max > 0 ? Math.round((item.count / max) * 100) : 0;
@@ -413,7 +413,7 @@ export function AdminPage() {
               <LayoutDashboard className="size-3.5" />
               Administration
             </div>
-            <h1 className="text-2xl font-black tracking-tight" style={{ color: "var(--dsfr-blue-france-main)" }}>
+            <h1 className="text-2xl font-black tracking-tight text-primary">
               Tableau de bord
             </h1>
           </div>
@@ -533,7 +533,7 @@ export function AdminPage() {
                   <TopList title="Top téléchargements" items={stats.downloads.topPictograms} />
                   {stats.pictograms.neverDownloaded.length > 0 && (
                     <div>
-                      <h3 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: "var(--dsfr-blue-france-main)" }}>
+                      <h3 className="text-sm font-semibold mb-3 flex items-center gap-2 text-primary">
                         Jamais téléchargés
                         <span className="inline-flex items-center justify-center rounded-full bg-primary/10 text-primary text-[10px] font-bold px-2 py-0.5 leading-none">
                           {stats.pictograms.neverDownloaded.length}
@@ -569,7 +569,7 @@ export function AdminPage() {
               </div>
             ) : stats ? (
               <div className="rounded-xl border border-border bg-card p-5 space-y-4">
-                <h3 className="text-sm font-semibold" style={{ color: "var(--dsfr-blue-france-main)" }}>
+                <h3 className="text-sm font-semibold text-primary">
                   Activité récente
                 </h3>
                 <div className="space-y-3">

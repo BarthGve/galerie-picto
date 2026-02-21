@@ -613,7 +613,7 @@ export function FeedbackPage({
       <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8 pt-8">
         {/* Header */}
         <div className="mb-8 space-y-1">
-          <h1 className="text-2xl font-black tracking-tight text-foreground">
+          <h1 className="text-2xl font-black tracking-tight text-primary">
             Signalements
           </h1>
           <p className="text-sm text-muted-foreground">

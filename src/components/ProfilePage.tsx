@@ -76,7 +76,7 @@ export function ProfilePage({ onDeleted }: ProfilePageProps) {
   return (
     <div className="flex-1 overflow-y-auto pb-12">
       <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 pt-6">
-        <h1 className="text-2xl font-bold text-foreground mb-8">Mon profil</h1>
+        <h1 className="text-2xl font-bold text-primary mb-8">Mon profil</h1>
 
         {loading && (
           <div className="flex items-center justify-center py-24">
