@@ -95,8 +95,8 @@ export function CollectionFormDialog({
       <DialogContent className="sm:max-w-sm" aria-describedby={undefined}>
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-3 text-primary">
-              <div className="w-9 h-9 rounded-[4px] bg-primary/20 backdrop-blur-md border border-primary/30 flex items-center justify-center text-primary shrink-0">
+            <DialogTitle className="flex items-center gap-3 text-tertiary">
+              <div className="w-9 h-9 rounded-[4px] bg-tertiary/20 backdrop-blur-md border border-tertiary/30 flex items-center justify-center text-tertiary shrink-0">
                 <Icon className="w-4 h-4" />
               </div>
               {title}

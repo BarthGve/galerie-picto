@@ -82,10 +82,10 @@ function SectionHeader({
   return (
     <div className="flex items-center justify-between mb-6">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded bg-primary/80 backdrop-blur-sm flex items-center justify-center text-primary-foreground shadow-lg ring-1 ring-primary/20 shrink-0">
+        <div className="w-10 h-10 rounded bg-tertiary/80 backdrop-blur-sm flex items-center justify-center text-tertiary-foreground shadow-lg ring-1 ring-tertiary/20 shrink-0">
           <Icon className="w-5 h-5" />
         </div>
-        <h2 className="text-xl font-extrabold tracking-tight text-primary">
+        <h2 className="text-xl font-extrabold tracking-tight text-tertiary">
           {title}
         </h2>
       </div>
@@ -285,7 +285,7 @@ export function DiscoverPage({
       <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-10">
-          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-primary">
+          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-tertiary">
             Découvrir
           </h1>
           <p className="mt-2 text-lg text-muted-foreground font-medium">
@@ -418,7 +418,7 @@ export function DiscoverPage({
               </div>
               <button
                 onClick={() => onNavigateGallery()}
-                className="w-full mt-4 btn-cta group relative px-6 py-2.5 rounded bg-primary text-primary-foreground font-bold text-sm overflow-hidden shadow-lg transition-all hover:scale-[1.02] active:scale-95"
+                className="w-full mt-4 px-6 py-2.5 rounded bg-primary hover:bg-(--primary-hover) active:bg-(--primary-active) text-primary-foreground font-bold text-sm shadow-lg transition-all hover:scale-[1.02] active:scale-95"
               >
                 <span className="relative z-10 flex items-center justify-center gap-2">
                   Voir tout <TrendingUp className="w-4 h-4" />
@@ -504,7 +504,7 @@ export function DiscoverPage({
                           style={{ backgroundColor: gallery.color }}
                         />
                       )}
-                      <h3 className="text-base font-extrabold text-primary truncate">
+                      <h3 className="text-base font-extrabold tracking-tight text-tertiary truncate">
                         {gallery.name}
                       </h3>
                     </div>
@@ -541,10 +541,10 @@ export function DiscoverPage({
           {topTags.length > 0 && (
             <BentoCard className="md:col-span-2 lg:col-span-2 hover:!shadow-sm hover:!translate-y-0 bg-[var(--dsfr-blue-france-975)] dark:bg-[var(--dsfr-blue-france-main)]/[0.08]">
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded bg-primary/80 backdrop-blur-sm flex items-center justify-center text-primary-foreground shadow-lg ring-1 ring-primary/20">
+                <div className="w-10 h-10 rounded bg-tertiary/80 backdrop-blur-sm flex items-center justify-center text-tertiary-foreground shadow-lg ring-1 ring-tertiary/20">
                   <Tag className="w-5 h-5" />
                 </div>
-                <h2 className="text-xl font-extrabold tracking-tight text-primary">
+                <h2 className="text-xl font-extrabold tracking-tight text-tertiary">
                   Tags populaires
                 </h2>
               </div>
@@ -597,7 +597,7 @@ export function DiscoverPage({
 
                 <div className="flex-1 text-center lg:text-left space-y-3">
                   <div>
-                    <h3 className="text-2xl md:text-3xl font-black text-foreground tracking-tight">
+                    <h3 className="text-2xl md:text-3xl font-extrabold tracking-tight text-tertiary">
                       {topContributorProfile?.name || topContributor.username}
                     </h3>
                     <p className="text-github-accent font-bold">

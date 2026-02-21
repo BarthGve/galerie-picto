@@ -68,7 +68,16 @@ const CookiesPage = lazy(() =>
 const AdminPage = lazy(() =>
   import("@/components/AdminPage").then((m) => ({ default: m.AdminPage })),
 );
-type Page = "home" | "discover" | "gallery" | "test-discover" | "feedback" | "privacy" | "cookies" | "profile" | "admin";
+const CollectionsPage = lazy(() =>
+  import("@/components/CollectionsPage").then((m) => ({
+    default: m.CollectionsPage,
+  })),
+);
+
+const normalizeSearch = (s: string) =>
+  s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+type Page = "home" | "discover" | "gallery" | "collections" | "test-discover" | "feedback" | "privacy" | "cookies" | "profile" | "admin";
 
 function getInitialPage(): Page {
   const path = window.location.pathname;
@@ -80,6 +89,7 @@ function getInitialPage(): Page {
   if (path === "/cookies") return "cookies";
   if (path === "/profil") return "profile";
   if (path === "/admin") return "admin";
+  if (path === "/collections") return "collections";
   // OAuth callback → go straight to discover
   if (new URLSearchParams(window.location.search).has("code")) return "discover";
   return "home";
@@ -196,6 +206,7 @@ function AppInner() {
       else if (path === "/cookies") setPage("cookies");
       else if (path === "/profil") setPage("profile");
       else if (path === "/admin") setPage("admin");
+      else if (path === "/collections") setPage("collections");
       else setPage("home");
     };
     window.addEventListener("popstate", onPopState);
@@ -220,7 +231,9 @@ function AppInner() {
                   ? "/profil"
                   : target === "admin"
                     ? "/admin"
-                    : "/";
+                    : target === "collections"
+                      ? "/collections"
+                      : "/";
     window.history.pushState(null, "", path);
     setPage(target);
     if (target === "discover" || target === "home") {
@@ -258,7 +271,7 @@ function AppInner() {
     setSelectedContributor(null);
     setShowFavoritesOnly(false);
     setCurrentPage(1);
-    if (page !== "gallery") navigateTo("gallery");
+    if (id && page !== "collections") navigateTo("collections");
   };
   const [galleryDialogOpen, setGalleryDialogOpen] = useState(false);
   const [editingGallery, setEditingGallery] = useState<
@@ -358,12 +371,8 @@ function AppInner() {
     }
   };
 
-  const filteredPictograms = useMemo(() => {
+  const filteredPictogramsGallery = useMemo(() => {
     let result = pictograms;
-
-    if (showFavoritesOnly) {
-      result = result.filter((picto) => isFavorite(picto.id));
-    }
 
     if (selectedGalleryId) {
       const gallery = galleries.find((g) => g.id === selectedGalleryId);
@@ -371,6 +380,35 @@ function AppInner() {
         const pictoIdsInGallery = new Set(gallery.pictogramIds);
         result = result.filter((picto) => pictoIdsInGallery.has(picto.id));
       }
+    }
+
+    if (selectedContributor) {
+      result = result.filter(
+        (picto) => picto.contributor?.githubUsername === selectedContributor,
+      );
+    }
+
+    if (searchQuery) {
+      const query = normalizeSearch(searchQuery);
+      result = result.filter(
+        (picto) =>
+          normalizeSearch(picto.name).includes(query) ||
+          normalizeSearch(picto.id).includes(query) ||
+          normalizeSearch(picto.filename).includes(query) ||
+          picto.tags?.some((tag) => normalizeSearch(tag).includes(query)) ||
+          (picto.contributor &&
+            normalizeSearch(picto.contributor.githubUsername).includes(query)),
+      );
+    }
+
+    return result;
+  }, [pictograms, searchQuery, selectedGalleryId, selectedContributor, galleries]);
+
+  const filteredPictogramsCollections = useMemo(() => {
+    let result = pictograms;
+
+    if (showFavoritesOnly) {
+      result = result.filter((picto) => isFavorite(picto.id));
     }
 
     if (selectedUserCollectionId) {
@@ -397,27 +435,16 @@ function AppInner() {
       }
     }
 
-    if (selectedContributor) {
-      result = result.filter(
-        (picto) => picto.contributor?.githubUsername === selectedContributor,
-      );
-    }
-
     if (searchQuery) {
-      const normalize = (s: string) =>
-        s
-          .toLowerCase()
-          .normalize("NFD")
-          .replace(/[\u0300-\u036f]/g, "");
-      const query = normalize(searchQuery);
+      const query = normalizeSearch(searchQuery);
       result = result.filter(
         (picto) =>
-          normalize(picto.name).includes(query) ||
-          normalize(picto.id).includes(query) ||
-          normalize(picto.filename).includes(query) ||
-          picto.tags?.some((tag) => normalize(tag).includes(query)) ||
+          normalizeSearch(picto.name).includes(query) ||
+          normalizeSearch(picto.id).includes(query) ||
+          normalizeSearch(picto.filename).includes(query) ||
+          picto.tags?.some((tag) => normalizeSearch(tag).includes(query)) ||
           (picto.contributor &&
-            normalize(picto.contributor.githubUsername).includes(query)),
+            normalizeSearch(picto.contributor.githubUsername).includes(query)),
       );
     }
 
@@ -425,16 +452,24 @@ function AppInner() {
   }, [
     pictograms,
     searchQuery,
-    selectedGalleryId,
-    selectedContributor,
     showFavoritesOnly,
     isFavorite,
-    galleries,
     selectedUserCollectionId,
     userCollections,
     userPictograms,
     blobUrls,
   ]);
+
+  const collectionsPrivateIds = useMemo(
+    () =>
+      selectedUserCollectionId
+        ? new Set(
+            userCollections.find((c) => c.id === selectedUserCollectionId)
+              ?.userPictogramIds ?? [],
+          )
+        : undefined,
+    [selectedUserCollectionId, userCollections],
+  );
 
   // Legal pages — avec header/footer landing
   if (page === "privacy") {
@@ -570,10 +605,10 @@ function AppInner() {
           favoritesCount={favoritesCount}
           showFavoritesOnly={showFavoritesOnly}
           onToggleFavorites={() => {
-            setShowFavoritesOnly((prev) => !prev);
+            setShowFavoritesOnly(true);
             setSelectedUserCollectionId(null);
             setCurrentPage(1);
-            if (page !== "gallery") navigateTo("gallery");
+            if (page !== "collections") navigateTo("collections");
           }}
           userCollections={userCollections}
           selectedUserCollectionId={selectedUserCollectionId}
@@ -641,6 +676,35 @@ function AppInner() {
                     onToggleLike={user ? toggleLike : undefined}
                   />
                 </Suspense>
+              ) : page === "collections" ? (
+                <Suspense fallback={null}>
+                  <CollectionsPage
+                    user={user}
+                    onGoGallery={() => navigateTo("gallery")}
+                    selectedUserCollectionId={selectedUserCollectionId}
+                    showFavoritesOnly={showFavoritesOnly}
+                    setShowFavoritesOnly={setShowFavoritesOnly}
+                    userCollections={userCollections}
+                    filteredPictograms={filteredPictogramsCollections}
+                    galleries={galleries}
+                    isAuthenticated={!!user}
+                    onPictogramUpdated={handlePictogramUpdatedInGallery}
+                    currentPage={currentPage}
+                    onPageChange={setCurrentPage}
+                    isFavorite={isFavorite}
+                    onToggleFavorite={toggleFavorite}
+                    onLogin={handleLogin}
+                    onAddToUserCollection={user ? addToUserCollection : undefined}
+                    onRemoveFromUserCollection={user ? removeFromUserCollection : undefined}
+                    getLikeCount={getLikeCount}
+                    hasLiked={hasLiked}
+                    onToggleLike={user ? toggleLike : undefined}
+                    privateIds={collectionsPrivateIds}
+                    onDeletePrivatePictogram={selectedUserCollectionId ? handleDeleteUserPictogram : undefined}
+                    onUploadSvgClick={() => setUserPictoUploadOpen(true)}
+                    onDeletePictogram={user ? handleDeletePictogram : undefined}
+                  />
+                </Suspense>
               ) : (
                 <div className="flex-1 overflow-y-auto pb-12">
                   {/* En-tête de galerie équipe */}
@@ -654,7 +718,7 @@ function AppInner() {
                             className="size-3 shrink-0 rounded-full"
                             style={{ backgroundColor: gal.color ?? "var(--muted-foreground)", opacity: gal.color ? 1 : 0.4 }}
                           />
-                          <h2 className="font-extrabold text-lg text-foreground leading-tight">{gal.name}</h2>
+                          <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-tertiary">{gal.name}</h2>
                           <span className="text-xs text-muted-foreground font-medium">{gal.pictogramIds.length} picto{gal.pictogramIds.length !== 1 ? "s" : ""}</span>
                         </div>
                         {gal.description && (
@@ -663,54 +727,16 @@ function AppInner() {
                       </div>
                     );
                   })()}
-                  {/* En-tête de collection utilisateur */}
-                  {selectedUserCollectionId && (() => {
-                    const col = userCollections.find(c => c.id === selectedUserCollectionId);
-                    if (!col) return null;
-                    return (
-                      <>
-                        <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8 pt-6 pb-2">
-                          <div className="flex items-center gap-3 mb-1">
-                            <span
-                              className="size-3 shrink-0 rounded-full"
-                              style={{ backgroundColor: col.color ?? "var(--muted-foreground)", opacity: col.color ? 1 : 0.4 }}
-                            />
-                            <h2 className="font-extrabold text-lg text-foreground leading-tight">{col.name}</h2>
-                            <span className="text-xs text-muted-foreground font-medium">
-                              {col.pictogramIds.length + col.userPictogramIds.length} picto{(col.pictogramIds.length + col.userPictogramIds.length) !== 1 ? "s" : ""}
-                            </span>
-                            <button
-                              onClick={() => setUserPictoUploadOpen(true)}
-                              className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] bg-primary text-primary-foreground text-xs font-bold hover:opacity-90 transition-opacity"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                              Ajouter un SVG perso
-                            </button>
-                          </div>
-                          {col.description && (
-                            <p className="text-sm text-muted-foreground pl-6">{col.description}</p>
-                          )}
-                        </div>
-
-                      </>
-                    );
-                  })()}
                   {/* En-tête Tous les pictos */}
-                  {!selectedGalleryId && !selectedUserCollectionId && !showFavoritesOnly && (
+                  {!selectedGalleryId && !selectedContributor && (
                     <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8 pt-6 pb-2">
-                      <h2 className="font-extrabold text-lg text-primary leading-tight">Tous les pictos</h2>
-                    </div>
-                  )}
-                  {/* En-tête Mes Favoris */}
-                  {showFavoritesOnly && (
-                    <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8 pt-6 pb-2">
-                      <h2 className="font-extrabold text-lg text-primary leading-tight">Mes Favoris</h2>
+                      <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-tertiary">Tous les pictos</h2>
                     </div>
                   )}
                   <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8">
                     <PictoGrid
-                      key={`${selectedGalleryId ?? "all"}|${selectedUserCollectionId ?? ""}|${showFavoritesOnly ? "fav" : ""}`}
-                      pictograms={filteredPictograms}
+                      key={`${selectedGalleryId ?? "all"}|${selectedContributor ?? ""}`}
+                      pictograms={filteredPictogramsGallery}
                       galleries={galleries}
                       onAddToGallery={addPictogramToGallery}
                       onRemoveFromGallery={removePictogramFromGallery}
@@ -732,10 +758,6 @@ function AppInner() {
                       getLikeCount={getLikeCount}
                       hasLiked={hasLiked}
                       onToggleLike={user ? toggleLike : undefined}
-                      privateIds={selectedUserCollectionId ? new Set(
-                        userCollections.find(c => c.id === selectedUserCollectionId)?.userPictogramIds ?? []
-                      ) : undefined}
-                      onDeletePrivatePictogram={selectedUserCollectionId ? handleDeleteUserPictogram : undefined}
                     />
                   </div>
                 </div>

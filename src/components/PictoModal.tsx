@@ -657,7 +657,7 @@ const handleDownloadSvg = () => {
               </div>
             ) : (
               <>
-                <DialogTitle className="text-lg font-bold text-primary">
+                <DialogTitle className="text-lg font-bold text-tertiary">
                   {pictogram.name || pictogram.filename.replace(/\.svg$/i, "")}
                 </DialogTitle>
                 {isAuthenticated && (
@@ -685,7 +685,7 @@ const handleDownloadSvg = () => {
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>
+                    <AlertDialogTitle className="text-tertiary">
                       Supprimer ce pictogramme ?
                     </AlertDialogTitle>
                     <AlertDialogDescription>
@@ -934,7 +934,7 @@ const handleDownloadSvg = () => {
                   <button
                     onClick={handleDownloadSvg}
                     disabled={!svgLoaded}
-                    className="h-9 flex-1 flex items-center justify-center gap-2 rounded-[4px] text-xs font-bold text-primary-foreground transition-all hover:opacity-90 disabled:opacity-50 bg-primary"
+                    className="h-9 flex-1 flex items-center justify-center gap-2 rounded-[4px] text-xs font-bold text-primary-foreground transition-all bg-primary hover:bg-(--primary-hover) active:bg-(--primary-active) disabled:opacity-50"
                   >
                     <Download className="w-3.5 h-3.5" />
                     SVG
@@ -954,7 +954,7 @@ const handleDownloadSvg = () => {
                   <button
                     onClick={handleDownloadPng}
                     disabled={!svgLoaded}
-                    className="h-9 flex-1 flex items-center justify-center gap-2 rounded-[4px] text-xs font-bold text-primary-foreground transition-all hover:opacity-90 disabled:opacity-50 bg-primary"
+                    className="h-9 flex-1 flex items-center justify-center gap-2 rounded-[4px] text-xs font-bold text-primary-foreground transition-all bg-primary hover:bg-(--primary-hover) active:bg-(--primary-active) disabled:opacity-50"
                   >
                     <Download className="w-3.5 h-3.5" />
                     PNG
@@ -966,7 +966,7 @@ const handleDownloadSvg = () => {
                     {/* SVG verrouillé */}
                     <button
                       onClick={() => setUpgradeGateOpen(true)}
-                      className="h-9 flex-1 flex items-center justify-center gap-2 rounded-[4px] text-xs font-bold text-primary-foreground opacity-60 hover:opacity-80 transition-opacity bg-primary"
+                      className="h-9 flex-1 flex items-center justify-center gap-2 rounded-[4px] text-xs font-bold text-primary-foreground transition-all bg-primary/60 hover:bg-primary/75 cursor-not-allowed"
                     >
                       <Lock className="w-3.5 h-3.5" />
                       SVG
@@ -986,7 +986,7 @@ const handleDownloadSvg = () => {
                     <button
                       onClick={handleDownloadPngAnonymous}
                       disabled={anonDownloadsRemaining === null || anonDownloadsRemaining === 0}
-                      className="h-9 flex-1 flex items-center justify-center gap-2 rounded-[4px] text-xs font-bold text-primary-foreground transition-all hover:opacity-90 disabled:opacity-50 bg-primary"
+                      className="h-9 flex-1 flex items-center justify-center gap-2 rounded-[4px] text-xs font-bold text-primary-foreground transition-all bg-primary hover:bg-(--primary-hover) active:bg-(--primary-active) disabled:opacity-50"
                     >
                       <Download className="w-3.5 h-3.5" />
                       PNG (128 px)

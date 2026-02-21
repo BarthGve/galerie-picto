@@ -379,7 +379,7 @@ export function UploadDialog({
       )}
       <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-y-auto" aria-describedby={undefined}>
         <DialogHeader>
-          <DialogTitle>Ajouter un pictogramme</DialogTitle>
+          <DialogTitle className="text-tertiary">Ajouter un pictogramme</DialogTitle>
         </DialogHeader>
 
         {/* Drop zone - full width when no file */}

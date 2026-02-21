@@ -34,6 +34,12 @@
     --muted: var(--dsfr-grey-975);
     --muted-foreground: var(--dsfr-grey-425);
 
+    /* ── Tertiary : Blue France Sun 113 ── */
+    --tertiary: var(--dsfr-blue-france-sun);
+    --tertiary-hover: var(--dsfr-blue-france-sun-hover);
+    --tertiary-active: var(--dsfr-blue-france-sun-active);
+    --tertiary-foreground: #ffffff;
+
     /* ── Accent : Blue France 925 ── */
     --accent: var(--dsfr-blue-france-925);
     --accent-foreground: var(--dsfr-grey-50);
@@ -121,6 +127,12 @@
     --muted: #2a2a2a;
     --muted-foreground: #929292;
 
+    /* ── Tertiary : Blue France Sun 113 ── */
+    --tertiary: var(--dsfr-blue-france-sun);
+    --tertiary-hover: var(--dsfr-blue-france-sun-hover);
+    --tertiary-active: var(--dsfr-blue-france-sun-active);
+    --tertiary-foreground: #ffffff;
+
     /* ── Accent ── */
     --accent: #1b1b35;
     --accent-foreground: #e5e5e5;
@@ -197,6 +209,8 @@
     --color-muted: var(--muted);
     --color-secondary-foreground: var(--secondary-foreground);
     --color-secondary: var(--secondary);
+    --color-tertiary-foreground: var(--tertiary-foreground);
+    --color-tertiary: var(--tertiary);
     --color-primary-foreground: var(--primary-foreground);
     --color-primary: var(--primary);
     --color-popover-foreground: var(--popover-foreground);

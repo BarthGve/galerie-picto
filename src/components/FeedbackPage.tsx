@@ -126,45 +126,53 @@ function IssuesList({
         <div className="space-y-3">
           {items.map((item) => {
             const inner = (
-              <div className="flex items-start gap-3">
-                <div className="mt-0.5 shrink-0">
-                  {item.type === "bug" ? (
-                    <Bug className="size-4 text-orange-500" />
-                  ) : (
-                    <Sparkles className="size-4 text-[#6a6af4]" />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className={`font-medium text-sm text-foreground truncate${isCollaborator ? " group-hover:text-primary transition-colors" : ""}`}>
-                      {item.title}
-                    </span>
-                    {item.status === "resolved" ? (
-                      <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-[10px] px-1.5 py-0 shrink-0">
-                        <CheckCircle2 className="size-3 mr-1" />
-                        Résolu
-                      </Badge>
+              <div className="grid grid-cols-2 gap-4 items-start">
+                {/* Colonne signalement */}
+                <div className="flex items-start gap-3 min-w-0">
+                  <div className="mt-0.5 shrink-0">
+                    {item.type === "bug" ? (
+                      <Bug className="size-4 text-orange-500" />
                     ) : (
-                      <Badge
-                        variant="outline"
-                        className="text-orange-600 border-orange-300 bg-orange-50 text-[10px] px-1.5 py-0 shrink-0"
-                      >
-                        <Clock className="size-3 mr-1" />
-                        En cours
-                      </Badge>
+                      <Sparkles className="size-4 text-primary" />
                     )}
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Signalé par{" "}
-                    <span className="font-medium">@{item.reportedBy}</span>
-                    {" · "}
-                    {formatDate(item.createdAt)}
-                  </p>
-                  {item.status === "resolved" && item.resolution && (
-                    <p className="text-xs text-muted-foreground mt-2 line-clamp-2">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className={`font-medium text-sm text-foreground truncate${isCollaborator ? " group-hover:text-primary transition-colors" : ""}`}>
+                        {item.title}
+                      </span>
+                      {item.status === "resolved" ? (
+                        <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-[10px] px-1.5 py-0 shrink-0">
+                          <CheckCircle2 className="size-3 mr-1" />
+                          Résolu
+                        </Badge>
+                      ) : (
+                        <Badge
+                          variant="outline"
+                          className="text-orange-600 border-orange-300 bg-orange-50 text-[10px] px-1.5 py-0 shrink-0"
+                        >
+                          <Clock className="size-3 mr-1" />
+                          En cours
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Signalé par{" "}
+                      <span className="font-medium">@{item.reportedBy}</span>
+                      {" · "}
+                      {formatDate(item.createdAt)}
+                    </p>
+                  </div>
+                </div>
+                {/* Colonne résolution */}
+                <div className="min-w-0">
+                  {item.status === "resolved" && item.resolution ? (
+                    <p className="text-xs text-muted-foreground line-clamp-3">
                       <span className="font-medium text-foreground">Résolution :</span>{" "}
                       {item.resolution}
                     </p>
+                  ) : (
+                    <span className="text-xs text-muted-foreground/40 italic">—</span>
                   )}
                 </div>
               </div>
@@ -535,12 +543,12 @@ function FormView({ onBack }: { onBack: () => void }) {
           onClick={() => setFormType("improvement")}
           className={`rounded border-2 p-4 text-left transition-all ${
             formType === "improvement"
-              ? "border-[#6a6af4] bg-[#e3e3fd]/40"
-              : "border-border hover:border-[#6a6af4]/50 hover:bg-[#e3e3fd]/20"
+              ? "border-primary bg-accent/40"
+              : "border-border hover:border-primary/50 hover:bg-accent/20"
           }`}
         >
           <Sparkles
-            className={`size-5 mb-2 ${formType === "improvement" ? "text-[#6a6af4]" : "text-muted-foreground"}`}
+            className={`size-5 mb-2 ${formType === "improvement" ? "text-primary" : "text-muted-foreground"}`}
           />
           <p className="font-semibold text-sm text-foreground">
             Demander une amélioration
@@ -613,7 +621,7 @@ export function FeedbackPage({
       <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8 pt-8">
         {/* Header */}
         <div className="mb-8 space-y-1">
-          <h1 className="text-2xl font-black tracking-tight text-primary">
+          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-tertiary">
             Signalements
           </h1>
           <p className="text-sm text-muted-foreground">
