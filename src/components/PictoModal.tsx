@@ -17,6 +17,9 @@ import {
   X,
   Plus,
   Trash2,
+  FileType,
+  HardDrive,
+  Calendar,
 } from "lucide-react";
 import {
   Dialog,
@@ -27,7 +30,6 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
   AlertDialog,
@@ -620,148 +622,60 @@ const handleDownloadSvg = () => {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-y-auto rounded border-border" aria-describedby={undefined}>
-        <DialogHeader>
-          <div className="flex items-center gap-2">
-            {editingName ? (
-              <div className="flex items-center gap-2 flex-1">
-                <Input
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  disabled={savingName}
-                  className="h-8 text-lg font-semibold"
-                  placeholder="Titre du pictogramme"
-                />
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleSaveName}
-                  disabled={savingName || !name.trim()}
-                >
-                  <Check className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setEditingName(false);
-                    setName(
-                      pictogram.name ||
-                        pictogram.filename.replace(/\.svg$/i, ""),
-                    );
-                  }}
-                  disabled={savingName}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            ) : (
-              <>
-                <DialogTitle className="text-lg font-bold text-tertiary">
-                  {pictogram.name || pictogram.filename.replace(/\.svg$/i, "")}
-                </DialogTitle>
-                {isAuthenticated && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-primary"
-                    onClick={() => setEditingName(true)}
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                )}
-              </>
-            )}
-            {isAuthenticated && onDeletePictogram && (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle className="text-tertiary">
-                      Supprimer ce pictogramme ?
-                    </AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Cette action est irréversible. Le pictogramme sera
-                      supprimé définitivement du CDN et de toutes les galeries.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Annuler</AlertDialogCancel>
-                    <AlertDialogAction
-                      className="bg-destructive text-white hover:bg-destructive/90"
-                      onClick={async () => {
-                        const success = await onDeletePictogram(pictogram.id);
-                        if (success) {
-                          toast.success("Pictogramme supprimé");
-                          onClose();
-                        }
-                      }}
-                    >
-                      Supprimer
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            )}
-          </div>
-        </DialogHeader>
-
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr] gap-6">
-          {/* Left column - Preview + Color customization */}
-          <div className="flex flex-col gap-4">
+      <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-y-auto rounded-xl border-border shadow-[0_20px_60px_rgba(0,0,0,0.1)] p-0" aria-describedby={undefined}>
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr]">
+          {/* ── Left column — Preview + Contributor ── */}
+          <div className="flex flex-col bg-gradient-to-b from-muted/30 to-card min-h-[400px]">
             {/* Live preview */}
-            <div className="relative flex items-center justify-center rounded py-12">
-              <img
-                src={previewBlobUrl || displayUrl}
-                alt={
-                  pictogram.name || pictogram.filename.replace(/\.svg$/i, "")
-                }
-                className="w-48 h-48 object-contain drop-shadow-sm"
-              />
-              {isAuthenticated && svgLoaded && (
-                <Popover open={showColorPopover} onOpenChange={setShowColorPopover}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <PopoverTrigger asChild>
-                        <button
-                          className={`absolute bottom-3 right-3 w-8 h-8 flex items-center justify-center rounded-[4px] bg-background border transition-colors shadow-sm ${modifiedSvg ? "text-primary border-primary/60" : "border-border text-muted-foreground hover:text-primary hover:border-primary"}`}
-                        >
-                          <Palette className="w-4 h-4" />
-                        </button>
-                      </PopoverTrigger>
-                    </TooltipTrigger>
-                    <TooltipContent side="right">
-                      {modifiedSvg ? "Couleurs personnalisées" : "Personnaliser les couleurs"}
-                    </TooltipContent>
-                  </Tooltip>
-                  <PopoverContent className="w-80" side="right" align="end" sideOffset={8}>
-                    <Suspense
-                      fallback={
-                        <div className="h-20 flex items-center justify-center text-xs text-muted-foreground">
-                          Chargement…
-                        </div>
-                      }
-                    >
-                      {svgCacheRef.current && (
-                        <ColorCustomizer
-                          svgText={svgCacheRef.current}
-                          onModifiedSvgChange={handleModifiedSvgChange}
-                        />
-                      )}
-                    </Suspense>
-                  </PopoverContent>
-                </Popover>
-            )}
+            <div className="flex-1 flex items-center justify-center p-12">
+              <div className="relative">
+                <img
+                  src={previewBlobUrl || displayUrl}
+                  alt={pictogram.name || pictogram.filename.replace(/\.svg$/i, "")}
+                  className="w-48 h-48 object-contain drop-shadow-sm"
+                />
+
+                {/* Palette button — bottom right of the pictogram */}
+                {isAuthenticated && svgLoaded && (
+                  <Popover open={showColorPopover} onOpenChange={setShowColorPopover}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <PopoverTrigger asChild>
+                          <button
+                            className={`absolute -bottom-4 -right-4 w-9 h-9 flex items-center justify-center rounded-xl bg-card shadow-md border transition-colors ${modifiedSvg ? "text-primary border-primary/60" : "border-border text-muted-foreground hover:text-primary hover:border-primary"}`}
+                          >
+                            <Palette className="w-4 h-4" />
+                          </button>
+                        </PopoverTrigger>
+                      </TooltipTrigger>
+                      <TooltipContent side="right">
+                        {modifiedSvg ? "Couleurs personnalisées" : "Personnaliser les couleurs"}
+                      </TooltipContent>
+                    </Tooltip>
+                    <PopoverContent className="w-80" side="right" align="end" sideOffset={8}>
+                      <Suspense
+                        fallback={
+                          <div className="h-20 flex items-center justify-center text-xs text-muted-foreground">
+                            Chargement…
+                          </div>
+                        }
+                      >
+                        {svgCacheRef.current && (
+                          <ColorCustomizer
+                            svgText={svgCacheRef.current}
+                            onModifiedSvgChange={handleModifiedSvgChange}
+                          />
+                        )}
+                      </Suspense>
+                    </PopoverContent>
+                  </Popover>
+                )}
+              </div>
+            </div>
+
+            {/* Login prompt for colors */}
             {!isAuthenticated && (
-              <p className="absolute bottom-3 left-3 right-3 text-xs text-center text-muted-foreground">
+              <p className="px-5 pb-2 text-xs text-center text-muted-foreground">
                 <Lock className="w-3 h-3 inline mr-1 shrink-0" />
                 {onLogin ? (
                   <>
@@ -778,47 +692,140 @@ const handleDownloadSvg = () => {
                 )}
               </p>
             )}
-            </div>
 
             {/* Contributor — masqué pour les pictos privés */}
-            {!isPrivate && renderContributorSection()}
+            {!isPrivate && (
+              <div className="px-5 pb-4">
+                {renderContributorSection()}
+              </div>
+            )}
           </div>
 
-          {/* Right column - Info & Actions */}
-          <div className="flex flex-col gap-5">
-            {/* Metadata */}
-            <div className="grid grid-cols-2 gap-3 text-sm bg-surface-subtle rounded border border-border p-4">
-              <div>
-                <span className="text-xs text-muted-foreground">Fichier</span>
-                <p className="font-medium text-foreground truncate">{pictogram.filename}</p>
+          {/* ── Right column — Info & Actions ── */}
+          <div className="flex flex-col p-6 gap-5">
+            {/* Header — title + edit + delete */}
+            <DialogHeader className="p-0 space-y-0">
+              <div className="flex items-center gap-2">
+                {editingName ? (
+                  <div className="flex items-center gap-2 flex-1">
+                    <Input
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      disabled={savingName}
+                      className="h-8 text-lg font-semibold"
+                      placeholder="Titre du pictogramme"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleSaveName}
+                      disabled={savingName || !name.trim()}
+                    >
+                      <Check className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setEditingName(false);
+                        setName(
+                          pictogram.name ||
+                            pictogram.filename.replace(/\.svg$/i, ""),
+                        );
+                      }}
+                      disabled={savingName}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <DialogTitle className="text-xl font-extrabold tracking-tight text-foreground truncate">
+                      {pictogram.name || pictogram.filename.replace(/\.svg$/i, "")}
+                    </DialogTitle>
+                    {isAuthenticated && (
+                      <button
+                        className="p-1.5 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-primary"
+                        onClick={() => setEditingName(true)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                    )}
+                  </>
+                )}
+                {isAuthenticated && onDeletePictogram && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <button className="p-1.5 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-destructive">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle className="text-tertiary">
+                          Supprimer ce pictogramme ?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Cette action est irréversible. Le pictogramme sera
+                          supprimé définitivement du CDN et de toutes les galeries.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Annuler</AlertDialogCancel>
+                        <AlertDialogAction
+                          className="bg-destructive text-white hover:bg-destructive/90"
+                          onClick={async () => {
+                            const success = await onDeletePictogram(pictogram.id);
+                            if (success) {
+                              toast.success("Pictogramme supprimé");
+                              onClose();
+                            }
+                          }}
+                        >
+                          Supprimer
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
               </div>
-              <div>
-                <span className="text-xs text-muted-foreground">Taille</span>
-                <p className="font-medium text-foreground">
-                  {formatFileSize(pictogram.size)}
-                </p>
+            </DialogHeader>
+
+            {/* Metadata — individual mini-cards with icons */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="p-3 rounded-xl bg-muted/30 border border-border">
+                <div className="flex items-center gap-1.5 text-muted-foreground mb-0.5">
+                  <FileType className="w-3 h-3" />
+                  <span className="text-[10px] uppercase tracking-wider font-bold">Fichier</span>
+                </div>
+                <p className="text-sm font-bold text-foreground truncate">{pictogram.filename}</p>
               </div>
-              <div>
-                <span className="text-xs text-muted-foreground">
-                  Modifié le
-                </span>
-                <p className="font-medium text-foreground">
-                  {formatDate(pictogram.lastModified)}
-                </p>
+              <div className="p-3 rounded-xl bg-muted/30 border border-border">
+                <div className="flex items-center gap-1.5 text-muted-foreground mb-0.5">
+                  <HardDrive className="w-3 h-3" />
+                  <span className="text-[10px] uppercase tracking-wider font-bold">Taille</span>
+                </div>
+                <p className="text-sm font-bold text-foreground">{formatFileSize(pictogram.size)}</p>
               </div>
-              <div>
-                <span className="text-xs text-muted-foreground">Téléchargements</span>
-                <p className="font-medium text-badge-download-text">
-                  {downloadCount}
-                </p>
+              <div className="p-3 rounded-xl bg-muted/30 border border-border">
+                <div className="flex items-center gap-1.5 text-muted-foreground mb-0.5">
+                  <Calendar className="w-3 h-3" />
+                  <span className="text-[10px] uppercase tracking-wider font-bold">Modifié</span>
+                </div>
+                <p className="text-sm font-bold text-foreground">{formatDate(pictogram.lastModified)}</p>
+              </div>
+              <div className="p-3 rounded-xl bg-muted/30 border border-border">
+                <div className="flex items-center gap-1.5 text-muted-foreground mb-0.5">
+                  <Download className="w-3 h-3" />
+                  <span className="text-[10px] uppercase tracking-wider font-bold">Téléchargements</span>
+                </div>
+                <p className="text-sm font-bold text-badge-download-text">{downloadCount}</p>
               </div>
             </div>
 
             {/* Tags */}
             <div>
-              <label className="block text-xs text-muted-foreground mb-1">
-                Tags / Mots-clés
-              </label>
+              <p className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground mb-2">Tags / Mots-clés</p>
               {isAuthenticated ? (
                 <div className="space-y-2">
                   <div className="relative flex gap-2">
@@ -836,12 +843,11 @@ const handleDownloadSvg = () => {
                         disabled={savingTags}
                       />
                       {showSuggestions && tagSuggestions.length > 0 && (
-                        <ul className="absolute z-50 top-full left-0 right-0 mt-1 bg-popover border border-border rounded shadow-md overflow-hidden text-sm">
+                        <ul className="absolute z-50 top-full left-0 right-0 mt-1 bg-popover border border-border rounded-xl shadow-md overflow-hidden text-sm">
                           {tagSuggestions.map((suggestion) => (
                             <li
                               key={suggestion}
                               onMouseDown={() => {
-                                // Traite tous les segments + la suggestion et sauvegarde
                                 const parts = tagInput.split(";");
                                 parts[parts.length - 1] = suggestion;
                                 const newItems = parts
@@ -877,20 +883,18 @@ const handleDownloadSvg = () => {
                   {tags.length > 0 && (
                     <div className="flex flex-wrap gap-1.5 mt-1">
                       {tags.map((tag) => (
-                        <Badge key={tag} variant="secondary" className="cursor-pointer gap-1">
-                          {savingTags ? (
-                            <Loader2 className="h-2.5 w-2.5 animate-spin" />
-                          ) : null}
+                        <span key={tag} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 text-[11px] font-bold dark:bg-amber-900/30 dark:text-amber-400">
+                          {savingTags && <Loader2 className="h-2.5 w-2.5 animate-spin" />}
                           {tag}
                           <button
                             type="button"
                             onClick={() => handleRemoveTag(tag)}
                             disabled={savingTags}
-                            className="ml-0.5 hover:text-destructive"
+                            className="ml-0.5 hover:text-destructive transition-colors"
                           >
                             <X className="h-3 w-3" />
                           </button>
-                        </Badge>
+                        </span>
                       ))}
                     </div>
                   )}
@@ -899,9 +903,9 @@ const handleDownloadSvg = () => {
                 <div className="flex flex-wrap gap-1.5">
                   {(pictogram.tags?.length ?? 0) > 0 ? (
                     pictogram.tags!.map((tag) => (
-                      <Badge key={tag} variant="secondary">
+                      <span key={tag} className="px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 text-[11px] font-bold dark:bg-amber-900/30 dark:text-amber-400">
                         {tag}
-                      </Badge>
+                      </span>
                     ))
                   ) : (
                     <span className="text-xs text-muted-foreground italic">
@@ -911,7 +915,6 @@ const handleDownloadSvg = () => {
                 </div>
               )}
             </div>
-
 
             {/* Gallery selector */}
             {showGallerySelector && (
@@ -924,71 +927,65 @@ const handleDownloadSvg = () => {
               />
             )}
 
-            {/* Download actions - footer */}
+            {/* Download actions — footer */}
             <div className="mt-auto pt-4 border-t border-border space-y-1.5">
-              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Télécharger</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-3">Télécharger</p>
 
               {isAuthenticated ? (
-                <div className="flex items-center gap-1.5">
-                  {/* SVG */}
+                <div className="flex items-center gap-2">
                   <button
                     onClick={handleDownloadSvg}
                     disabled={!svgLoaded}
-                    className="h-9 flex-1 flex items-center justify-center gap-2 rounded-[4px] text-xs font-bold text-primary-foreground transition-all bg-primary hover:bg-(--primary-hover) active:bg-(--primary-active) disabled:opacity-50"
+                    className="h-10 flex-1 flex items-center justify-center gap-2 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-lg hover:shadow-xl transition-all active:scale-95 disabled:opacity-50"
                   >
-                    <Download className="w-3.5 h-3.5" />
+                    <Download className="w-4 h-4" />
                     SVG
                   </button>
-                  {/* Size select */}
                   <select
                     value={pngSize}
                     onChange={(e) => setPngSize(Number(e.target.value))}
-                    className="h-9 w-24 rounded-[4px] border border-border bg-background px-2 text-xs font-medium focus:outline-none shrink-0 ml-2"
+                    className="h-10 w-24 rounded-xl border border-border bg-card px-3 text-sm font-medium focus:outline-none shrink-0"
                   >
                     <option value={128}>128 px</option>
                     <option value={256}>256 px</option>
                     <option value={512}>512 px</option>
                     <option value={1024}>1024 px</option>
                   </select>
-                  {/* PNG — extra gap via ml */}
                   <button
                     onClick={handleDownloadPng}
                     disabled={!svgLoaded}
-                    className="h-9 flex-1 flex items-center justify-center gap-2 rounded-[4px] text-xs font-bold text-primary-foreground transition-all bg-primary hover:bg-(--primary-hover) active:bg-(--primary-active) disabled:opacity-50"
+                    className="h-10 flex-1 flex items-center justify-center gap-2 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-lg hover:shadow-xl transition-all active:scale-95 disabled:opacity-50"
                   >
-                    <Download className="w-3.5 h-3.5" />
+                    <Download className="w-4 h-4" />
                     PNG
                   </button>
                 </div>
               ) : (
                 <>
-                  <div className="flex items-center gap-1.5">
-                    {/* SVG verrouillé */}
+                  <div className="flex items-center gap-2">
                     <button
                       onClick={() => setUpgradeGateOpen(true)}
-                      className="h-9 flex-1 flex items-center justify-center gap-2 rounded-[4px] text-xs font-bold text-primary-foreground transition-all bg-primary/60 hover:bg-primary/75 cursor-not-allowed"
+                      className="h-10 flex-1 flex items-center justify-center gap-2 rounded-xl bg-primary/60 text-primary-foreground font-bold text-sm cursor-not-allowed"
                     >
-                      <Lock className="w-3.5 h-3.5" />
+                      <Lock className="w-4 h-4" />
                       SVG
                     </button>
-                    {/* Select taille bloqué pour non-connectés — ouvre le dialog de connexion */}
                     <select
                       value={128}
                       onChange={() => setUpgradeGateOpen(true)}
-                      className="h-9 w-24 rounded-[4px] border border-border bg-background px-2 text-xs font-medium focus:outline-none shrink-0 opacity-60 cursor-pointer"
+                      className="h-10 w-24 rounded-xl border border-border bg-card px-3 text-sm font-medium focus:outline-none shrink-0 opacity-60 cursor-pointer"
                     >
                       <option value={128}>128 px</option>
                       <option value={256}>256 px</option>
                       <option value={512}>512 px</option>
                       <option value={1024}>1024 px</option>
                     </select>
-                    {/* PNG anonyme — 128px fixe côté backend */}
                     <button
                       onClick={handleDownloadPngAnonymous}
                       disabled={anonDownloadsRemaining === null || anonDownloadsRemaining === 0}
-                      className="h-9 flex-1 flex items-center justify-center gap-2 rounded-[4px] text-xs font-bold text-primary-foreground transition-all bg-primary hover:bg-(--primary-hover) active:bg-(--primary-active) disabled:opacity-50"
+                      className="h-10 flex-1 flex items-center justify-center gap-2 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-lg hover:shadow-xl transition-all active:scale-95 disabled:opacity-50"
                     >
-                      <Download className="w-3.5 h-3.5" />
+                      <Download className="w-4 h-4" />
                       PNG (128 px)
                     </button>
                   </div>

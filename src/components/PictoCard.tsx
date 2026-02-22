@@ -2,7 +2,6 @@ import { lazy, memo, Suspense, useEffect, useRef, useState } from "react";
 import { Copy, Check, Download, Heart, BookmarkPlus, Bookmark, ThumbsUp, Lock, Trash2, Palette } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -134,6 +133,7 @@ interface PictoCardProps {
   onToggleLike?: (id: string) => void;
   isPrivate?: boolean;
   onDeletePrivatePictogram?: (id: string) => void;
+  actionsPosition?: "right" | "bottom";
 }
 
 function PictoCardInner({
@@ -157,6 +157,7 @@ function PictoCardInner({
   onToggleLike,
   isPrivate,
   onDeletePrivatePictogram,
+  actionsPosition = "right",
 }: PictoCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -234,10 +235,101 @@ function PictoCardInner({
     onAddToGallery &&
     onRemoveFromGallery;
 
+  const tooltipSide = actionsPosition === "bottom" ? "top" as const : "left" as const;
+
+  const quickActionButtons = (
+    <>
+      {showGallerySelector && (
+        <GallerySelector
+          galleries={galleries}
+          pictogramId={pictogram.id}
+          onAdd={onAddToGallery}
+          onRemove={onRemoveFromGallery}
+          variant="compact"
+        />
+      )}
+      {userCollections !== undefined && onAddToUserCollection && (
+        <UserCollectionButton
+          pictogramId={pictogram.id}
+          userCollections={userCollections}
+          onAdd={onAddToUserCollection}
+          onRemove={onRemoveFromUserCollection}
+        />
+      )}
+      {isAuthenticated && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              size="sm"
+              variant="secondary"
+              className="h-8 w-8 p-0 rounded-lg bg-background shadow-md border border-border hover:shadow-lg transition-all"
+              onClick={handleCopy}
+            >
+              {copied ? (
+                <Check className="h-4 w-4 text-green-600" />
+              ) : (
+                <Copy className="h-4 w-4" />
+              )}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side={tooltipSide}>
+            {copied ? "Copié !" : "Copier le SVG"}
+          </TooltipContent>
+        </Tooltip>
+      )}
+      {isAuthenticated && (
+        <Popover open={isPaletteOpen} onOpenChange={handlePaletteOpen}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <PopoverTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className={`h-8 w-8 p-0 rounded-lg shadow-md border hover:shadow-lg transition-all ${cardModifiedSvg ? "border-primary/60 bg-primary/10 text-primary" : "bg-background border-border"}`}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Palette className="h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+            </TooltipTrigger>
+            <TooltipContent side={tooltipSide}>
+              {cardModifiedSvg ? "Couleurs personnalisées" : "Personnaliser les couleurs"}
+            </TooltipContent>
+          </Tooltip>
+          <PopoverContent
+            className="w-80"
+            align="end"
+            sideOffset={8}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Suspense
+              fallback={
+                <div className="h-20 flex items-center justify-center text-xs text-muted-foreground">
+                  Chargement…
+                </div>
+              }
+            >
+              {svgText ? (
+                <ColorCustomizer
+                  svgText={svgText}
+                  onModifiedSvgChange={(svg) => setCardModifiedSvg(svg)}
+                />
+              ) : (
+                <div className="h-20 flex items-center justify-center text-xs text-muted-foreground">
+                  Chargement du SVG…
+                </div>
+              )}
+            </Suspense>
+          </PopoverContent>
+        </Popover>
+      )}
+    </>
+  );
+
   return (
     <>
       <Card
-          className={`group relative overflow-hidden rounded border border-border bg-card transition-all duration-300 hover:-translate-y-1 hover:shadow-xl cursor-pointer ${compact ? "p-0" : ""}`}
+          className={`group relative overflow-hidden rounded-xl bg-card transition-all duration-300 cursor-pointer shadow-[0_4px_16px_rgba(0,0,0,0.04),0_1px_4px_rgba(0,0,0,0.04)] hover:-translate-y-1.5 hover:shadow-[0_20px_60px_rgba(0,0,0,0.1),0_4px_16px_rgba(0,0,0,0.05)] ${compact ? "p-0" : ""}`}
           draggable
           onDragStart={(e) => {
             e.dataTransfer.setData("application/pictogram-id", pictogram.id);
@@ -246,7 +338,8 @@ function PictoCardInner({
           onClick={() => setIsModalOpen(true)}
           onMouseEnter={prefetchSvg}
         >
-          <div className={`relative flex items-center justify-center ${compact ? "aspect-square p-2" : "aspect-[4/3] p-4"}`}>
+          {/* Zone pictogramme */}
+          <div className={`relative flex items-center justify-center bg-card ${compact ? "aspect-square p-2" : "aspect-[4/3] p-6"}`}>
             <img
               src={cardPreviewUrl || displayUrl}
               alt={pictogram.name || pictogram.filename.replace(/\.svg$/i, "")}
@@ -254,9 +347,14 @@ function PictoCardInner({
               decoding="async"
               width={128}
               height={128}
-              className={`w-full h-full object-contain drop-shadow-sm transition-transform duration-200 group-hover:scale-110 ${compact ? "max-w-12 max-h-12" : "max-w-24 max-h-24"}`}
+              className={`w-full h-full object-contain drop-shadow-sm transition-transform duration-300 group-hover:scale-110 ${compact ? "max-w-12 max-h-12" : "max-w-24 max-h-24"}`}
             />
-            <div className="absolute inset-4 bg-foreground/5 blur-2xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+            {/* Quick actions bottom — inside image area */}
+            {actionsPosition === "bottom" && !isPrivate && (
+              <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 flex flex-row items-center gap-1 z-20 opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
+                {quickActionButtons}
+              </div>
+            )}
           </div>
 
           {/* Favorite button - always visible when favorited */}
@@ -264,7 +362,7 @@ function PictoCardInner({
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
-                  className={`absolute top-2 left-2 z-10 transition-opacity ${isFavorite ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
+                  className={`absolute top-3 left-3 z-10 transition-all duration-200 ${isFavorite ? "opacity-100" : "opacity-0 scale-75 group-hover:opacity-100 group-hover:scale-100"}`}
                   aria-label={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
                   onClick={(e) => {
                     e.stopPropagation();
@@ -272,7 +370,7 @@ function PictoCardInner({
                   }}
                 >
                   <Heart
-                    className="h-5 w-5 transition-colors"
+                    className="h-5 w-5 drop-shadow-sm transition-colors"
                     style={isFavorite ? {
                       color: "var(--destructive)",
                       fill: "var(--destructive)",
@@ -290,7 +388,7 @@ function PictoCardInner({
 
           {/* Badge privé */}
           {isPrivate && (
-            <span className="absolute top-2 left-2 z-10 flex items-center gap-1 text-[10px] text-muted-foreground bg-background/80 rounded-[25px] px-1.5 py-0.5 border border-border">
+            <span className="absolute top-3 left-3 z-10 flex items-center gap-1 text-[10px] font-bold text-muted-foreground bg-background/90 backdrop-blur-sm rounded-full px-2 py-0.5 border border-border shadow-sm">
               <Lock className="size-2.5" />
               Privé
             </span>
@@ -305,7 +403,7 @@ function PictoCardInner({
                     e.stopPropagation();
                     onDeletePrivatePictogram(pictogram.id);
                   }}
-                  className="absolute top-2 right-2 z-20 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded bg-background/80 border border-border text-muted-foreground hover:text-destructive"
+                  className="absolute top-3 right-3 z-20 opacity-0 group-hover:opacity-100 transition-all duration-300 p-1.5 rounded-lg bg-background shadow-md border border-border text-muted-foreground hover:text-destructive hover:shadow-lg"
                 >
                   <Trash2 className="size-3.5" />
                 </button>
@@ -314,93 +412,12 @@ function PictoCardInner({
             </Tooltip>
           )}
 
-          {/* Quick actions overlay (pictos publics uniquement) */}
-          <div className={`absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-1 z-20 ${isPrivate ? "hidden" : ""}`}>
-            {showGallerySelector && (
-              <GallerySelector
-                galleries={galleries}
-                pictogramId={pictogram.id}
-                onAdd={onAddToGallery}
-                onRemove={onRemoveFromGallery}
-                variant="compact"
-              />
-            )}
-            {userCollections !== undefined && onAddToUserCollection && (
-              <UserCollectionButton
-                pictogramId={pictogram.id}
-                userCollections={userCollections}
-                onAdd={onAddToUserCollection}
-                onRemove={onRemoveFromUserCollection}
-              />
-            )}
-            {isAuthenticated && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    className="h-8 w-8 p-0 rounded-lg border border-border shadow-sm"
-                    onClick={handleCopy}
-                  >
-                    {copied ? (
-                      <Check className="h-4 w-4 text-green-600" />
-                    ) : (
-                      <Copy className="h-4 w-4" />
-                    )}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="left">
-                  {copied ? "Copié !" : "Copier le SVG"}
-                </TooltipContent>
-              </Tooltip>
-            )}
-            {isAuthenticated && (
-              <Popover open={isPaletteOpen} onOpenChange={handlePaletteOpen}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <PopoverTrigger asChild>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        className={`h-8 w-8 p-0 rounded-lg border shadow-sm ${cardModifiedSvg ? "border-primary/60 bg-primary/10 text-primary" : "border-border"}`}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <Palette className="h-4 w-4" />
-                      </Button>
-                    </PopoverTrigger>
-                  </TooltipTrigger>
-                  <TooltipContent side="left">
-                    {cardModifiedSvg ? "Couleurs personnalisées" : "Personnaliser les couleurs"}
-                  </TooltipContent>
-                </Tooltip>
-                <PopoverContent
-                  className="w-80"
-                  align="end"
-                  sideOffset={8}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <Suspense
-                    fallback={
-                      <div className="h-20 flex items-center justify-center text-xs text-muted-foreground">
-                        Chargement…
-                      </div>
-                    }
-                  >
-                    {svgText ? (
-                      <ColorCustomizer
-                        svgText={svgText}
-                        onModifiedSvgChange={(svg) => setCardModifiedSvg(svg)}
-                      />
-                    ) : (
-                      <div className="h-20 flex items-center justify-center text-xs text-muted-foreground">
-                        Chargement du SVG…
-                      </div>
-                    )}
-                  </Suspense>
-                </PopoverContent>
-              </Popover>
-            )}
-          </div>
+          {/* Quick actions right — slide in from right */}
+          {actionsPosition === "right" && !isPrivate && (
+            <div className="absolute top-3 right-0 flex flex-col gap-1 z-20 opacity-0 translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 group-hover:right-3 transition-all duration-300">
+              {quickActionButtons}
+            </div>
+          )}
 
           {compact ? (
             <div className="px-2 pb-2 pt-1">
@@ -409,7 +426,7 @@ function PictoCardInner({
               </h3>
             </div>
           ) : (
-            <div className="px-3 pb-3 pt-2 border-t border-border space-y-1.5">
+            <div className="px-3.5 pb-3 pt-2.5 space-y-1.5">
               <div className="flex items-center gap-1.5 min-w-0">
                 <h3 className="font-extrabold text-sm text-foreground truncate leading-tight flex-1">
                   {pictogram.name || pictogram.filename.replace(/\.svg$/i, "")}
@@ -423,14 +440,14 @@ function PictoCardInner({
                           onToggleLike?.(pictogram.id);
                         }}
                         disabled={!isAuthenticated}
-                        className={`flex items-center gap-0.5 text-[10px] shrink-0 transition-colors ${
+                        className={`flex items-center gap-0.5 text-[10px] shrink-0 px-1.5 py-0.5 rounded-full transition-all ${
                           hasLiked
-                            ? "text-primary"
-                            : "text-muted-foreground hover:text-primary"
-                        } disabled:cursor-default disabled:hover:text-muted-foreground`}
+                            ? "text-primary-foreground bg-primary"
+                            : "text-muted-foreground hover:bg-muted"
+                        } disabled:cursor-default disabled:hover:bg-transparent disabled:hover:text-muted-foreground`}
                       >
-                        <ThumbsUp className={`size-2.5 ${hasLiked ? "fill-primary" : ""}`} />
-                        {likeCount > 0 && <span>{likeCount}</span>}
+                        <ThumbsUp className={`size-2.5 ${hasLiked ? "fill-primary-foreground" : ""}`} />
+                        {likeCount > 0 && <span className="font-bold">{likeCount}</span>}
                       </button>
                     </TooltipTrigger>
                     {isAuthenticated && (
@@ -441,24 +458,30 @@ function PictoCardInner({
                   </Tooltip>
                 )}
               </div>
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <div className="flex items-center gap-1.5">
-                  <Badge variant="outline" className="text-[10px] h-5 px-1.5 rounded-[4px] bg-muted text-muted-foreground border-border">
-                    {formatFileSize(pictogram.size)}
-                  </Badge>
-                  {downloadCount > 0 && (
-                    <span className="flex items-center gap-0.5 text-[10px] text-badge-download-text">
-                      <Download className="size-2.5" />
-                      {downloadCount}
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0">
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-bold dark:bg-amber-900/30 dark:text-amber-400 shrink-0">
+                  {formatFileSize(pictogram.size)}
+                </span>
+                {downloadCount > 0 && (
+                  <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground shrink-0">
+                    <Download className="size-2.5" />
+                    {downloadCount}
+                  </span>
+                )}
+                {(() => {
+                  const galleryName = pictogram.galleryIds?.[0] && galleries?.find(g => g.id === pictogram.galleryIds![0])?.name;
+                  return galleryName ? (
+                    <span className="text-[10px] truncate text-muted-foreground">
+                      {galleryName}
                     </span>
-                  )}
-                </div>
+                  ) : null;
+                })()}
                 {pictogram.contributor && (
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 ml-auto shrink-0">
                     <img
                       src={pictogram.contributor.githubAvatarUrl}
                       alt={pictogram.contributor.githubUsername}
-                      className="w-3.5 h-3.5 rounded-full ring-1 ring-ring-accent"
+                      className="w-3.5 h-3.5 rounded-full ring-2 ring-card"
                     />
                     <span className="truncate max-w-[70px] text-[10px]">
                       {pictogram.contributor.githubUsername}

@@ -7,7 +7,6 @@ import {
   ExternalLink,
   Users,
   FolderOpen,
-  Heart,
   Tag,
   ChevronRight,
   TrendingUp,
@@ -16,6 +15,7 @@ import {
 import { useDownloads } from "@/hooks/useDownloads";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { DarkAwarePicto } from "@/components/DarkAwarePicto";
+import { PictoCard } from "@/components/PictoCard";
 import { API_URL } from "@/lib/config";
 import type { Pictogram, Gallery } from "@/lib/types";
 
@@ -53,21 +53,6 @@ interface DiscoverPageProps {
   getLikeCount?: (id: string) => number;
   hasLiked?: (id: string) => boolean;
   onToggleLike?: (id: string) => void;
-}
-
-function timeAgo(dateStr: string): string {
-  const now = Date.now();
-  const then = new Date(dateStr).getTime();
-  const diff = now - then;
-
-  const minutes = Math.floor(diff / 60_000);
-  if (minutes < 60) return `il y a ${minutes} min`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `il y a ${hours}h`;
-  const days = Math.floor(hours / 24);
-  if (days < 30) return `il y a ${days}j`;
-  const months = Math.floor(days / 30);
-  return `il y a ${months} mois`;
 }
 
 function SectionHeader({
@@ -317,67 +302,23 @@ export function DiscoverPage({
               />
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {latestPictos.map((picto) => (
-                  <div
+                  <PictoCard
                     key={picto.id}
-                    className="group/item relative rounded p-4 border border-border hover:bg-accent/30 transition-all duration-300 cursor-pointer"
-                    onClick={() => setSelectedPicto(picto)}
-                  >
-                    {isAuthenticated && onToggleFavorite && isFavorite && (
-                      <button
-                        className="absolute top-3 right-3 z-10 p-1.5 rounded transition-all"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onToggleFavorite(picto.id);
-                        }}
-                      >
-                        <Heart
-                          className="h-4 w-4 transition-colors"
-                          style={isFavorite(picto.id) ? {
-                            color: "var(--dsfr-red-marianne-main)",
-                            fill: "var(--dsfr-red-marianne-main)",
-                          } : { color: "color-mix(in srgb, var(--muted-foreground) 30%, transparent)" }}
-                        />
-                      </button>
-                    )}
-                    {isAuthenticated && onToggleLike && (
-                      <button
-                        className="absolute bottom-3 right-3 z-10 flex items-center gap-0.5 p-1.5 rounded transition-all"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onToggleLike(picto.id);
-                        }}
-                      >
-                        <ThumbsUp
-                          className={`h-3.5 w-3.5 transition-colors ${hasLiked?.(picto.id) ? "fill-[var(--dsfr-blue-france-main)] text-[var(--dsfr-blue-france-main)]" : "text-muted-foreground/30 hover:text-[var(--dsfr-blue-france-main)]"}`}
-                        />
-                        {(getLikeCount?.(picto.id) ?? 0) > 0 && (
-                          <span className={`text-[10px] font-bold leading-none ${hasLiked?.(picto.id) ? "text-[var(--dsfr-blue-france-main)]" : "text-muted-foreground/50"}`}>
-                            {getLikeCount!(picto.id)}
-                          </span>
-                        )}
-                      </button>
-                    )}
-
-                    <div className="aspect-square flex items-center justify-center p-3 mb-3">
-                      <DarkAwarePicto
-                        pictogram={picto}
-                        className="w-full h-full object-contain transition-transform duration-200 group-hover/item:scale-110"
-                      />
-                    </div>
-                    <div className="text-center space-y-1">
-                      <p className="text-sm font-bold text-foreground truncate group-hover/item:text-primary transition-colors">
-                        {picto.name}
-                      </p>
-                      <p className="text-xs text-muted-foreground font-medium">
-                        {timeAgo(picto.lastModified)}
-                      </p>
-                      {picto.tags && picto.tags.length > 0 && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-badge-bg border border-badge-border text-badge-text text-[10px] font-bold uppercase tracking-wide">
-                          {picto.tags[0]}
-                        </span>
-                      )}
-                    </div>
-                  </div>
+                    pictogram={picto}
+                    galleries={galleries}
+                    onAddToGallery={onAddToGallery}
+                    onRemoveFromGallery={onRemoveFromGallery}
+                    isAuthenticated={isAuthenticated}
+                    user={user}
+                    onPictogramUpdated={onPictogramUpdated}
+                    isFavorite={isFavorite?.(picto.id)}
+                    onToggleFavorite={onToggleFavorite}
+                    onLogin={onLogin}
+                    likeCount={getLikeCount?.(picto.id) ?? 0}
+                    hasLiked={hasLiked?.(picto.id)}
+                    onToggleLike={onToggleLike}
+                    actionsPosition="bottom"
+                  />
                 ))}
               </div>
             </BentoCard>
