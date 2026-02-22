@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, useRef } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import {
   Palette,
   LogOut,
@@ -8,11 +8,9 @@ import {
   Heart,
   UploadCloud,
   FolderOpen,
-  Download,
   FileType,
   Layers,
   Sparkles,
-  MousePointerClick,
 } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { PictoMosaic } from "@/components/PictoMosaic";
@@ -26,6 +24,21 @@ import { parseSvgColors, replaceSvgColors } from "@/lib/svg-color-parser";
 import { API_URL } from "@/lib/config";
 
 declare const __APP_VERSION__: string;
+
+const DSFR_SWATCHES = [
+  { label: "Blanc", hex: "#ffffff" },
+  { label: "Noir", hex: "#161616" },
+  { label: "Bleu France", hex: "#6a6af4" },
+  { label: "Rouge Marianne", hex: "#e1000f" },
+  { label: "Émeraude", hex: "#00a95f" },
+  { label: "Menthe", hex: "#009081" },
+  { label: "Écume", hex: "#465f9d" },
+  { label: "Glycine", hex: "#a558a0" },
+  { label: "Tuile", hex: "#ce614a" },
+  { label: "Tournesol", hex: "#c8aa39" },
+  { label: "Macaron", hex: "#e18b76" },
+  { label: "Gris", hex: "#929292" },
+];
 
 interface HomePageV3Props {
   onEnterGallery: () => void;
@@ -74,12 +87,8 @@ export function HomePageV3({
   const { pictograms: allPictograms, loading } = usePictogramsCtx();
   const { galleries } = useGalleriesCtx();
 
-  const pictos = useMemo(
-    () => allPictograms.filter((p) => !p.filename.endsWith("_dark.svg")),
-    [allPictograms],
-  );
-  const mosaicPictos = useMemo(() => pictos.slice(0, 40), [pictos]);
-  const totalCount = pictos.length;
+  const mosaicPictos = useMemo(() => allPictograms.slice(0, 40), [allPictograms]);
+  const totalCount = allPictograms.length;
   const collections = galleries.length;
 
   // Shuffle galleries once for the Collections card
@@ -94,11 +103,11 @@ export function HomePageV3({
   // Shuffle une seule fois quand les pictos sont disponibles
   const [previewPictos, setPreviewPictos] = useState<Pictogram[]>([]);
   useEffect(() => {
-    if (pictos.length > 0 && previewPictos.length === 0) {
-      setPreviewPictos([...pictos].sort(() => Math.random() - 0.5).slice(0, 12));
+    if (allPictograms.length > 0 && previewPictos.length === 0) {
+      setPreviewPictos([...allPictograms].sort(() => Math.random() - 0.5).slice(0, 12));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pictos.length]);
+  }, [allPictograms.length]);
 
   // Prefetch batch des SVGs dark pour les pictos d'aperçu de collection
   const previewUrls = useMemo(() => previewPictos.map((p) => p.url), [previewPictos]);
@@ -129,42 +138,31 @@ export function HomePageV3({
     return () => { cancelled = true; };
   }, [firstPicto]);
 
-  // Generate modified SVG blob URL
+  // Generate modified SVG blob URL with proper cleanup
+  const blobUrlRef = useRef<string | null>(null);
   const modifiedSvgUrl = useMemo(() => {
-    if (!svgText) return null;
+    if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
+    if (!svgText) { blobUrlRef.current = null; return null; }
     const hasChanges = Object.entries(colorMap).some(([k, v]) => k !== v);
-    if (!hasChanges) return null;
+    if (!hasChanges) { blobUrlRef.current = null; return null; }
     const modified = replaceSvgColors(svgText, colorMap);
-    return URL.createObjectURL(new Blob([modified], { type: "image/svg+xml" }));
+    const url = URL.createObjectURL(new Blob([modified], { type: "image/svg+xml" }));
+    blobUrlRef.current = url;
+    return url;
   }, [svgText, colorMap]);
 
-  // Cleanup blob URL
+  // Cleanup on unmount
   useEffect(() => {
-    return () => { if (modifiedSvgUrl) URL.revokeObjectURL(modifiedSvgUrl); };
-  }, [modifiedSvgUrl]);
-
-  const DSFR_SWATCHES = [
-    { label: "Blanc", hex: "#ffffff" },
-    { label: "Noir", hex: "#161616" },
-    { label: "Bleu France", hex: "#6a6af4" },
-    { label: "Rouge Marianne", hex: "#e1000f" },
-    { label: "Émeraude", hex: "#00a95f" },
-    { label: "Menthe", hex: "#009081" },
-    { label: "Écume", hex: "#465f9d" },
-    { label: "Glycine", hex: "#a558a0" },
-    { label: "Tuile", hex: "#ce614a" },
-    { label: "Tournesol", hex: "#c8aa39" },
-    { label: "Macaron", hex: "#e18b76" },
-    { label: "Gris", hex: "#929292" },
-  ];
+    return () => { if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current); };
+  }, []);
 
   const exampleTags = useMemo(() => {
     const allTags = new Set<string>();
-    pictos.forEach((p) => {
+    allPictograms.forEach((p) => {
       p.tags?.forEach((t) => allTags.add(t));
     });
     return Array.from(allTags).slice(0, 3);
-  }, [pictos]);
+  }, [allPictograms]);
 
   return (
     <div className="min-h-screen bg-background font-sans">
@@ -359,9 +357,9 @@ export function HomePageV3({
 
             {/* Card 2: Personnalisation */}
             <div className="break-inside-avoid mb-6 group bg-card rounded-xl p-6 md:p-8 border border-border/50 shadow-[0_4px_16px_rgba(0,0,0,0.04),0_1px_4px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_60px_rgba(0,0,0,0.1),0_4px_16px_rgba(0,0,0,0.05)] hover:-translate-y-1 transition-all duration-300 overflow-hidden">
-              <div className="flex items-start gap-3 mb-6">
-                <div className="w-10 h-10 rounded-lg bg-tertiary text-tertiary-foreground flex items-center justify-center shrink-0">
-                  <Palette className="size-5" />
+              <div className="flex items-start gap-4 mb-6">
+                <div className="w-12 h-12 rounded-xl bg-tertiary text-tertiary-foreground flex items-center justify-center shrink-0">
+                  <Palette className="size-6" />
                 </div>
                 <div>
                   <h3 className="text-lg font-extrabold text-foreground">
@@ -381,6 +379,7 @@ export function HomePageV3({
                     alt={firstPicto.name}
                     width={128}
                     height={128}
+                    decoding="async"
                     className="w-32 h-32 object-contain drop-shadow-sm transition-all duration-300"
                   />
                 </div>
@@ -553,9 +552,9 @@ export function HomePageV3({
             {/* Card 6: GitHub Bonus — only if !user */}
             {!user && (
               <div className="break-inside-avoid mb-6 group bg-gradient-to-br from-accent to-primary/5 rounded-xl p-6 md:p-8 border border-border/50 shadow-[0_4px_16px_rgba(0,0,0,0.04),0_1px_4px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_60px_rgba(0,0,0,0.1),0_4px_16px_rgba(0,0,0,0.05)] hover:-translate-y-1 transition-all duration-300 overflow-hidden">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-lg bg-tertiary text-tertiary-foreground flex items-center justify-center">
-                    <Github className="size-5" />
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-12 h-12 rounded-xl bg-tertiary text-tertiary-foreground flex items-center justify-center">
+                    <Github className="size-6" />
                   </div>
                   <h3 className="text-lg font-extrabold text-foreground">
                     GitHub Bonus
