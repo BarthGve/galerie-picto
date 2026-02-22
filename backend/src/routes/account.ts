@@ -64,11 +64,11 @@ router.patch(
 
     for (const [key, val] of Object.entries(body)) {
       if (!VALID_NOTIF_KEYS.includes(key as EmailNotifKey)) {
-        res.status(400).json({ error: `Clé inconnue : ${key}` });
+        res.status(400).json({ error: "Clé de notification inconnue" });
         return;
       }
       if (typeof val !== "boolean") {
-        res.status(400).json({ error: `${key} doit être un booléen` });
+        res.status(400).json({ error: "La valeur doit être un booléen" });
         return;
       }
       prefs[key as EmailNotifKey] = val;

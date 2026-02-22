@@ -1,4 +1,5 @@
 import { Router, Request, Response } from "express";
+import { timingSafeEqual } from "crypto";
 import { config } from "../config.js";
 import { getNewsletterSubscribers } from "../db/repositories/users.js";
 import { getRecentPictograms } from "../db/repositories/pictograms.js";
@@ -17,8 +18,12 @@ router.get("/newsletter-data", (req: Request, res: Response): void => {
     return;
   }
 
-  const auth = req.headers.authorization;
-  if (!auth || auth !== `Bearer ${secret}`) {
+  const auth = req.headers.authorization ?? "";
+  const expected = `Bearer ${secret}`;
+  if (
+    auth.length !== expected.length ||
+    !timingSafeEqual(Buffer.from(auth), Buffer.from(expected))
+  ) {
     res.status(401).json({ error: "Unauthorized" });
     return;
   }
