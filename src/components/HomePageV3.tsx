@@ -42,37 +42,23 @@ function AnimatedCounter({
   suffix?: string;
 }) {
   const [display, setDisplay] = useState(0);
-  const [hasAnimated, setHasAnimated] = useState(false);
-  const nodeRef = useRef<HTMLSpanElement | null>(null);
+  const animatedRef = useRef(false);
 
   useEffect(() => {
-    const node = nodeRef.current;
-    if (!value || hasAnimated || !node) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setHasAnimated(true);
-          observer.disconnect();
-          const start = performance.now();
-          const animate = (now: number) => {
-            const progress = Math.min((now - start) / 1500, 1);
-            const eased = 1 - Math.pow(1 - progress, 3);
-            setDisplay(Math.floor(eased * value));
-            if (progress < 1) requestAnimationFrame(animate);
-          };
-          requestAnimationFrame(animate);
-        }
-      },
-      { threshold: 0.3 },
-    );
-
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, [value, hasAnimated]);
+    if (!value || animatedRef.current) return;
+    animatedRef.current = true;
+    const start = performance.now();
+    const animate = (now: number) => {
+      const progress = Math.min((now - start) / 1500, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setDisplay(Math.floor(eased * value));
+      if (progress < 1) requestAnimationFrame(animate);
+    };
+    requestAnimationFrame(animate);
+  }, [value]);
 
   return (
-    <span ref={nodeRef}>
+    <span>
       {display}
       {suffix}
     </span>
@@ -93,7 +79,7 @@ export function HomePageV3({
     [allPictograms],
   );
   const mosaicPictos = useMemo(() => pictos.slice(0, 40), [pictos]);
-  const totalCount = useMemo(() => Math.floor(pictos.length / 10) * 10, [pictos]);
+  const totalCount = pictos.length;
   const collections = galleries.length;
 
   // Shuffle galleries once for the Collections card
@@ -248,7 +234,7 @@ export function HomePageV3({
                 Vos pictogrammes,{" "}
                 <br className="hidden sm:block" />
                 <span className="inline-block pr-6">
-                  <span style={{ color: 'var(--primary)' }}>prêts </span>
+                  <span style={{ color: 'var(--tertiary)' }}>prêts </span>
                   <span className="text-white" style={{ WebkitTextStroke: '1.5px rgba(0,0,0,0.5)' }}>à l'</span>
                   <span style={{ color: 'var(--destructive)' }}>emploi</span>
                 </span>
@@ -339,7 +325,7 @@ export function HomePageV3({
             {/* Card 1: Recherche instantanée */}
             <div className="break-inside-avoid mb-6 group bg-card rounded-xl p-6 md:p-8 border border-border/50 shadow-[0_4px_16px_rgba(0,0,0,0.04),0_1px_4px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_60px_rgba(0,0,0,0.1),0_4px_16px_rgba(0,0,0,0.05)] hover:-translate-y-1 transition-all duration-300 overflow-hidden">
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shrink-0">
+                <div className="w-12 h-12 rounded-xl bg-tertiary text-tertiary-foreground flex items-center justify-center shrink-0">
                   <Search className="size-6" />
                 </div>
                 <div className="flex-1">
@@ -374,7 +360,7 @@ export function HomePageV3({
             {/* Card 2: Personnalisation */}
             <div className="break-inside-avoid mb-6 group bg-card rounded-xl p-6 md:p-8 border border-border/50 shadow-[0_4px_16px_rgba(0,0,0,0.04),0_1px_4px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_60px_rgba(0,0,0,0.1),0_4px_16px_rgba(0,0,0,0.05)] hover:-translate-y-1 transition-all duration-300 overflow-hidden">
               <div className="flex items-start gap-3 mb-6">
-                <div className="w-10 h-10 rounded-lg bg-primary text-primary-foreground flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-lg bg-tertiary text-tertiary-foreground flex items-center justify-center shrink-0">
                   <Palette className="size-5" />
                 </div>
                 <div>
@@ -503,10 +489,14 @@ export function HomePageV3({
 
             {/* Card 4: Collections */}
             <div className="break-inside-avoid mb-6 group bg-card rounded-xl p-6 md:p-8 border border-border/50 shadow-[0_4px_16px_rgba(0,0,0,0.04),0_1px_4px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_60px_rgba(0,0,0,0.1),0_4px_16px_rgba(0,0,0,0.05)] hover:-translate-y-1 transition-all duration-300 overflow-hidden">
-              <div className="flex items-center gap-2 mb-4">
-                <FolderOpen className="size-5 text-primary" />
-                <h3 className="font-extrabold text-foreground">Collections</h3>
-              </div>
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-tertiary text-tertiary-foreground flex items-center justify-center shrink-0">
+                  <FolderOpen className="size-6" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg md:text-xl font-extrabold text-foreground mb-4">
+                    Collections
+                  </h3>
 
               {/* Gallery previews — 2 visible, scroll for more */}
               <div className="mb-6 max-h-[4.5rem] overflow-y-auto space-y-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -529,6 +519,8 @@ export function HomePageV3({
               <p className="text-xs text-muted-foreground">
                 Organisez vos pictos par thème
               </p>
+                </div>
+              </div>
             </div>
 
             {/* Card 5: Formats */}
@@ -552,7 +544,7 @@ export function HomePageV3({
                   </div>
                   <h4 className="font-extrabold text-foreground mb-2">PNG</h4>
                   <p className="text-xs text-muted-foreground">
-                    Raster · Compatible · Prêt à l'emploi
+                    Image · Compatible · Prêt à l'emploi
                   </p>
                 </div>
               </div>
@@ -562,7 +554,7 @@ export function HomePageV3({
             {!user && (
               <div className="break-inside-avoid mb-6 group bg-gradient-to-br from-accent to-primary/5 rounded-xl p-6 md:p-8 border border-border/50 shadow-[0_4px_16px_rgba(0,0,0,0.04),0_1px_4px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_60px_rgba(0,0,0,0.1),0_4px_16px_rgba(0,0,0,0.05)] hover:-translate-y-1 transition-all duration-300 overflow-hidden">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-lg bg-primary text-primary-foreground flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-lg bg-tertiary text-tertiary-foreground flex items-center justify-center">
                     <Github className="size-5" />
                   </div>
                   <h3 className="text-lg font-extrabold text-foreground">

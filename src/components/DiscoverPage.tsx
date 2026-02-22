@@ -66,11 +66,11 @@ function SectionHeader({
 }) {
   return (
     <div className="flex items-center justify-between mb-6">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded bg-tertiary/80 backdrop-blur-sm flex items-center justify-center text-tertiary-foreground shadow-lg ring-1 ring-tertiary/20 shrink-0">
-          <Icon className="w-5 h-5" />
+      <div className="flex items-center gap-4">
+        <div className="w-9 h-9 rounded-lg bg-tertiary text-tertiary-foreground flex items-center justify-center shrink-0">
+          <Icon className="size-4.5" />
         </div>
-        <h2 className="text-xl font-extrabold tracking-tight text-tertiary">
+        <h2 className="text-lg md:text-xl font-extrabold text-foreground">
           {title}
         </h2>
       </div>
@@ -94,53 +94,37 @@ function BentoCard({
     <div
       onClick={onClick}
       style={style}
-      className={`group relative bg-card rounded p-6 md:p-8 shadow-sm transition-all duration-500 hover:shadow-xl overflow-hidden ${className}`}
+      className={`group relative bg-card rounded-xl p-6 md:p-8 border border-border/50 shadow-[0_4px_16px_rgba(0,0,0,0.04),0_1px_4px_rgba(0,0,0,0.04)] transition-all duration-500 hover:shadow-[0_20px_60px_rgba(0,0,0,0.1),0_4px_16px_rgba(0,0,0,0.05)] overflow-hidden ${className}`}
     >
       {children}
     </div>
   );
 }
 
-const glass = (r: number, g: number, b: number): React.CSSProperties => ({
-  background: `rgba(${r}, ${g}, ${b}, 0.65)`,
-  backdropFilter: "blur(10px)",
-  WebkitBackdropFilter: "blur(10px)",
-  border: `1px solid rgba(${r}, ${g}, ${b}, 0.65)`,
-});
-
 // Visual positions [left=2nd, center=1st, right=3rd]
 const PODIUM_CONFIG = [
   {
     rank: 2,
-    stepHeight: "h-8",
-    stepStyle: glass(206, 206, 206),          // grey-850
-    rankStyle: { color: `var(--dsfr-grey-200)` },
-    countStyle: { color: `var(--dsfr-grey-425)` },
-    borderStyle: { borderColor: `var(--dsfr-grey-850)` },
+    stepHeight: "h-9",
+    stepClass: "bg-tertiary/60",
+    ringClass: "ring-tertiary/40",
     pictoSize: "w-12 h-12",
-    shadowClass: "",
     rankSize: "text-sm",
   },
   {
     rank: 1,
     stepHeight: "h-14",
-    stepStyle: glass(239, 203, 58),           // yellow-tournesol-850
-    rankStyle: { color: `var(--dsfr-yellow-tournesol-sun)` },
-    countStyle: { color: `var(--dsfr-yellow-tournesol-main)` },
-    borderStyle: {},
+    stepClass: "bg-tertiary",
+    ringClass: "ring-tertiary",
     pictoSize: "w-[3.75rem] h-[3.75rem]",
-    shadowClass: "shadow-[0_4px_16px_rgba(239,203,58,0.25)]",
     rankSize: "text-lg",
   },
   {
     rank: 3,
     stepHeight: "h-5",
-    stepStyle: glass(228, 121, 74),           // orange-terre-battue-main
-    rankStyle: { color: `var(--dsfr-orange-terre-battue-sun)` },
-    countStyle: { color: `var(--dsfr-orange-terre-battue-sun)` },
-    borderStyle: { borderColor: `var(--dsfr-orange-terre-battue-main)` },
+    stepClass: "bg-tertiary/30",
+    ringClass: "ring-tertiary/25",
     pictoSize: "w-11 h-11",
-    shadowClass: "",
     rankSize: "text-xs",
   },
 ];
@@ -328,39 +312,69 @@ export function DiscoverPage({
           {mostDownloaded.length > 0 && (
             <BentoCard className="md:col-span-2 lg:col-span-2 bg-accent hover:!shadow-sm hover:!translate-y-0">
               <SectionHeader title="Top téléchargés" icon={TrendingUp} />
-              <div className="space-y-3">
-                {mostDownloaded.map((picto, idx) => (
-                  <div
-                    key={picto.id}
-                    className="flex items-center gap-3 p-3 rounded bg-card/60 border border-border hover:shadow-lg transition-all cursor-pointer"
-                    onClick={() => setSelectedPicto(picto)}
-                  >
-                    <div className="w-11 h-11 rounded border border-border flex items-center justify-center p-1 shrink-0">
-                      <DarkAwarePicto
-                        pictogram={picto}
-                        width={36}
-                        height={36}
-                        className="w-full h-full object-contain"
-                      />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-bold text-sm truncate text-foreground">
-                        {picto.name}
-                      </p>
-                      <span className="inline-flex items-center gap-1 text-badge-download-text text-[10px] font-bold">
-                        <Download className="size-2.5" />
-                        {getCount(picto.id)}
-                      </span>
-                    </div>
-                    <span className="font-extrabold text-primary/15 text-xl italic">
-                      #{idx + 1}
-                    </span>
+              {(() => {
+                const maxCount = mostDownloaded.length > 0 ? getCount(mostDownloaded[0].id) : 1;
+                const cardStyles = [
+                  "bg-[var(--accent)] dark:bg-[var(--accent)]",
+                  "bg-[var(--accent)]/50 dark:bg-[var(--accent)]/50",
+                  "bg-[var(--accent)]/20 dark:bg-[var(--accent)]/20",
+                ];
+                const rankColors = [
+                  "bg-tertiary text-tertiary-foreground",
+                  "bg-tertiary/60 text-tertiary-foreground",
+                  "bg-tertiary/30 text-tertiary-foreground dark:text-foreground",
+                ];
+                return (
+                  <div className="space-y-2.5">
+                    {mostDownloaded.map((picto, idx) => {
+                      const ratio = Math.round((getCount(picto.id) / maxCount) * 100);
+                      return (
+                        <div
+                          key={picto.id}
+                          className={`relative rounded-lg p-3.5 transition-all cursor-pointer hover:shadow-lg ${cardStyles[idx] ?? cardStyles[2]}`}
+                          onClick={() => setSelectedPicto(picto)}
+                        >
+                          <div className="flex items-center gap-3">
+                            {/* Rank badge */}
+                            <span className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black shrink-0 ${rankColors[idx] ?? rankColors[2]}`}>
+                              {idx + 1}
+                            </span>
+                            {/* Picto thumbnail */}
+                            <div className="w-10 h-10 rounded-lg border border-border/50 bg-card/80 flex items-center justify-center p-1 shrink-0">
+                              <DarkAwarePicto
+                                pictogram={picto}
+                                width={32}
+                                height={32}
+                                className="w-full h-full object-contain"
+                              />
+                            </div>
+                            {/* Name + count */}
+                            <div className="flex-1 min-w-0">
+                              <p className="font-extrabold text-sm truncate text-foreground">
+                                {picto.name}
+                              </p>
+                              <span className="inline-flex items-center gap-1 text-badge-download-text text-[10px] font-bold">
+                                <Download className="size-2.5" />
+                                {getCount(picto.id)}
+                              </span>
+                            </div>
+                          </div>
+                          {/* Progress bar */}
+                          <div className="mt-2.5 h-1.5 rounded-full bg-foreground/[0.06] dark:bg-white/[0.06] overflow-hidden">
+                            <div
+                              className="h-full rounded-full bg-tertiary/70 transition-all duration-500"
+                              style={{ width: `${ratio}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                ))}
-              </div>
+                );
+              })()}
               <button
                 onClick={() => onNavigateGallery()}
-                className="w-full mt-4 px-6 py-2.5 rounded bg-primary hover:bg-(--primary-hover) active:bg-(--primary-active) text-primary-foreground font-bold text-sm shadow-lg transition-all hover:scale-[1.02] active:scale-95"
+                className="w-full mt-4 px-6 py-2.5 rounded-xl bg-primary hover:bg-(--primary-hover) active:bg-(--primary-active) text-primary-foreground font-bold text-sm shadow-lg transition-all hover:scale-[1.02] active:scale-95"
               >
                 <span className="relative z-10 flex items-center justify-center gap-2">
                   Voir tout <TrendingUp className="w-4 h-4" />
@@ -374,17 +388,16 @@ export function DiscoverPage({
             <BentoCard className="md:col-span-2 lg:col-span-2 hover:!shadow-sm hover:!translate-y-0">
               <SectionHeader title="Podium des likes" icon={ThumbsUp} />
 
-              <div className="flex items-end justify-center gap-2 pt-1">
+              <div className="flex items-end justify-center gap-3 pt-1">
                 {podium.items.map((picto, visualIdx) => {
                   const cfg = PODIUM_CONFIG[visualIdx];
                   return (
-                    <div key={visualIdx} className="flex-1 flex flex-col items-center gap-1 min-w-0">
+                    <div key={visualIdx} className="flex-1 flex flex-col items-center gap-1.5 min-w-0">
                       {picto ? (
                         <>
-                          {/* Pictogramme */}
+                          {/* Pictogramme dans cercle avec ring */}
                           <div
-                            className={`${cfg.pictoSize} ${cfg.shadowClass} rounded-[4px] border bg-card flex items-center justify-center p-1.5 cursor-pointer hover:scale-110 transition-transform`}
-                            style={cfg.borderStyle}
+                            className={`${cfg.pictoSize} rounded-full ring-2 ${cfg.ringClass} bg-card flex items-center justify-center p-2 cursor-pointer hover:scale-110 transition-transform`}
                             onClick={() => setSelectedPicto(picto)}
                           >
                             <DarkAwarePicto
@@ -393,11 +406,11 @@ export function DiscoverPage({
                             />
                           </div>
                           {/* Nom */}
-                          <p className="text-[10px] font-bold truncate w-full text-center text-foreground leading-tight px-0.5">
+                          <p className="text-[10px] font-extrabold truncate w-full text-center text-foreground leading-tight px-0.5">
                             {picto.name}
                           </p>
                           {/* Nb likes */}
-                          <span className="flex items-center gap-0.5 text-[10px] font-bold" style={cfg.countStyle}>
+                          <span className="flex items-center gap-0.5 text-xs font-black text-tertiary">
                             <ThumbsUp className="size-2.5" />
                             {getLikeCount?.(picto.id) ?? 0}
                           </span>
@@ -409,10 +422,9 @@ export function DiscoverPage({
 
                       {/* Marche du podium */}
                       <div
-                        className={`w-full ${cfg.stepHeight} rounded-t-[4px] flex items-center justify-center mt-1`}
-                        style={cfg.stepStyle}
+                        className={`w-full ${cfg.stepHeight} ${cfg.stepClass} rounded-t-lg flex items-center justify-center mt-1`}
                       >
-                        <span className={`font-black ${cfg.rankSize}`} style={cfg.rankStyle}>
+                        <span className={`font-black ${cfg.rankSize} text-tertiary-foreground`}>
                           {cfg.rank}
                         </span>
                       </div>
@@ -431,50 +443,61 @@ export function DiscoverPage({
                 icon={FolderOpen}
               />
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {featuredGalleries.map((gallery) => (
-                  <div
-                    key={gallery.id}
-                    className="flex flex-col p-5 rounded hover:bg-accent/30 hover:shadow-lg transition-all cursor-pointer"
-                    onClick={() =>
-                      onNavigateGallery({ galleryId: gallery.id })
-                    }
-                  >
-                    <div className="flex items-center gap-2 mb-2">
-                      {gallery.color && (
-                        <div
-                          className="w-3 h-3 rounded-full shrink-0"
-                          style={{ backgroundColor: gallery.color }}
-                        />
-                      )}
-                      <h3 className="text-base font-extrabold tracking-tight text-tertiary truncate">
-                        {gallery.name}
-                      </h3>
-                    </div>
-                    {gallery.description && (
-                      <p className="text-sm text-muted-foreground font-medium line-clamp-2 leading-relaxed mb-3">
-                        {gallery.description}
-                      </p>
-                    )}
-                    <div className="flex items-center gap-2 mb-3 mt-auto">
-                      {galleryPreviewPictos(gallery).map((picto) => (
-                        <div
-                          key={picto.id}
-                          className="w-9 h-9 rounded border border-border flex items-center justify-center p-0.5"
-                        >
-                          <DarkAwarePicto
-                            pictogram={picto}
-                            width={28}
-                            height={28}
-                            className="w-full h-full object-contain"
-                          />
+                {featuredGalleries.map((gallery) => {
+                  const previews = galleryPreviewPictos(gallery);
+                  return (
+                    <div
+                      key={gallery.id}
+                      className="relative rounded-lg overflow-hidden cursor-pointer hover:shadow-lg transition-all group/gallery"
+                      onClick={() =>
+                        onNavigateGallery({ galleryId: gallery.id })
+                      }
+                    >
+                      {/* Grille 2x2 de pictos */}
+                      <div className="grid grid-cols-2 gap-px bg-border/30 aspect-[4/3]">
+                        {[0, 1, 2, 3].map((i) => (
+                          <div
+                            key={i}
+                            className="bg-card flex items-center justify-center p-3 group-hover/gallery:bg-accent/20 transition-colors"
+                          >
+                            {previews[i] ? (
+                              <DarkAwarePicto
+                                pictogram={previews[i]}
+                                width={48}
+                                height={48}
+                                className="w-full h-full object-contain opacity-80 group-hover/gallery:opacity-100 transition-opacity"
+                              />
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-border/20" />
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                      {/* Overlay bas avec infos */}
+                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-card via-card/95 to-transparent pt-8 pb-4 px-4">
+                        <div className="flex items-center gap-2 mb-1">
+                          {gallery.color && (
+                            <div
+                              className="w-2.5 h-2.5 rounded-full shrink-0 ring-2 ring-card"
+                              style={{ backgroundColor: gallery.color }}
+                            />
+                          )}
+                          <h3 className="text-sm font-extrabold tracking-tight text-foreground truncate">
+                            {gallery.name}
+                          </h3>
                         </div>
-                      ))}
+                        {gallery.description && (
+                          <p className="text-xs text-muted-foreground font-medium line-clamp-1 leading-relaxed mb-2">
+                            {gallery.description}
+                          </p>
+                        )}
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-tertiary/10 text-tertiary text-[10px] font-bold">
+                          {gallery.pictogramIds.length} picto{gallery.pictogramIds.length > 1 ? "s" : ""}
+                        </span>
+                      </div>
                     </div>
-                    <span className="inline-flex items-center self-start px-3 py-1 rounded-full bg-badge-accent-bg border border-badge-accent-border text-badge-accent-text text-xs font-bold">
-                      {gallery.pictogramIds.length} picto{gallery.pictogramIds.length > 1 ? "s" : ""}
-                    </span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </BentoCard>
           )}
@@ -482,29 +505,39 @@ export function DiscoverPage({
           {/* ── Tags populaires (2 cols) ── */}
           {topTags.length > 0 && (
             <BentoCard className="md:col-span-2 lg:col-span-2 hover:!shadow-sm hover:!translate-y-0 bg-[var(--dsfr-blue-france-975)] dark:bg-[var(--dsfr-blue-france-main)]/[0.08]">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded bg-tertiary/80 backdrop-blur-sm flex items-center justify-center text-tertiary-foreground shadow-lg ring-1 ring-tertiary/20">
-                  <Tag className="w-5 h-5" />
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-9 h-9 rounded-lg bg-tertiary text-tertiary-foreground flex items-center justify-center shrink-0">
+                  <Tag className="size-4.5" />
                 </div>
-                <h2 className="text-xl font-extrabold tracking-tight text-tertiary">
+                <h2 className="text-lg md:text-xl font-extrabold text-foreground">
                   Tags populaires
                 </h2>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {topTags.slice(0, 15).map(({ name, count }) => (
-                  <button
-                    key={name}
-                    onClick={() => onNavigateGallery({ search: name })}
-                    className="px-3 py-1.5 rounded-xl bg-background/60 border border-border text-xs font-bold text-foreground transition-all cursor-pointer"
-                    style={{ '--hover-bg': 'var(--dsfr-blue-france-850)' } as React.CSSProperties}
-                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'var(--dsfr-blue-france-850)'; e.currentTarget.style.borderColor = 'var(--dsfr-blue-france-850)'; }}
-                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = ''; e.currentTarget.style.borderColor = ''; }}
-                  >
-                    {name}{" "}
-                    <span className="ml-1 text-[var(--dsfr-blue-france-main)] font-extrabold">{count}</span>
-                  </button>
-                ))}
-              </div>
+              {(() => {
+                const tags = topTags.slice(0, 20);
+                const maxCount = tags[0]?.count ?? 1;
+                const minCount = tags[tags.length - 1]?.count ?? 1;
+                const range = maxCount - minCount || 1;
+                // 5 tailles : text-[10px] → text-xs → text-sm → text-base → text-lg
+                const sizeClasses = ["text-[10px] px-2 py-1", "text-xs px-2.5 py-1", "text-sm px-3 py-1.5", "text-sm px-3 py-1.5 font-extrabold", "text-base px-3.5 py-1.5 font-extrabold"];
+                const opacityClasses = ["opacity-50", "opacity-60", "opacity-75", "opacity-90", "opacity-100"];
+                return (
+                  <div className="flex flex-wrap items-center justify-center gap-2">
+                    {tags.map(({ name, count }) => {
+                      const level = Math.round(((count - minCount) / range) * 4);
+                      return (
+                        <button
+                          key={name}
+                          onClick={() => onNavigateGallery({ search: name })}
+                          className={`${sizeClasses[level]} ${opacityClasses[level]} rounded-xl bg-background/60 border border-border font-bold text-foreground transition-all cursor-pointer hover:bg-[var(--dsfr-blue-france-850)] hover:border-[var(--dsfr-blue-france-850)] hover:opacity-100`}
+                        >
+                          {name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
             </BentoCard>
           )}
 

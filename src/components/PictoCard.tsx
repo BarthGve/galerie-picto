@@ -420,13 +420,13 @@ function PictoCardInner({
           )}
 
           {compact ? (
-            <div className="px-2 pb-2 pt-1">
+            <div className="px-2 pb-1.5 pt-0.5">
               <h3 className="font-bold text-xs text-foreground truncate leading-tight text-center">
                 {pictogram.name || pictogram.filename.replace(/\.svg$/i, "")}
               </h3>
             </div>
           ) : (
-            <div className="px-3.5 pb-3 pt-2.5 space-y-1.5">
+            <div className="px-3 pb-0 pt-2 space-y-2">
               <div className="flex items-center gap-1.5 min-w-0">
                 <h3 className="font-extrabold text-sm text-foreground truncate leading-tight flex-1">
                   {pictogram.name || pictogram.filename.replace(/\.svg$/i, "")}
