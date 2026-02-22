@@ -163,7 +163,7 @@ export function useRequests(isAuthenticated: boolean) {
   );
 
   const getHistory = useCallback(
-    async (requestId: string): Promise<{ id: string; actorLogin: string; actorAvatar: string | null; action: string; fromStatus: string | null; toStatus: string | null; detail: string | null; createdAt: string }[]> => {
+    async (requestId: string): Promise<{ id: string; actorLogin: string; actorAvatar: string | null; action: string; fromStatus: string | null; toStatus: string | null; detail: string | null; detailAvatar: string | null; detailName: string | null; createdAt: string }[]> => {
       const token = getStoredToken();
       if (!token) return [];
       try {

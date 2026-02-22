@@ -1,7 +1,12 @@
 import { Router, Response } from "express";
 import { authAnyUser } from "../middleware/auth-any-user.js";
 import { AuthenticatedRequest } from "../middleware/auth.js";
-import { deleteUser, getUserProfile } from "../db/repositories/users.js";
+import {
+  deleteUser,
+  getUserProfile,
+  clearUserEmail,
+  updateUserEmail,
+} from "../db/repositories/users.js";
 import { getUserPictograms } from "../db/repositories/user-pictograms.js";
 import { deletePrivateFile } from "../services/minio.js";
 
@@ -19,6 +24,44 @@ router.get(
       return;
     }
     res.json(profile);
+  },
+);
+
+// PATCH /api/user/me/email - Modifier son email
+router.patch(
+  "/me/email",
+  authAnyUser,
+  (req: AuthenticatedRequest, res: Response): void => {
+    const { email } = req.body as { email?: string };
+    if (
+      !email ||
+      typeof email !== "string" ||
+      email.length > 254 ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+    ) {
+      res.status(400).json({ error: "Adresse email invalide" });
+      return;
+    }
+    try {
+      updateUserEmail(req.user!.login, email);
+      res.json({ success: true });
+    } catch {
+      res.status(500).json({ error: "Failed to update email" });
+    }
+  },
+);
+
+// DELETE /api/user/me/email - Retirer son email (opt-out)
+router.delete(
+  "/me/email",
+  authAnyUser,
+  (req: AuthenticatedRequest, res: Response): void => {
+    try {
+      clearUserEmail(req.user!.login);
+      res.json({ success: true });
+    } catch {
+      res.status(500).json({ error: "Failed to clear email" });
+    }
   },
 );
 

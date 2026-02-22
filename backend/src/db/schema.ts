@@ -56,6 +56,7 @@ export const users = sqliteTable("users", {
   githubName: text("github_name"),
   githubAvatarUrl: text("github_avatar_url"),
   githubEmail: text("github_email"),
+  emailOptOut: integer("email_opt_out").default(0),
   firstSeenAt: text("first_seen_at").$defaultFn(() => new Date().toISOString()),
   lastSeenAt: text("last_seen_at").$defaultFn(() => new Date().toISOString()),
   bannedAt: text("banned_at"),
