@@ -13,6 +13,7 @@ import {
   Ban,
   Trash2,
   ShieldCheck,
+  Shield,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { API_URL } from "@/lib/config";
@@ -20,6 +21,8 @@ import { getStoredToken } from "@/lib/github-auth";
 import { useAdminStats } from "@/hooks/useAdminStats";
 import { useAdminUsers, type AdminUser } from "@/hooks/useAdminUsers";
 import { AdminRequestsSection } from "@/components/AdminRequestsSection";
+import { AdminGdprSection } from "@/components/AdminGdprSection";
+import { useAdminGdprRequests } from "@/hooks/useGdprRequests";
 
 function formatDate(iso: string | null | undefined) {
   if (!iso) return "—";
@@ -378,7 +381,8 @@ function UsersSection() {
 export function AdminPage({ activeRequestCount = 0 }: { activeRequestCount?: number }) {
   const { stats, loading, error, refetch } = useAdminStats();
   const [openTickets, setOpenTickets] = useState<number | null>(null);
-  const [activeTab, setActiveTab] = useState<"dashboard" | "users" | "requests">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "users" | "requests" | "gdpr">("dashboard");
+  const { newCount: gdprNewCount } = useAdminGdprRequests();
 
   useEffect(() => {
     fetch(`${API_URL}/api/feedback`)
@@ -492,10 +496,28 @@ export function AdminPage({ activeRequestCount = 0 }: { activeRequestCount?: num
           >
             <span className="flex items-center gap-1.5">
               <MessageSquare className="size-3.5" />
-              Demandes
+              Demandes de pictos
               {activeRequestCount > 0 && (
                 <span className="inline-flex items-center justify-center rounded-full bg-muted text-muted-foreground text-[10px] font-bold px-1.5 py-0.5 leading-none">
                   {activeRequestCount}
+                </span>
+              )}
+            </span>
+          </button>
+          <button
+            onClick={() => setActiveTab("gdpr")}
+            className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
+              activeTab === "gdpr"
+                ? "border-tertiary text-tertiary"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <span className="flex items-center gap-1.5">
+              <Shield className="size-3.5" />
+              RGPD
+              {gdprNewCount > 0 && (
+                <span className="inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 leading-none">
+                  {gdprNewCount}
                 </span>
               )}
             </span>
@@ -662,6 +684,9 @@ export function AdminPage({ activeRequestCount = 0 }: { activeRequestCount?: num
 
         {/* Contenu Demandes */}
         {activeTab === "requests" && <AdminRequestsSection />}
+
+        {/* Contenu RGPD */}
+        {activeTab === "gdpr" && <AdminGdprSection />}
       </div>
     </div>
   );

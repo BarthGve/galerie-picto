@@ -32,6 +32,7 @@ import adminRoutes from "./routes/admin.js";
 import sitemapRoutes from "./routes/sitemap.js";
 import requestsRoutes from "./routes/requests.js";
 import notificationsRoutes from "./routes/notifications.js";
+import gdprRequestsRoutes from "./routes/gdpr-requests.js";
 
 const app = express();
 
@@ -158,6 +159,7 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/sitemap.xml", sitemapRoutes);
 app.use("/api/requests", requestsRoutes);
 app.use("/api/notifications", notificationsRoutes);
+app.use("/api/gdpr-requests", gdprRequestsRoutes);
 
 // Run migrations then start server
 runMigrations();

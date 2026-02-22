@@ -18,13 +18,13 @@ import {
 
 const UploadDialog = lazy(() => import("@/components/UploadDialog").then(m => ({ default: m.UploadDialog })));
 
-const FILTER_TABS: { value: PictoRequestStatus | "all"; label: string }[] = [
+const FILTER_TABS: { value: PictoRequestStatus | "all"; label: string; countKey?: PictoRequestStatus }[] = [
   { value: "all", label: "Toutes" },
-  { value: "nouvelle", label: "Nouvelles" },
-  { value: "en_cours", label: "En cours" },
-  { value: "precisions_requises", label: "Précisions" },
-  { value: "livree", label: "Livrées" },
-  { value: "refusee", label: "Refusées" },
+  { value: "nouvelle", label: "Nouvelles", countKey: "nouvelle" },
+  { value: "en_cours", label: "En cours", countKey: "en_cours" },
+  { value: "precisions_requises", label: "Précisions", countKey: "precisions_requises" },
+  { value: "livree", label: "Livrées", countKey: "livree" },
+  { value: "refusee", label: "Refusées", countKey: "refusee" },
 ];
 
 function RequestDetailPanel({
@@ -504,6 +504,30 @@ export function AdminRequestsSection() {
   const { requests, loading, fetchAll, assignRequest: assignReq, updateStatus, getRequestDetail } = useAdminRequests();
   const [filter, setFilter] = useState<PictoRequestStatus | "all">("all");
   const [selectedRequest, setSelectedRequest] = useState<PictoRequest | null>(null);
+  const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
+
+  // Fetch counts from all requests
+  const fetchCounts = useCallback(async () => {
+    const token = getStoredToken();
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_URL}/api/requests/admin`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const counts: Record<string, number> = {};
+        for (const r of data.requests as PictoRequest[]) {
+          counts[r.status] = (counts[r.status] || 0) + 1;
+        }
+        setStatusCounts(counts);
+      }
+    } catch { /* ignore */ }
+  }, []);
+
+  useEffect(() => {
+    fetchCounts();
+  }, [fetchCounts]);
 
   useEffect(() => {
     fetchAll(filter === "all" ? undefined : filter);
@@ -531,6 +555,7 @@ export function AdminRequestsSection() {
         onClose={() => {
           setSelectedRequest(null);
           fetchAll(filter === "all" ? undefined : filter);
+          fetchCounts();
         }}
         onAssign={async (id, assignTo) => {
           const ok = await assignReq(id, assignTo);
@@ -555,20 +580,28 @@ export function AdminRequestsSection() {
   return (
     <div className="space-y-4">
       {/* Filtres */}
-      <div className="flex gap-1 flex-wrap">
-        {FILTER_TABS.map((tab) => (
-          <button
-            key={tab.value}
-            onClick={() => setFilter(tab.value)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
-              filter === tab.value
-                ? "bg-slate-900 text-white"
-                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+      <div className="flex gap-1.5 flex-wrap">
+        {FILTER_TABS.map((tab) => {
+          const count = tab.countKey ? statusCounts[tab.countKey] ?? 0 : 0;
+          return (
+            <button
+              key={tab.value}
+              onClick={() => setFilter(tab.value)}
+              className={`px-3.5 py-1.5 text-xs font-bold rounded-full transition-all ${
+                filter === tab.value
+                  ? "bg-foreground text-background shadow-sm"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+              }`}
+            >
+              {tab.label}
+              {tab.countKey && count > 0 && (
+                <span className="ml-1.5 inline-flex items-center justify-center size-4 rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
+                  {count > 99 ? "99+" : count}
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
 
       {loading && requests.length === 0 ? (

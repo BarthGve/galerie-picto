@@ -272,3 +272,42 @@ export const notifications = sqliteTable(
     ),
   ],
 );
+
+export const gdprRequests = sqliteTable(
+  "gdpr_requests",
+  {
+    id: text("id").primaryKey(),
+    requesterLogin: text("requester_login")
+      .notNull()
+      .references(() => users.githubLogin, { onDelete: "cascade" }),
+    rightType: text("right_type").notNull(), // "acces" | "rectification" | "effacement" | "portabilite" | "opposition"
+    message: text("message").notNull(),
+    status: text("status").notNull().default("nouveau"), // "nouveau" | "en_cours" | "traite"
+    consentContact: integer("consent_contact").notNull().default(0),
+    createdAt: text("created_at").$defaultFn(() => new Date().toISOString()),
+    updatedAt: text("updated_at").$defaultFn(() => new Date().toISOString()),
+  },
+  (table) => [
+    index("gdpr_requester_login_idx").on(table.requesterLogin),
+    index("gdpr_status_idx").on(table.status),
+  ],
+);
+
+export const gdprRequestHistory = sqliteTable(
+  "gdpr_request_history",
+  {
+    id: text("id").primaryKey(),
+    requestId: text("request_id")
+      .notNull()
+      .references(() => gdprRequests.id, { onDelete: "cascade" }),
+    actorLogin: text("actor_login")
+      .notNull()
+      .references(() => users.githubLogin, { onDelete: "cascade" }),
+    action: text("action").notNull(), // "created" | "status_changed"
+    fromStatus: text("from_status"),
+    toStatus: text("to_status"),
+    detail: text("detail"),
+    createdAt: text("created_at").$defaultFn(() => new Date().toISOString()),
+  },
+  (table) => [index("gdrh_request_id_idx").on(table.requestId)],
+);

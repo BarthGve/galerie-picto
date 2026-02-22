@@ -91,11 +91,16 @@ const RequestsPage = lazy(() =>
     default: m.RequestsPage,
   })),
 );
+const GdprRequestForm = lazy(() =>
+  import("@/components/GdprRequestForm").then((m) => ({
+    default: m.GdprRequestForm,
+  })),
+);
 
 const normalizeSearch = (s: string) =>
   s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-type Page = "home" | "discover" | "gallery" | "collections" | "test-discover" | "feedback" | "privacy" | "cookies" | "guides" | "profile" | "admin" | "requests" | "404";
+type Page = "home" | "discover" | "gallery" | "collections" | "test-discover" | "feedback" | "privacy" | "cookies" | "guides" | "profile" | "admin" | "requests" | "gdpr" | "404";
 
 function getInitialPage(): Page {
   const path = window.location.pathname;
@@ -110,6 +115,7 @@ function getInitialPage(): Page {
   if (path === "/collections") return "collections";
   if (path === "/guides") return "guides";
   if (path === "/demandes") return "requests";
+  if (path === "/exercer-mes-droits") return "gdpr";
   // OAuth callback → go straight to discover
   if (new URLSearchParams(window.location.search).has("code")) return "discover";
   if (path === "/") return "home";
@@ -240,6 +246,7 @@ function AppInner() {
       else if (path === "/collections") setPage("collections");
       else if (path === "/guides") setPage("guides");
       else if (path === "/demandes") setPage("requests");
+      else if (path === "/exercer-mes-droits") setPage("gdpr");
       else if (path === "/") setPage("home");
       else setPage("404");
     };
@@ -271,7 +278,9 @@ function AppInner() {
                         ? "/guides"
                         : target === "requests"
                           ? "/demandes"
-                          : "/";
+                          : target === "gdpr"
+                            ? "/exercer-mes-droits"
+                            : "/";
     window.history.pushState(null, "", path);
     setPage(target);
     if (target === "discover" || target === "home") {
@@ -629,6 +638,8 @@ function AppInner() {
         return <SEOHead title="Gestion des cookies" description="Politique de gestion des cookies de La Boite à Pictos." path="/cookies" />;
       case "requests":
         return <SEOHead title="Mes demandes" description="Demandez la création de nouveaux pictogrammes SVG sur La Boite à Pictos." path="/demandes" />;
+      case "gdpr":
+        return <SEOHead title="Exercer mes droits" description="Formulaire d'exercice de vos droits RGPD sur La Boite à Pictos." path="/exercer-mes-droits" />;
       case "guides":
         return <SEOHead title="Guides" description="Tutoriels pas-à-pas pour utiliser La Boite à Pictos : personnaliser les couleurs, télécharger, créer des collections et plus." path="/guides" />;
       default:
@@ -734,6 +745,14 @@ function AppInner() {
               {page === "privacy" ? (
                 <Suspense fallback={null}>
                   <PrivacyPage />
+                </Suspense>
+              ) : page === "gdpr" ? (
+                <Suspense fallback={null}>
+                  <GdprRequestForm
+                    isAuthenticated={!!user}
+                    userEmail={user?.email ?? null}
+                    onLogin={handleLogin}
+                  />
                 </Suspense>
               ) : page === "cookies" ? (
                 <Suspense fallback={null}>

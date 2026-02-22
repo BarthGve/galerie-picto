@@ -1,4 +1,5 @@
 import { BreadcrumbNav } from "@/components/Breadcrumb";
+import { getStoredToken } from "@/lib/github-auth";
 
 export function PrivacyPage() {
   return (
@@ -8,7 +9,7 @@ export function PrivacyPage() {
         { label: "Confidentialité" },
       ]} />
 
-      <h1 className="text-3xl font-bold text-foreground mb-2">
+      <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-tertiary mb-2">
         Politique de confidentialité
       </h1>
       <p className="text-sm text-muted-foreground mb-10">
@@ -24,8 +25,8 @@ export function PrivacyPage() {
             <p className="font-medium">Bruno Gauvillé</p>
             <p>78 promenade du Verger — 92130 Issy-les-Moulineaux</p>
             <p>
-              <a href="mailto:admin@laboiteapicto.fr" className="text-primary underline underline-offset-2">
-                admin@laboiteapicto.fr
+              <a href="mailto:admin@laboiteapictos.fr" className="text-primary underline underline-offset-2">
+                admin@laboiteapictos.fr
               </a>
             </p>
           </div>
@@ -151,9 +152,13 @@ export function PrivacyPage() {
                   <td className="py-2 pr-4">Pictogrammes uploadés</td>
                   <td className="py-2">Jusqu'à suppression manuelle par le contributeur</td>
                 </tr>
-                <tr>
+                <tr className="border-b border-border/50">
                   <td className="py-2 pr-4">Adresses IP (téléchargements anonymes)</td>
                   <td className="py-2">7 jours</td>
+                </tr>
+                <tr>
+                  <td className="py-2 pr-4">Demandes d'exercice de droits RGPD</td>
+                  <td className="py-2">3 ans (délai de prescription CNIL)</td>
                 </tr>
               </tbody>
             </table>
@@ -173,7 +178,7 @@ export function PrivacyPage() {
               { title: "Droit à l'effacement", desc: "Supprimez votre compte depuis le menu utilisateur (« Supprimer mon compte ») ou par e-mail." },
               { title: "Droit à la portabilité", desc: "Demandez une copie de vos données par e-mail." },
               { title: "Droit d'opposition", desc: "Vous opposer à un traitement fondé sur l'intérêt légitime." },
-              { title: "Droit de réclamation", desc: "Saisir la CNIL à l'adresse www.cnil.fr ou par courrier : 3 place de Fontenoy, 75007 Paris." },
+              { title: "Droit de réclamation", desc: "Saisir la CNIL à l'adresse www.cnil.fr ou par courrier : 3 place de Fontenoy, TSA 80715, 75334 PARIS CEDEX 07." },
             ].map(({ title, desc }) => (
               <div key={title} className="border border-border rounded-[4px] p-3 text-sm">
                 <p className="font-medium mb-1">{title}</p>
@@ -181,13 +186,29 @@ export function PrivacyPage() {
               </div>
             ))}
           </div>
-          <p className="text-sm text-muted-foreground mt-4">
-            Pour exercer vos droits :{" "}
-            <a href="mailto:admin@laboiteapicto.fr" className="text-primary underline underline-offset-2">
-              admin@laboiteapicto.fr
-            </a>
-            . Nous nous engageons à répondre dans un délai d'un mois.
-          </p>
+          <div className="mt-4 space-y-2">
+            {getStoredToken() ? (
+              <p className="text-sm text-muted-foreground">
+                Pour exercer vos droits, utilisez notre{" "}
+                <a
+                  href="/exercer-mes-droits"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    window.history.pushState(null, "", "/exercer-mes-droits");
+                    window.dispatchEvent(new PopStateEvent("popstate"));
+                  }}
+                  className="text-primary font-medium underline underline-offset-2 hover:text-[var(--primary-hover)] transition-colors"
+                >
+                  formulaire en ligne
+                </a>.
+                Nous nous engageons à répondre dans un délai d'un mois.
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground italic">
+                Connectez-vous avec GitHub pour soumettre une demande d'exercice de droits.
+              </p>
+            )}
+          </div>
         </section>
 
         {/* 7. Mise à jour */}

@@ -242,6 +242,15 @@ For EVERY call (create_frontend, modify_frontend, snippet_frontend), you MUST pa
 - Pass the FULL design-system.md content in `designSystem`
 - Pass functional context in `context` (purpose, features, requirements)
 
+## FALLBACK OBLIGATOIRE : skill interface-design
+
+Si Gemini (MCP) est indisponible (quota épuisé, erreur réseau, etc.), **toujours** utiliser le skill `interface-design` pour générer le code frontend/UI. Ne JAMAIS coder du frontend soi-même sans passer par un outil de design (Gemini OU skill interface-design).
+
+Ordre de priorité :
+1. Gemini MCP (`create_frontend`, `modify_frontend`, `snippet_frontend`)
+2. Skill `interface-design` (si Gemini indisponible)
+3. Coder soi-même → **INTERDIT** pour du code UI/visuel
+
 ## EXCEPTIONS (you can code these yourself)
 
 - Text-only changes
