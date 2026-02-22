@@ -633,7 +633,7 @@ const handleDownloadSvg = () => {
                       <TooltipTrigger asChild>
                         <PopoverTrigger asChild>
                           <button
-                            className={`absolute -bottom-4 -right-4 w-9 h-9 flex items-center justify-center rounded-xl bg-card shadow-md border transition-colors ${modifiedSvg ? "text-primary border-primary/60" : "border-border text-muted-foreground hover:text-primary hover:border-primary"}`}
+                            className={`absolute -bottom-4 -right-4 w-9 h-9 flex items-center justify-center rounded bg-card shadow-md border transition-colors ${modifiedSvg ? "text-primary border-primary/60" : "border-border text-muted-foreground hover:text-primary hover:border-primary"}`}
                           >
                             <Palette className="w-4 h-4" />
                           </button>
@@ -916,7 +916,7 @@ const handleDownloadSvg = () => {
                   <button
                     onClick={handleDownloadSvg}
                     disabled={!svgLoaded}
-                    className="h-10 flex-1 flex items-center justify-center gap-2 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-lg hover:shadow-xl transition-all active:scale-95 disabled:opacity-50"
+                    className="h-10 flex-1 flex items-center justify-center gap-2 rounded bg-primary text-primary-foreground font-bold text-sm shadow-lg hover:shadow-xl transition-all active:scale-95 disabled:opacity-50"
                   >
                     <Download className="w-4 h-4" />
                     SVG
@@ -924,7 +924,7 @@ const handleDownloadSvg = () => {
                   <select
                     value={pngSize}
                     onChange={(e) => setPngSize(Number(e.target.value))}
-                    className="h-10 w-24 rounded-xl border border-border bg-card px-3 text-sm font-medium focus:outline-none shrink-0"
+                    className="h-10 w-24 rounded border border-border bg-card px-3 text-sm font-medium focus:outline-none shrink-0"
                   >
                     <option value={128}>128 px</option>
                     <option value={256}>256 px</option>
@@ -934,7 +934,7 @@ const handleDownloadSvg = () => {
                   <button
                     onClick={handleDownloadPng}
                     disabled={!svgLoaded}
-                    className="h-10 flex-1 flex items-center justify-center gap-2 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-lg hover:shadow-xl transition-all active:scale-95 disabled:opacity-50"
+                    className="h-10 flex-1 flex items-center justify-center gap-2 rounded bg-primary text-primary-foreground font-bold text-sm shadow-lg hover:shadow-xl transition-all active:scale-95 disabled:opacity-50"
                   >
                     <Download className="w-4 h-4" />
                     PNG
@@ -945,7 +945,7 @@ const handleDownloadSvg = () => {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => setUpgradeGateOpen(true)}
-                      className="h-10 flex-1 flex items-center justify-center gap-2 rounded-xl bg-primary/60 text-primary-foreground font-bold text-sm cursor-not-allowed"
+                      className="h-10 flex-1 flex items-center justify-center gap-2 rounded bg-primary/60 text-primary-foreground font-bold text-sm cursor-not-allowed"
                     >
                       <Lock className="w-4 h-4" />
                       SVG
@@ -953,7 +953,7 @@ const handleDownloadSvg = () => {
                     <select
                       value={128}
                       onChange={() => setUpgradeGateOpen(true)}
-                      className="h-10 w-24 rounded-xl border border-border bg-card px-3 text-sm font-medium focus:outline-none shrink-0 opacity-60 cursor-pointer"
+                      className="h-10 w-24 rounded border border-border bg-card px-3 text-sm font-medium focus:outline-none shrink-0 opacity-60 cursor-pointer"
                     >
                       <option value={128}>128 px</option>
                       <option value={256}>256 px</option>
@@ -963,7 +963,7 @@ const handleDownloadSvg = () => {
                     <button
                       onClick={handleDownloadPngAnonymous}
                       disabled={anonDownloadsRemaining === null || anonDownloadsRemaining === 0}
-                      className="h-10 flex-1 flex items-center justify-center gap-2 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-lg hover:shadow-xl transition-all active:scale-95 disabled:opacity-50"
+                      className="h-10 flex-1 flex items-center justify-center gap-2 rounded bg-primary text-primary-foreground font-bold text-sm shadow-lg hover:shadow-xl transition-all active:scale-95 disabled:opacity-50"
                     >
                       <Download className="w-4 h-4" />
                       PNG (128 px)

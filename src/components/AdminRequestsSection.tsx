@@ -308,7 +308,7 @@ function RequestDetailPanel({
                   {!showPrecisionForm ? (
                     <button
                       onClick={() => setShowPrecisionForm(true)}
-                      className="px-4 py-2 rounded-xl bg-orange-50 text-orange-700 font-bold text-sm hover:bg-orange-100"
+                      className="px-4 py-2 rounded bg-orange-50 text-orange-700 font-bold text-sm hover:bg-orange-100"
                     >
                       Demander des précisions
                     </button>
@@ -320,7 +320,7 @@ function RequestDetailPanel({
                         placeholder="Quelles précisions souhaitez-vous ?"
                         className="flex-1 rounded-[4px] border border-slate-200 px-3 py-2 text-sm"
                       />
-                      <button onClick={handlePrecision} className="px-4 py-2 rounded-xl bg-orange-500 text-white font-bold text-sm">
+                      <button onClick={handlePrecision} className="px-4 py-2 rounded bg-orange-500 text-white font-bold text-sm">
                         Confirmer
                       </button>
                       <button onClick={() => setShowPrecisionForm(false)} className="px-3 py-2 text-sm text-slate-500">
@@ -330,7 +330,7 @@ function RequestDetailPanel({
                   )}
                   <button
                     onClick={() => setShowUploadForDelivery(true)}
-                    className="px-4 py-2 rounded-xl bg-emerald-50 text-emerald-700 font-bold text-sm hover:bg-emerald-100 flex items-center gap-2"
+                    className="px-4 py-2 rounded bg-emerald-50 text-emerald-700 font-bold text-sm hover:bg-emerald-100 flex items-center gap-2"
                   >
                     <Check className="w-4 h-4" />
                     Marquer livrée
@@ -343,7 +343,7 @@ function RequestDetailPanel({
                     const ok = await onUpdateStatus(request.id, "en_cours");
                     if (ok) { toast.success("Reprise en cours"); afterAction(); }
                   }}
-                  className="px-4 py-2 rounded-xl bg-amber-50 text-amber-700 font-bold text-sm hover:bg-amber-100"
+                  className="px-4 py-2 rounded bg-amber-50 text-amber-700 font-bold text-sm hover:bg-amber-100"
                 >
                   Reprendre en cours
                 </button>
@@ -351,7 +351,7 @@ function RequestDetailPanel({
               {!showRejectForm ? (
                 <button
                   onClick={() => setShowRejectForm(true)}
-                  className="px-4 py-2 rounded-xl bg-red-50 text-red-600 font-bold text-sm hover:bg-red-100"
+                  className="px-4 py-2 rounded bg-red-50 text-red-600 font-bold text-sm hover:bg-red-100"
                 >
                   Refuser
                 </button>
@@ -363,7 +363,7 @@ function RequestDetailPanel({
                     placeholder="Motif du refus..."
                     className="flex-1 rounded-[4px] border border-slate-200 px-3 py-2 text-sm"
                   />
-                  <button onClick={handleReject} className="px-4 py-2 rounded-xl bg-red-500 text-white font-bold text-sm">
+                  <button onClick={handleReject} className="px-4 py-2 rounded bg-red-500 text-white font-bold text-sm">
                     Confirmer
                   </button>
                   <button onClick={() => setShowRejectForm(false)} className="px-3 py-2 text-sm text-slate-500">
@@ -419,7 +419,7 @@ function RequestDetailPanel({
                 <button
                   onClick={handleSendComment}
                   disabled={sending || !newComment.trim()}
-                  className="px-3 py-1.5 rounded-xl bg-primary text-primary-foreground font-bold text-xs hover:bg-primary/90 active:bg-primary/80 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-1.5"
+                  className="px-3 py-1.5 rounded bg-primary text-primary-foreground font-bold text-xs hover:bg-primary/90 active:bg-primary/80 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-1.5"
                 >
                   {sending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
                   Envoyer

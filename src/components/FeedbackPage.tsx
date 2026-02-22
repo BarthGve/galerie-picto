@@ -84,7 +84,7 @@ function IssuesList({
           </p>
           <button
             onClick={onSignal}
-            className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm hover:bg-primary/90 active:bg-primary/80 flex items-center gap-2"
+            className="px-5 py-2.5 rounded bg-primary text-primary-foreground font-bold text-sm hover:bg-primary/90 active:bg-primary/80 flex items-center gap-2"
           >
             <Send className="size-3.5" />
             Initier un ticket
@@ -381,7 +381,7 @@ function BugForm({ onSuccess }: { onSuccess: () => void }) {
         <button
           type="submit"
           disabled={!canSubmit || loading}
-          className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm hover:bg-primary/90 active:bg-primary/80 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2"
+          className="px-5 py-2.5 rounded bg-primary text-primary-foreground font-bold text-sm hover:bg-primary/90 active:bg-primary/80 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2"
         >
           {loading ? (
             <>
@@ -515,7 +515,7 @@ function ImprovementForm({ onSuccess }: { onSuccess: () => void }) {
         <button
           type="submit"
           disabled={!canSubmit || loading}
-          className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm hover:bg-primary/90 active:bg-primary/80 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2"
+          className="px-5 py-2.5 rounded bg-primary text-primary-foreground font-bold text-sm hover:bg-primary/90 active:bg-primary/80 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2"
         >
           {loading ? (
             <>

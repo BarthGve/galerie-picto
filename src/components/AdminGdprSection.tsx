@@ -252,7 +252,7 @@ function GdprDetailPanel({
                 <button
                   onClick={() => handleStatus("en_cours")}
                   disabled={busy}
-                  className="px-4 py-2 rounded-xl bg-amber-50 text-amber-700 font-bold text-sm hover:bg-amber-100 disabled:opacity-50"
+                  className="px-4 py-2 rounded bg-amber-50 text-amber-700 font-bold text-sm hover:bg-amber-100 disabled:opacity-50"
                 >
                   Passer en cours
                 </button>
@@ -261,7 +261,7 @@ function GdprDetailPanel({
                 <button
                   onClick={() => handleStatus("nouveau")}
                   disabled={busy}
-                  className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 font-bold text-sm hover:bg-slate-200 disabled:opacity-50"
+                  className="px-4 py-2 rounded bg-slate-100 text-slate-700 font-bold text-sm hover:bg-slate-200 disabled:opacity-50"
                 >
                   Remettre en nouveau
                 </button>
@@ -269,7 +269,7 @@ function GdprDetailPanel({
               <button
                 onClick={() => setShowTraiteDialog(true)}
                 disabled={busy}
-                className="px-4 py-2 rounded-xl bg-emerald-50 text-emerald-700 font-bold text-sm hover:bg-emerald-100 disabled:opacity-50"
+                className="px-4 py-2 rounded bg-emerald-50 text-emerald-700 font-bold text-sm hover:bg-emerald-100 disabled:opacity-50"
               >
                 Marquer traité
               </button>
@@ -304,14 +304,14 @@ function GdprDetailPanel({
                 <div className="flex items-center justify-end gap-2">
                   <button
                     onClick={() => setShowTraiteDialog(false)}
-                    className="px-4 py-2 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground"
+                    className="px-4 py-2 rounded text-sm font-medium text-muted-foreground hover:text-foreground"
                   >
                     Annuler
                   </button>
                   <button
                     onClick={handleTraite}
                     disabled={busy || !responseMessage.trim()}
-                    className="px-4 py-2 rounded-xl bg-emerald-600 text-white font-bold text-sm hover:bg-emerald-700 disabled:opacity-50 disabled:pointer-events-none"
+                    className="px-4 py-2 rounded bg-emerald-600 text-white font-bold text-sm hover:bg-emerald-700 disabled:opacity-50 disabled:pointer-events-none"
                   >
                     {busy ? "Envoi…" : "Confirmer"}
                   </button>

@@ -146,7 +146,7 @@ export function PictoGrid({
           </div>
           <button
             onClick={() => { setActiveTag(null); setDrawerOpen(false); onPageChange(1); }}
-            className={`px-3 py-1 rounded-xl text-xs font-bold transition-all whitespace-nowrap border ${
+            className={`px-3 py-1 rounded text-xs font-bold transition-all whitespace-nowrap border ${
               !activeTag
                 ? "bg-accent text-primary border-primary/30"
                 : "bg-accent text-muted-foreground border-transparent hover:text-foreground"
@@ -158,7 +158,7 @@ export function PictoGrid({
             <button
               key={tag}
               onClick={() => { setActiveTag(activeTag === tag ? null : tag); onPageChange(1); }}
-              className={`px-3 py-1 rounded-xl text-xs font-bold transition-all whitespace-nowrap border ${
+              className={`px-3 py-1 rounded text-xs font-bold transition-all whitespace-nowrap border ${
                 activeTag === tag
                   ? "bg-accent text-primary border-primary/30"
                   : "bg-accent text-muted-foreground border-transparent hover:text-foreground"
@@ -183,7 +183,7 @@ export function PictoGrid({
                   <button
                     key={tag}
                     onClick={() => { setActiveTag(activeTag === tag ? null : tag); onPageChange(1); }}
-                    className={`px-3 py-1 rounded-xl text-xs font-bold transition-all whitespace-nowrap border ${
+                    className={`px-3 py-1 rounded text-xs font-bold transition-all whitespace-nowrap border ${
                       activeTag === tag
                         ? "bg-accent text-primary border-primary/30"
                         : "bg-accent text-muted-foreground border-transparent hover:text-foreground"
@@ -195,7 +195,7 @@ export function PictoGrid({
               </div>
               <button
                 onClick={() => setDrawerOpen(!drawerOpen)}
-                className="shrink-0 px-2 py-1 rounded-xl text-xs font-bold text-primary hover:bg-accent transition-all flex items-center gap-1 whitespace-nowrap"
+                className="shrink-0 px-2 py-1 rounded text-xs font-bold text-primary hover:bg-accent transition-all flex items-center gap-1 whitespace-nowrap"
               >
                 {drawerOpen ? (
                   <>
@@ -216,7 +216,7 @@ export function PictoGrid({
         <div className="flex items-center gap-2 px-2 border-l border-border shrink-0">
           <button
             onClick={cycleSortKey}
-            className="flex items-center gap-2 px-3 py-1.5 hover:bg-accent rounded-xl text-xs font-bold text-muted-foreground transition-colors"
+            className="flex items-center gap-2 px-3 py-1.5 hover:bg-accent rounded text-xs font-bold text-muted-foreground transition-colors"
           >
             <ArrowUpDown className="w-4 h-4" />
             <span className="hidden md:inline">Tri: {sortLabel}</span>
@@ -301,7 +301,7 @@ export function PictoGrid({
           <button
             disabled={safePage <= 1}
             onClick={() => { onPageChange(safePage - 1); window.scrollTo({ top: 0, behavior: "smooth" }); }}
-            className="p-2 rounded-xl border border-border text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-30"
+            className="p-2 rounded border border-border text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-30"
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
@@ -312,7 +312,7 @@ export function PictoGrid({
           <button
             disabled={safePage >= totalPages}
             onClick={() => { onPageChange(safePage + 1); window.scrollTo({ top: 0, behavior: "smooth" }); }}
-            className="p-2 rounded-xl border border-border text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-30"
+            className="p-2 rounded border border-border text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-30"
           >
             <ChevronRight className="w-5 h-5" />
           </button>

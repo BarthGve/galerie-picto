@@ -105,7 +105,7 @@ pnpm build            # Construire le frontend pour la production
 - **Refs stables** : Pour les callbacks qui accedent a un state sans en etre dependants, utiliser `useRef` + mise a jour synchrone (`countsRef.current = counts`) plutot que de les mettre dans les deps du `useCallback`
 - **Motion** : Toujours preferer `motion-safe:animate-*` pour respecter les preferences utilisateur (`prefers-reduced-motion`)
 - **Promise.allSettled** : Utiliser pour les refetch paralleles independants, mais logger les echecs pour eviter les donnees perimees silencieuses
-- **Border radius** : Les boutons et composants interactifs doivent systematiquement utiliser `rounded-xl` (radius 12px / ~0.75rem). Ne pas utiliser `rounded` (4px) ou `rounded-lg` (8px) par defaut.
+- **Border radius** : Les boutons et composants interactifs doivent systematiquement utiliser `rounded` (radius 4px / 0.25rem). Les cartes et conteneurs gardent `rounded-xl`.
 
 ### Backend
 - **SQLite + Drizzle ORM** : Toutes les donnees (pictogrammes, galleries, downloads, users, favoris) sont stockees dans SQLite via Drizzle ORM. Les fichiers JSON sur Minio ne sont plus utilises.

@@ -296,7 +296,7 @@ function RequestDetail({
                   <button
                     onClick={handleSend}
                     disabled={sending || !newComment.trim()}
-                    className="px-3 py-1.5 rounded-xl bg-primary text-primary-foreground font-bold text-xs hover:bg-primary/90 active:bg-primary/80 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-1.5"
+                    className="px-3 py-1.5 rounded bg-primary text-primary-foreground font-bold text-xs hover:bg-primary/90 active:bg-primary/80 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-1.5"
                   >
                     {sending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
                     Envoyer
@@ -410,7 +410,7 @@ export function RequestsPage({
           </p>
           <button
             onClick={onLogin}
-            className="px-6 py-2.5 rounded-xl bg-slate-900 text-white font-bold text-sm hover:bg-slate-800"
+            className="px-6 py-2.5 rounded bg-slate-900 text-white font-bold text-sm hover:bg-slate-800"
           >
             Se connecter
           </button>
@@ -461,7 +461,7 @@ export function RequestsPage({
           </h2>
           <button
             onClick={() => setView("form")}
-            className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm hover:bg-primary/90 active:bg-primary/80 flex items-center gap-2"
+            className="px-5 py-2.5 rounded bg-primary text-primary-foreground font-bold text-sm hover:bg-primary/90 active:bg-primary/80 flex items-center gap-2"
           >
             <MessageSquarePlus className="w-4 h-4" />
             Nouvelle demande

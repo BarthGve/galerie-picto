@@ -447,7 +447,7 @@ export function DiscoverPage({
               })()}
               <button
                 onClick={() => onNavigateGallery()}
-                className="w-full mt-4 px-6 py-2.5 rounded-xl bg-primary hover:bg-(--primary-hover) active:bg-(--primary-active) text-primary-foreground font-bold text-sm shadow-lg transition-all hover:scale-[1.02] active:scale-95"
+                className="w-full mt-4 px-6 py-2.5 rounded bg-primary hover:bg-(--primary-hover) active:bg-(--primary-active) text-primary-foreground font-bold text-sm shadow-lg transition-all hover:scale-[1.02] active:scale-95"
               >
                 <span className="relative z-10 flex items-center justify-center gap-2">
                   Voir tout <TrendingUp className="w-4 h-4" />
@@ -535,7 +535,7 @@ export function DiscoverPage({
                         <button
                           key={name}
                           onClick={() => onNavigateGallery({ search: name })}
-                          className={`${sizeClasses[level]} ${opacityClasses[level]} rounded-xl bg-background/60 border border-border font-bold text-foreground transition-all cursor-pointer hover:bg-[var(--dsfr-blue-france-850)] hover:border-[var(--dsfr-blue-france-850)] hover:opacity-100`}
+                          className={`${sizeClasses[level]} ${opacityClasses[level]} rounded bg-background/60 border border-border font-bold text-foreground transition-all cursor-pointer hover:bg-[var(--dsfr-blue-france-850)] hover:border-[var(--dsfr-blue-france-850)] hover:opacity-100`}
                         >
                           {name}
                         </button>
