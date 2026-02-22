@@ -6,6 +6,7 @@ import type {
   PictoRequestComment,
   PictoRequestStatus,
 } from "@/lib/types";
+import type { HistoryEntry } from "@/lib/request-constants";
 
 export function useRequests(isAuthenticated: boolean) {
   const [requests, setRequests] = useState<PictoRequest[]>([]);
@@ -163,7 +164,7 @@ export function useRequests(isAuthenticated: boolean) {
   );
 
   const getHistory = useCallback(
-    async (requestId: string): Promise<{ id: string; actorLogin: string; actorAvatar: string | null; action: string; fromStatus: string | null; toStatus: string | null; detail: string | null; createdAt: string }[]> => {
+    async (requestId: string): Promise<HistoryEntry[]> => {
       const token = getStoredToken();
       if (!token) return [];
       try {

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Heart, FolderOpen, ThumbsUp, Mail, Calendar, AlertTriangle, User, BarChart2, Inbox } from "lucide-react";
+import { Heart, FolderOpen, ThumbsUp, Mail, Calendar, AlertTriangle, User, BarChart2, Inbox, Pencil, Trash2, Check, X } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,6 +40,9 @@ export function ProfilePage({ onDeleted }: ProfilePageProps) {
   const [loading, setLoading] = useState(true);
   const [confirmInput, setConfirmInput] = useState("");
   const [deleting, setDeleting] = useState(false);
+  const [editingEmail, setEditingEmail] = useState(false);
+  const [emailInput, setEmailInput] = useState("");
+  const [savingEmail, setSavingEmail] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("github_token");
@@ -69,6 +72,46 @@ export function ProfilePage({ onDeleted }: ProfilePageProps) {
       toast.error("Erreur réseau");
     } finally {
       setDeleting(false);
+    }
+  }
+
+  async function handleSaveEmail() {
+    setSavingEmail(true);
+    try {
+      const token = localStorage.getItem("github_token");
+      const res = await fetch(`${API_URL}/api/user/me/email`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ email: emailInput.trim() }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        toast.error(data.error || "Erreur");
+        return;
+      }
+      setProfile((p) => p ? { ...p, githubEmail: emailInput.trim() } : p);
+      setEditingEmail(false);
+      toast.success("Email mis à jour");
+    } catch {
+      toast.error("Erreur réseau");
+    } finally {
+      setSavingEmail(false);
+    }
+  }
+
+  async function handleDeleteEmail() {
+    try {
+      const token = localStorage.getItem("github_token");
+      const res = await fetch(`${API_URL}/api/user/me/email`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        setProfile((p) => p ? { ...p, githubEmail: null } : p);
+        toast.success("Email supprimé");
+      }
+    } catch {
+      toast.error("Erreur réseau");
     }
   }
 
@@ -119,7 +162,38 @@ export function ProfilePage({ onDeleted }: ProfilePageProps) {
                     <span className="text-muted-foreground flex items-center gap-1.5">
                       <Mail className="size-3" /> Email
                     </span>
-                    <span>{profile.githubEmail ?? <span className="text-muted-foreground/50 italic">non communiqué</span>}</span>
+                    <span className="flex items-center gap-1.5">
+                      {editingEmail ? (
+                        <>
+                          <Input
+                            type="email"
+                            value={emailInput}
+                            onChange={(e) => setEmailInput(e.target.value)}
+                            className="h-7 text-sm max-w-[200px]"
+                            placeholder="votre@email.com"
+                            autoFocus
+                          />
+                          <button onClick={handleSaveEmail} disabled={savingEmail || !emailInput.trim()} className="text-emerald-600 hover:text-emerald-700 disabled:opacity-50">
+                            <Check className="size-3.5" />
+                          </button>
+                          <button onClick={() => setEditingEmail(false)} className="text-slate-400 hover:text-slate-600">
+                            <X className="size-3.5" />
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          {profile.githubEmail ?? <span className="text-muted-foreground/50 italic">non communiqué</span>}
+                          <button onClick={() => { setEmailInput(profile.githubEmail ?? ""); setEditingEmail(true); }} className="text-muted-foreground/50 hover:text-muted-foreground" title="Modifier">
+                            <Pencil className="size-3" />
+                          </button>
+                          {profile.githubEmail && (
+                            <button onClick={handleDeleteEmail} className="text-muted-foreground/50 hover:text-destructive" title="Supprimer mon email">
+                              <Trash2 className="size-3" />
+                            </button>
+                          )}
+                        </>
+                      )}
+                    </span>
 
                     <span className="text-muted-foreground flex items-center gap-1.5">
                       <Calendar className="size-3" /> Première connexion

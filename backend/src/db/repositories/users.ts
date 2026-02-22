@@ -38,6 +38,17 @@ export function upsertUser(data: {
   githubEmail?: string | null;
 }): void {
   const now = new Date().toISOString();
+
+  const existing = db
+    .select({ emailOptOut: users.emailOptOut })
+    .from(users)
+    .where(eq(users.githubLogin, data.githubLogin))
+    .get();
+
+  const emailUpdate = existing?.emailOptOut
+    ? undefined
+    : data.githubEmail || null;
+
   db.insert(users)
     .values({
       githubLogin: data.githubLogin,
@@ -52,7 +63,7 @@ export function upsertUser(data: {
       set: {
         githubName: data.githubName || null,
         githubAvatarUrl: data.githubAvatarUrl || null,
-        githubEmail: data.githubEmail || null,
+        ...(emailUpdate !== undefined ? { githubEmail: emailUpdate } : {}),
         lastSeenAt: now,
       },
     })
@@ -101,6 +112,20 @@ export function getUserProfile(login: string): UserProfile | null {
       requestsCount: Number(row.requestsCount),
     },
   };
+}
+
+export function clearUserEmail(login: string): void {
+  db.update(users)
+    .set({ githubEmail: null, emailOptOut: 1 })
+    .where(eq(users.githubLogin, login))
+    .run();
+}
+
+export function updateUserEmail(login: string, email: string): void {
+  db.update(users)
+    .set({ githubEmail: email, emailOptOut: 1 })
+    .where(eq(users.githubLogin, login))
+    .run();
 }
 
 export function getBannedLogins(): string[] {
