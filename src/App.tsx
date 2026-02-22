@@ -42,8 +42,8 @@ const UploadDialog = lazy(() =>
   })),
 );
 const HomePage = lazy(() =>
-  import("@/components/HomePage").then((m) => ({
-    default: m.HomePage,
+  import("@/components/HomePageSelector").then((m) => ({
+    default: m.HomePageSelector,
   })),
 );
 const DiscoverPage = lazy(() =>
