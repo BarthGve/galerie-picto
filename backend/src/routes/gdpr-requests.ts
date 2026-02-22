@@ -12,6 +12,10 @@ import {
 import { getGdprHistory } from "../db/repositories/gdpr-request-history.js";
 import { createNotification } from "../db/repositories/notifications.js";
 import { config } from "../config.js";
+import { notifyN8nGdpr } from "../services/n8n-notify.js";
+import { db } from "../db/index.js";
+import { users, gdprRequests } from "../db/schema.js";
+import { eq } from "drizzle-orm";
 
 const router = Router();
 
@@ -84,6 +88,27 @@ router.post(
           });
         }
       }
+
+      // In-app confirmation to requester
+      createNotification({
+        recipientLogin: login,
+        type: "gdpr_status",
+        title: "Demande RGPD enregistrée",
+        message: `Votre demande de ${rightType} a bien été reçue`,
+        link: "/profile",
+      });
+
+      // Notify requester by email via n8n
+      notifyN8nGdpr({
+        event: "request_created",
+        request: { id, rightType, status: "nouveau" },
+        user: {
+          login,
+          name: req.user!.name || undefined,
+          email: req.user!.email || undefined,
+        },
+        siteUrl: config.corsOrigin,
+      });
 
       res.status(201).json({ id });
     } catch {
@@ -160,6 +185,61 @@ router.patch(
         res.status(400).json({ error: result.error });
         return;
       }
+
+      // Notify requester by email via n8n
+      const reqData = db
+        .select({
+          rightType: gdprRequests.rightType,
+          requesterLogin: gdprRequests.requesterLogin,
+          requesterName: users.githubName,
+          requesterEmail: users.githubEmail,
+        })
+        .from(gdprRequests)
+        .leftJoin(users, eq(gdprRequests.requesterLogin, users.githubLogin))
+        .where(eq(gdprRequests.id, id))
+        .get();
+
+      if (reqData) {
+        // In-app notification to requester
+        const gdprStatusMessages: Record<string, string> = {
+          en_cours: "Votre demande RGPD est en cours de traitement",
+          traite: "Votre demande RGPD a été traitée",
+        };
+        const statusMsg = gdprStatusMessages[status];
+        if (statusMsg) {
+          createNotification({
+            recipientLogin: reqData.requesterLogin,
+            type: "gdpr_status",
+            title: `Demande RGPD — ${reqData.rightType}`,
+            message: statusMsg,
+            link: "/profile",
+          });
+        }
+
+        const event =
+          status === "en_cours"
+            ? "status_en_cours"
+            : status === "traite"
+              ? "status_traite"
+              : "status_changed";
+
+        notifyN8nGdpr({
+          event,
+          request: {
+            id,
+            rightType: reqData.rightType,
+            status,
+            responseMessage: sanitizedResponse,
+          },
+          user: {
+            login: reqData.requesterLogin,
+            name: reqData.requesterName || undefined,
+            email: reqData.requesterEmail || undefined,
+          },
+          siteUrl: config.corsOrigin,
+        });
+      }
+
       res.json({ ok: true });
     } catch {
       res.status(500).json({ error: "Failed to update GDPR request status" });

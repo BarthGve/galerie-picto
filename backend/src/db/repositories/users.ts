@@ -3,11 +3,44 @@ import { db } from "../index.js";
 import { users, userPictograms } from "../schema.js";
 import { addBan, removeBan } from "../../middleware/ban-list.js";
 
+export type EmailNotifKey =
+  | "notifyEmailGdpr"
+  | "notifyEmailPictoNew"
+  | "notifyEmailPictoEnCours"
+  | "notifyEmailPictoPrecision"
+  | "notifyEmailPictoLivre"
+  | "notifyEmailPictoRefuse"
+  | "notifyEmailNewsletter"
+  | "notifyEmailNewUser";
+
+export interface EmailNotifPreferences {
+  notifyEmailGdpr: boolean;
+  notifyEmailPictoNew: boolean;
+  notifyEmailPictoEnCours: boolean;
+  notifyEmailPictoPrecision: boolean;
+  notifyEmailPictoLivre: boolean;
+  notifyEmailPictoRefuse: boolean;
+  notifyEmailNewsletter: boolean;
+  notifyEmailNewUser: boolean;
+}
+
+export const VALID_NOTIF_KEYS: EmailNotifKey[] = [
+  "notifyEmailGdpr",
+  "notifyEmailPictoNew",
+  "notifyEmailPictoEnCours",
+  "notifyEmailPictoPrecision",
+  "notifyEmailPictoLivre",
+  "notifyEmailPictoRefuse",
+  "notifyEmailNewsletter",
+  "notifyEmailNewUser",
+];
+
 export interface UserProfile {
   githubLogin: string;
   githubName: string | null;
   githubAvatarUrl: string | null;
   githubEmail: string | null;
+  emailNotifications: EmailNotifPreferences;
   firstSeenAt: string | null;
   lastSeenAt: string | null;
   stats: {
@@ -36,7 +69,7 @@ export function upsertUser(data: {
   githubName?: string | null;
   githubAvatarUrl?: string | null;
   githubEmail?: string | null;
-}): void {
+}): { isNew: boolean } {
   const now = new Date().toISOString();
 
   const existing = db
@@ -44,6 +77,8 @@ export function upsertUser(data: {
     .from(users)
     .where(eq(users.githubLogin, data.githubLogin))
     .get();
+
+  const isNew = !existing;
 
   const emailUpdate = existing?.emailOptOut
     ? undefined
@@ -68,6 +103,8 @@ export function upsertUser(data: {
       },
     })
     .run();
+
+  return { isNew };
 }
 
 export function getUserByLogin(
@@ -85,6 +122,14 @@ export function getUserProfile(login: string): UserProfile | null {
       githubName: users.githubName,
       githubAvatarUrl: users.githubAvatarUrl,
       githubEmail: users.githubEmail,
+      notifyEmailGdpr: users.notifyEmailGdpr,
+      notifyEmailPictoNew: users.notifyEmailPictoNew,
+      notifyEmailPictoEnCours: users.notifyEmailPictoEnCours,
+      notifyEmailPictoPrecision: users.notifyEmailPictoPrecision,
+      notifyEmailPictoLivre: users.notifyEmailPictoLivre,
+      notifyEmailPictoRefuse: users.notifyEmailPictoRefuse,
+      notifyEmailNewsletter: users.notifyEmailNewsletter,
+      notifyEmailNewUser: users.notifyEmailNewUser,
       firstSeenAt: users.firstSeenAt,
       lastSeenAt: users.lastSeenAt,
       favoritesCount: sql<number>`(SELECT COUNT(*) FROM favorites WHERE user_login = ${login})`,
@@ -103,6 +148,16 @@ export function getUserProfile(login: string): UserProfile | null {
     githubName: row.githubName ?? null,
     githubAvatarUrl: row.githubAvatarUrl ?? null,
     githubEmail: row.githubEmail ?? null,
+    emailNotifications: {
+      notifyEmailGdpr: row.notifyEmailGdpr !== 0,
+      notifyEmailPictoNew: row.notifyEmailPictoNew !== 0,
+      notifyEmailPictoEnCours: row.notifyEmailPictoEnCours !== 0,
+      notifyEmailPictoPrecision: row.notifyEmailPictoPrecision !== 0,
+      notifyEmailPictoLivre: row.notifyEmailPictoLivre !== 0,
+      notifyEmailPictoRefuse: row.notifyEmailPictoRefuse !== 0,
+      notifyEmailNewsletter: row.notifyEmailNewsletter !== 0,
+      notifyEmailNewUser: row.notifyEmailNewUser !== 0,
+    },
     firstSeenAt: row.firstSeenAt ?? null,
     lastSeenAt: row.lastSeenAt ?? null,
     stats: {
@@ -123,9 +178,52 @@ export function clearUserEmail(login: string): void {
 
 export function updateUserEmail(login: string, email: string): void {
   db.update(users)
-    .set({ githubEmail: email, emailOptOut: 1 })
+    .set({ githubEmail: email, emailOptOut: 0 })
     .where(eq(users.githubLogin, login))
     .run();
+}
+
+const NOTIF_KEY_TO_COLUMN = {
+  notifyEmailGdpr: users.notifyEmailGdpr,
+  notifyEmailPictoNew: users.notifyEmailPictoNew,
+  notifyEmailPictoEnCours: users.notifyEmailPictoEnCours,
+  notifyEmailPictoPrecision: users.notifyEmailPictoPrecision,
+  notifyEmailPictoLivre: users.notifyEmailPictoLivre,
+  notifyEmailPictoRefuse: users.notifyEmailPictoRefuse,
+  notifyEmailNewsletter: users.notifyEmailNewsletter,
+  notifyEmailNewUser: users.notifyEmailNewUser,
+} as const;
+
+export function isEmailNotifEnabled(
+  login: string,
+  key: EmailNotifKey,
+): boolean {
+  const col = NOTIF_KEY_TO_COLUMN[key];
+  const row = db
+    .select({ val: col })
+    .from(users)
+    .where(eq(users.githubLogin, login))
+    .get();
+  return row?.val !== 0;
+}
+
+export function setEmailNotifPreferences(
+  login: string,
+  prefs: Partial<Record<EmailNotifKey, boolean>>,
+): void {
+  const set: Record<string, number> = {};
+  for (const [key, val] of Object.entries(prefs)) {
+    if (
+      VALID_NOTIF_KEYS.includes(key as EmailNotifKey) &&
+      typeof val === "boolean"
+    ) {
+      // Map camelCase key to snake_case column name
+      const snakeKey = key.replace(/[A-Z]/g, (m) => `_${m.toLowerCase()}`);
+      set[snakeKey] = val ? 1 : 0;
+    }
+  }
+  if (Object.keys(set).length === 0) return;
+  db.update(users).set(set).where(eq(users.githubLogin, login)).run();
 }
 
 export function getBannedLogins(): string[] {
@@ -230,6 +328,29 @@ export function getUserMinioKeys(login: string): string[] {
     .where(eq(userPictograms.ownerLogin, login))
     .all()
     .map((r) => r.minioKey);
+}
+
+export function getNewsletterSubscribers(): {
+  email: string;
+  name: string;
+  login: string;
+}[] {
+  return db
+    .select({
+      email: users.githubEmail,
+      name: users.githubName,
+      login: users.githubLogin,
+    })
+    .from(users)
+    .where(
+      sql`${users.githubEmail} IS NOT NULL AND ${users.notifyEmailNewsletter} = 1 AND ${users.bannedAt} IS NULL`,
+    )
+    .all()
+    .map((r) => ({
+      email: r.email!,
+      name: r.name || r.login,
+      login: r.login,
+    }));
 }
 
 export function deleteUser(login: string): boolean {

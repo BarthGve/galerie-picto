@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   Filter,
   ArrowUpDown,
@@ -7,6 +7,8 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
+  ChevronsRight,
+  X,
 } from "lucide-react";
 import type { Pictogram, Gallery, UserCollection } from "@/lib/types";
 import { PictoCard } from "./PictoCard";
@@ -71,9 +73,13 @@ export function PictoGrid({
   const [compact, setCompact] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>("date");
   const [activeTag, setActiveTag] = useState<string | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const drawerRef = useRef<HTMLDivElement>(null);
 
-  // Extract top tags from pictograms — exclure les pictos privés
-  const topTags = useMemo(() => {
+  const VISIBLE_TAGS = 6;
+
+  // Extract all tags from pictograms — exclure les pictos privés
+  const allTags = useMemo(() => {
     const tagCounts = new Map<string, number>();
     for (const p of pictograms) {
       if (privateIds?.has(p.id)) continue;
@@ -83,9 +89,12 @@ export function PictoGrid({
     }
     return [...tagCounts.entries()]
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 6)
       .map(([tag]) => tag);
   }, [pictograms, privateIds]);
+
+  const topTags = allTags.slice(0, VISIBLE_TAGS);
+  const extraTags = allTags.slice(VISIBLE_TAGS);
+  const hasMore = extraTags.length > 0;
 
   // Filter by tag
   const tagFiltered = useMemo(() => {
@@ -131,12 +140,12 @@ export function PictoGrid({
       {/* ── Floating Toolbar ── */}
       <div className="sticky top-0 z-20 pt-4 pb-2 -mt-4">
       <div className="flex items-center justify-between p-2">
-        <div className="flex items-center gap-1 overflow-x-auto px-1" style={{ scrollbarWidth: "none" }}>
+        <div className="flex items-center gap-1 overflow-x-auto px-1 min-w-0" style={{ scrollbarWidth: "none" }}>
           <div className="p-2 text-muted-foreground shrink-0">
             <Filter className="w-4 h-4" />
           </div>
           <button
-            onClick={() => { setActiveTag(null); onPageChange(1); }}
+            onClick={() => { setActiveTag(null); setDrawerOpen(false); onPageChange(1); }}
             className={`px-3 py-1 rounded-xl text-xs font-bold transition-all whitespace-nowrap border ${
               !activeTag
                 ? "bg-accent text-primary border-primary/30"
@@ -158,6 +167,50 @@ export function PictoGrid({
               {tag}
             </button>
           ))}
+
+          {/* Tiroir tags supplémentaires */}
+          {hasMore && (
+            <>
+              <div
+                ref={drawerRef}
+                className="flex items-center gap-1 overflow-hidden transition-all duration-300 ease-out"
+                style={{
+                  maxWidth: drawerOpen ? `${extraTags.length * 120}px` : "0px",
+                  opacity: drawerOpen ? 1 : 0,
+                }}
+              >
+                {extraTags.map((tag) => (
+                  <button
+                    key={tag}
+                    onClick={() => { setActiveTag(activeTag === tag ? null : tag); onPageChange(1); }}
+                    className={`px-3 py-1 rounded-xl text-xs font-bold transition-all whitespace-nowrap border ${
+                      activeTag === tag
+                        ? "bg-accent text-primary border-primary/30"
+                        : "bg-accent text-muted-foreground border-transparent hover:text-foreground"
+                    }`}
+                  >
+                    {tag}
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => setDrawerOpen(!drawerOpen)}
+                className="shrink-0 px-2 py-1 rounded-xl text-xs font-bold text-primary hover:bg-accent transition-all flex items-center gap-1 whitespace-nowrap"
+              >
+                {drawerOpen ? (
+                  <>
+                    <X className="size-3" />
+                    Moins
+                  </>
+                ) : (
+                  <>
+                    <ChevronsRight className="size-3" />
+                    +{extraTags.length}
+                  </>
+                )}
+              </button>
+            </>
+          )}
         </div>
 
         <div className="flex items-center gap-2 px-2 border-l border-border shrink-0">

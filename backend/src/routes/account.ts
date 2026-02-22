@@ -6,6 +6,9 @@ import {
   getUserProfile,
   clearUserEmail,
   updateUserEmail,
+  setEmailNotifPreferences,
+  VALID_NOTIF_KEYS,
+  type EmailNotifKey,
 } from "../db/repositories/users.js";
 import { getUserPictograms } from "../db/repositories/user-pictograms.js";
 import { deletePrivateFile } from "../services/minio.js";
@@ -47,6 +50,42 @@ router.patch(
       res.json({ success: true });
     } catch {
       res.status(500).json({ error: "Failed to update email" });
+    }
+  },
+);
+
+// PATCH /api/user/me/notifications - Modifier les préférences de notifications granulaires
+router.patch(
+  "/me/notifications",
+  authAnyUser,
+  (req: AuthenticatedRequest, res: Response): void => {
+    const body = req.body as Record<string, unknown>;
+    const prefs: Partial<Record<EmailNotifKey, boolean>> = {};
+
+    for (const [key, val] of Object.entries(body)) {
+      if (!VALID_NOTIF_KEYS.includes(key as EmailNotifKey)) {
+        res.status(400).json({ error: `Clé inconnue : ${key}` });
+        return;
+      }
+      if (typeof val !== "boolean") {
+        res.status(400).json({ error: `${key} doit être un booléen` });
+        return;
+      }
+      prefs[key as EmailNotifKey] = val;
+    }
+
+    if (Object.keys(prefs).length === 0) {
+      res.status(400).json({ error: "Aucune préférence fournie" });
+      return;
+    }
+
+    try {
+      setEmailNotifPreferences(req.user!.login, prefs);
+      res.json({ success: true });
+    } catch {
+      res
+        .status(500)
+        .json({ error: "Failed to update notification preferences" });
     }
   },
 );

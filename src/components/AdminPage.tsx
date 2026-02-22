@@ -14,6 +14,10 @@ import {
   Trash2,
   ShieldCheck,
   Shield,
+  Clock,
+  ThumbsUp,
+  EyeOff,
+  TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { API_URL } from "@/lib/config";
@@ -35,7 +39,7 @@ function formatDate(iso: string | null | undefined) {
 
 function SkeletonCard() {
   return (
-    <div className="rounded-[4px] border border-border bg-muted/30 p-5 animate-pulse">
+    <div className="rounded-xl border border-border/50 bg-muted/30 p-5 shadow-[0_4px_16px_rgba(0,0,0,0.04),0_1px_4px_rgba(0,0,0,0.04)] animate-pulse">
       <div className="h-3 w-24 rounded bg-muted mb-3" />
       <div className="h-7 w-16 rounded bg-muted" />
     </div>
@@ -54,7 +58,7 @@ function KpiCard({
   sub?: string;
 }) {
   return (
-    <div className="rounded-[4px] border border-border bg-card p-5 flex flex-col gap-2">
+    <div className="rounded-xl border border-border/50 bg-card p-5 shadow-[0_4px_16px_rgba(0,0,0,0.04),0_1px_4px_rgba(0,0,0,0.04)] flex flex-col gap-2">
       <div className="flex items-center gap-2 text-muted-foreground text-xs font-medium">
         <Icon className="size-3.5" />
         {label}
@@ -69,15 +73,20 @@ function KpiCard({
 
 function TopList({
   title,
+  icon: Icon,
   items,
 }: {
   title: string;
+  icon: React.ElementType;
   items: { id: string; name: string; count: number }[];
 }) {
   if (items.length === 0) {
     return (
       <div>
-        <h3 className="text-base font-extrabold tracking-tight text-tertiary mb-3">{title}</h3>
+        <h3 className="text-base font-extrabold tracking-tight text-tertiary mb-3 flex items-center gap-2">
+          <Icon className="size-4 text-tertiary" />
+          {title}
+        </h3>
         <p className="text-xs text-muted-foreground">Aucune donnée.</p>
       </div>
     );
@@ -85,7 +94,10 @@ function TopList({
   const max = items[0].count;
   return (
     <div>
-      <h3 className="text-base font-extrabold tracking-tight text-tertiary mb-3">{title}</h3>
+      <h3 className="text-base font-extrabold tracking-tight text-tertiary mb-3 flex items-center gap-2">
+        <Icon className="size-4 text-tertiary" />
+        {title}
+      </h3>
       <div className="space-y-2">
         {items.map((item, idx) => {
           const pct = max > 0 ? Math.round((item.count / max) * 100) : 0;
@@ -178,8 +190,12 @@ function UserRow({
                 </span>
               )}
             </p>
-            {user.githubName && (
-              <p className="text-[11px] text-muted-foreground truncate">{user.githubName}</p>
+            {(user.githubName || user.githubEmail) && (
+              <p className="text-[11px] text-muted-foreground truncate">
+                {user.githubName}
+                {user.githubName && user.githubEmail && <span className="mx-1">·</span>}
+                {user.githubEmail && <span className="text-muted-foreground/70">{user.githubEmail}</span>}
+              </p>
             )}
           </div>
         </div>
@@ -246,8 +262,10 @@ function UserRow({
   );
 }
 
+const PAGE_SIZE_OPTIONS = [20, 50, 100] as const;
+
 function UsersSection() {
-  const { result, loading, error, page, setPage, pageSize, teamLogins, handleSearchChange, ban, unban, removeUser } =
+  const { result, loading, error, page, setPage, pageSize, setPageSize, teamLogins, handleSearchChange, ban, unban, removeUser } =
     useAdminUsers();
   const searchRef = useRef<HTMLInputElement>(null);
 
@@ -255,26 +273,47 @@ function UsersSection() {
 
   return (
     <div className="space-y-4">
-      {/* Barre de recherche */}
-      <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
-        <input
-          ref={searchRef}
-          type="search"
-          placeholder="Rechercher par login ou nom…"
-          onChange={(e) => handleSearchChange(e.target.value)}
-          className="w-full pl-9 pr-3 py-2 text-sm rounded-[4px] border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50"
-        />
+      {/* Barre de recherche + sélecteur par page */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="relative flex-1 min-w-[200px] max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
+          <input
+            ref={searchRef}
+            type="search"
+            placeholder="Rechercher par login, nom ou email…"
+            onChange={(e) => handleSearchChange(e.target.value)}
+            className="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-border/50 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50"
+          />
+        </div>
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground shrink-0">
+          <span>Afficher</span>
+          <div className="flex rounded-xl border border-border/50 overflow-hidden">
+            {PAGE_SIZE_OPTIONS.map((size) => (
+              <button
+                key={size}
+                onClick={() => { setPageSize(size); setPage(1); }}
+                className={`px-2.5 py-1.5 text-xs font-bold transition-colors ${
+                  pageSize === size
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-card text-muted-foreground hover:text-foreground hover:bg-accent"
+                }`}
+              >
+                {size}
+              </button>
+            ))}
+          </div>
+          <span>par page</span>
+        </div>
       </div>
 
       {error && (
-        <div className="rounded-[4px] border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+        <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {error}
         </div>
       )}
 
       {/* Table */}
-      <div className="rounded-[4px] border border-border bg-card overflow-hidden">
+      <div className="rounded-xl border border-border/50 bg-card shadow-[0_4px_16px_rgba(0,0,0,0.04),0_1px_4px_rgba(0,0,0,0.04)] overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
@@ -480,7 +519,7 @@ export function AdminPage({ activeRequestCount = 0 }: { activeRequestCount?: num
               <Users className="size-3.5" />
               Utilisateurs
               {stats && (
-                <span className="inline-flex items-center justify-center rounded-full bg-muted text-muted-foreground text-[10px] font-bold px-1.5 py-0.5 leading-none">
+                <span className="inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 leading-none">
                   {stats.users.total}
                 </span>
               )}
@@ -498,7 +537,7 @@ export function AdminPage({ activeRequestCount = 0 }: { activeRequestCount?: num
               <MessageSquare className="size-3.5" />
               Demandes de pictos
               {activeRequestCount > 0 && (
-                <span className="inline-flex items-center justify-center rounded-full bg-muted text-muted-foreground text-[10px] font-bold px-1.5 py-0.5 leading-none">
+                <span className="inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 leading-none">
                   {activeRequestCount}
                 </span>
               )}
@@ -528,7 +567,7 @@ export function AdminPage({ activeRequestCount = 0 }: { activeRequestCount?: num
         {activeTab === "dashboard" && (
           <div className="space-y-8">
             {error && (
-              <div className="rounded-[4px] border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+              <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
                 {error}
               </div>
             )}
@@ -563,7 +602,7 @@ export function AdminPage({ activeRequestCount = 0 }: { activeRequestCount?: num
 
             {/* Tops */}
             {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 rounded-[4px] border border-border bg-card p-5 animate-pulse">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 rounded-xl border border-border/50 bg-card p-6 md:p-8 shadow-[0_4px_16px_rgba(0,0,0,0.04),0_1px_4px_rgba(0,0,0,0.04)] animate-pulse">
                 {[0, 1].map((i) => (
                   <div key={i} className="space-y-3">
                     <div className="h-3 w-32 rounded bg-muted" />
@@ -577,12 +616,13 @@ export function AdminPage({ activeRequestCount = 0 }: { activeRequestCount?: num
                 ))}
               </div>
             ) : stats ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 rounded-[4px] border border-border bg-card p-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 rounded-xl border border-border/50 bg-card p-6 md:p-8 shadow-[0_4px_16px_rgba(0,0,0,0.04),0_1px_4px_rgba(0,0,0,0.04)]">
                 <div className="space-y-6">
-                  <TopList title="Top téléchargements" items={stats.downloads.topPictograms} />
+                  <TopList title="Top téléchargements" icon={TrendingUp} items={stats.downloads.topPictograms} />
                   {stats.pictograms.neverDownloaded.length > 0 && (
                     <div>
                       <h3 className="text-base font-extrabold tracking-tight text-tertiary mb-3 flex items-center gap-2">
+                        <EyeOff className="size-4 text-tertiary" />
                         Jamais téléchargés
                         <span className="inline-flex items-center justify-center rounded-full bg-tertiary/10 text-tertiary text-[10px] font-bold px-2 py-0.5 leading-none">
                           {stats.pictograms.neverDownloaded.length}
@@ -599,13 +639,13 @@ export function AdminPage({ activeRequestCount = 0 }: { activeRequestCount?: num
                     </div>
                   )}
                 </div>
-                <TopList title="Top likes" items={stats.likes.topPictograms} />
+                <TopList title="Top likes" icon={ThumbsUp} items={stats.likes.topPictograms} />
               </div>
             ) : null}
 
             {/* Activité récente */}
             {loading ? (
-              <div className="rounded-[4px] border border-border bg-card p-5 space-y-4 animate-pulse">
+              <div className="rounded-xl border border-border/50 bg-card p-6 md:p-8 shadow-[0_4px_16px_rgba(0,0,0,0.04),0_1px_4px_rgba(0,0,0,0.04)] space-y-4 animate-pulse">
                 <div className="h-3 w-28 rounded bg-muted" />
                 <div className="space-y-2">
                   {[1, 2, 3, 4, 5].map((i) => (
@@ -617,8 +657,9 @@ export function AdminPage({ activeRequestCount = 0 }: { activeRequestCount?: num
                 </div>
               </div>
             ) : stats ? (
-              <div className="rounded-[4px] border border-border bg-card p-5 space-y-4">
-                <h3 className="text-base font-extrabold tracking-tight text-tertiary">
+              <div className="rounded-xl border border-border/50 bg-card p-6 md:p-8 shadow-[0_4px_16px_rgba(0,0,0,0.04),0_1px_4px_rgba(0,0,0,0.04)] space-y-4">
+                <h3 className="text-base font-extrabold tracking-tight text-tertiary flex items-center gap-2">
+                  <Clock className="size-4 text-tertiary" />
                   Activité récente
                 </h3>
                 <div className="space-y-3">

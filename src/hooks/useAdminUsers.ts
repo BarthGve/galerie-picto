@@ -22,13 +22,14 @@ export interface AdminUsersResult {
   limit: number;
 }
 
-const PAGE_SIZE = 20;
+const DEFAULT_PAGE_SIZE = 20;
 
 export function useAdminUsers() {
   const [result, setResult] = useState<AdminUsersResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [search, setSearch] = useState("");
   const [teamLogins, setTeamLogins] = useState<Set<string>>(new Set());
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -47,13 +48,13 @@ export function useAdminUsers() {
       .catch(() => {});
   }, []);
 
-  const fetchUsers = useCallback(async (p: number, s: string) => {
+  const fetchUsers = useCallback(async (p: number, s: string, limit: number) => {
     const token = getStoredToken();
     if (!token) return;
     setLoading(true);
     setError(null);
     try {
-      const params = new URLSearchParams({ page: String(p), limit: String(PAGE_SIZE) });
+      const params = new URLSearchParams({ page: String(p), limit: String(limit) });
       if (s) params.set("search", s);
       const res = await fetch(`${API_URL}/api/admin/users?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -68,8 +69,8 @@ export function useAdminUsers() {
   }, []);
 
   useEffect(() => {
-    fetchUsers(page, search);
-  }, [fetchUsers, page, search]);
+    fetchUsers(page, search, pageSize);
+  }, [fetchUsers, page, search, pageSize]);
 
   const handleSearchChange = useCallback(
     (value: string) => {
@@ -90,9 +91,9 @@ export function useAdminUsers() {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
-      fetchUsers(page, search);
+      fetchUsers(page, search, pageSize);
     },
-    [fetchUsers, page, search],
+    [fetchUsers, page, search, pageSize],
   );
 
   const unban = useCallback(
@@ -103,9 +104,9 @@ export function useAdminUsers() {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
-      fetchUsers(page, search);
+      fetchUsers(page, search, pageSize);
     },
-    [fetchUsers, page, search],
+    [fetchUsers, page, search, pageSize],
   );
 
   const removeUser = useCallback(
@@ -116,9 +117,9 @@ export function useAdminUsers() {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
-      fetchUsers(page, search);
+      fetchUsers(page, search, pageSize);
     },
-    [fetchUsers, page, search],
+    [fetchUsers, page, search, pageSize],
   );
 
   return {
@@ -127,13 +128,14 @@ export function useAdminUsers() {
     error,
     page,
     search,
-    pageSize: PAGE_SIZE,
+    pageSize,
     teamLogins,
     setPage,
+    setPageSize,
     handleSearchChange,
     ban,
     unban,
     removeUser,
-    refetch: () => fetchUsers(page, search),
+    refetch: () => fetchUsers(page, search, pageSize),
   };
 }

@@ -31,17 +31,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
 import type { Pictogram, Gallery } from "@/lib/types";
 import { fetchSvgText } from "@/lib/svg-to-png";
 import { usePictogramUrl } from "@/hooks/usePictogramUrl";
@@ -135,6 +125,7 @@ export function PictoModal({
 
   // Name editing state
   const [editingName, setEditingName] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [name, setName] = useState(
     pictogram.name || pictogram.filename.replace(/\.svg$/i, ""),
   );
@@ -754,39 +745,28 @@ const handleDownloadSvg = () => {
                   </>
                 )}
                 {isAuthenticated && onDeletePictogram && (
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <button className="p-1.5 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-destructive">
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle className="text-tertiary">
-                          Supprimer ce pictogramme ?
-                        </AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Cette action est irréversible. Le pictogramme sera
-                          supprimé définitivement du CDN et de toutes les galeries.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Annuler</AlertDialogCancel>
-                        <AlertDialogAction
-                          className="bg-destructive text-white hover:bg-destructive/90"
-                          onClick={async () => {
-                            const success = await onDeletePictogram(pictogram.id);
-                            if (success) {
-                              toast.success("Pictogramme supprimé");
-                              onClose();
-                            }
-                          }}
-                        >
-                          Supprimer
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                  <>
+                    <button
+                      className="p-1.5 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-destructive"
+                      onClick={() => setConfirmDelete(true)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                    <DeleteConfirmDialog
+                      open={confirmDelete}
+                      onOpenChange={setConfirmDelete}
+                      onConfirm={async () => {
+                        setConfirmDelete(false);
+                        const success = await onDeletePictogram(pictogram.id);
+                        if (success) {
+                          toast.success("Pictogramme supprimé");
+                          onClose();
+                        }
+                      }}
+                      title="Supprimer ce pictogramme ?"
+                      description={<>Le pictogramme <span className="font-semibold">« {pictogram.name || pictogram.filename.replace(/\.svg$/i, "")} »</span> sera supprimé définitivement du CDN et de toutes les galeries.</>}
+                    />
+                  </>
                 )}
               </div>
             </DialogHeader>

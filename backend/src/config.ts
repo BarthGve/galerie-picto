@@ -23,6 +23,11 @@ export const config = {
     webhookSecret: process.env.GITHUB_WEBHOOK_SECRET || "",
   },
 
+  n8n: {
+    webhookUrl: process.env.N8N_WEBHOOK_URL || "",
+    newsletterSecret: process.env.N8N_NEWSLETTER_SECRET || "",
+  },
+
   minio: {
     endpoint: process.env.MINIO_ENDPOINT || "",
     accessKey: process.env.MINIO_ACCESS_KEY || "",

@@ -53,7 +53,10 @@ export function GdprRequestForm({
     }
 
     const token = getStoredToken();
-    if (!token) return;
+    if (!token) {
+      setError("Session expirée. Veuillez vous reconnecter.");
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -66,7 +69,7 @@ export function GdprRequestForm({
         body: JSON.stringify({
           rightType,
           message: message.trim(),
-          consentContact: true,
+          consentContact: consent,
         }),
       });
 

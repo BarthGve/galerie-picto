@@ -5,13 +5,16 @@ import { notifications } from "../schema.js";
 
 export type NotificationType =
   | "request_new"
+  | "request_submitted"
   | "request_assigned"
   | "request_comment"
   | "request_precisions"
   | "request_delivered"
   | "request_refused"
   | "feedback_resolved"
-  | "gdpr_new";
+  | "gdpr_new"
+  | "gdpr_status"
+  | "new_user";
 
 export interface CreateNotificationInput {
   recipientLogin: string;

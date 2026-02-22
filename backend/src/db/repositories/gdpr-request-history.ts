@@ -4,6 +4,8 @@ import { v4 as uuidv4 } from "uuid";
 import { db } from "../index.js";
 import { gdprRequestHistory, users } from "../schema.js";
 
+type DbOrTx = typeof db | Parameters<Parameters<typeof db.transaction>[0]>[0];
+
 const detailUsers = alias(users, "detail_users");
 
 export interface AddGdprHistoryInput {
@@ -15,8 +17,12 @@ export interface AddGdprHistoryInput {
   detail?: string;
 }
 
-export function addGdprHistoryEntry(input: AddGdprHistoryInput) {
-  db.insert(gdprRequestHistory)
+export function addGdprHistoryEntry(
+  input: AddGdprHistoryInput,
+  dbOrTx: DbOrTx = db,
+) {
+  dbOrTx
+    .insert(gdprRequestHistory)
     .values({
       id: uuidv4(),
       requestId: input.requestId,

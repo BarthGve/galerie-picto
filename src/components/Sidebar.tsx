@@ -1,4 +1,4 @@
-import { Palette, Plus, Github, ArrowRight, MessageCircleWarning, LayoutList, LayoutDashboard } from "lucide-react";
+import { Palette, Github, ArrowRight, MessageCircleWarning, LayoutList, LayoutDashboard } from "lucide-react";
 
 import { NavGalleries } from "@/components/nav-galleries";
 import { NavContributors } from "@/components/nav-contributors";
@@ -13,8 +13,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarGroup,
-  SidebarGroupContent,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 import type { Gallery, Pictogram, UserCollection } from "@/lib/types";
@@ -32,6 +30,7 @@ export function AppSidebar({
   onLogin,
   onLogout,
   onUploadClick,
+  onUploadSvgClick,
   onCreateGallery,
   onEditGallery,
   onDeleteGallery,
@@ -69,6 +68,7 @@ export function AppSidebar({
   onLogin: () => void;
   onLogout: () => void;
   onUploadClick: () => void;
+  onUploadSvgClick?: () => void;
   onCreateGallery: () => void;
   onEditGallery?: (gallery: Gallery) => void;
   onDeleteGallery?: (gallery: Gallery) => void;
@@ -137,6 +137,7 @@ export function AppSidebar({
           }}
           isAuthenticated={!!user}
           onUploadClick={onUploadClick}
+          onUploadSvgClick={onUploadSvgClick}
           onGoDiscover={onGoDiscover}
           onGoGuides={onGoGuides}
           onGoRequests={onGoRequests}
@@ -157,6 +158,7 @@ export function AppSidebar({
           onEditGallery={user ? onEditGallery : undefined}
           onDeleteGallery={user ? onDeleteGallery : undefined}
           onAddToGallery={user ? onAddToGallery : undefined}
+          onCreateGallery={user ? onCreateGallery : undefined}
         />
         {!!user && (
           <NavUserCollections
@@ -179,24 +181,6 @@ export function AppSidebar({
           }}
         />
 
-        {/* Nouvelle galerie — style dashed B */}
-        {!!user && (
-          <SidebarGroup className="mt-auto">
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    onClick={onCreateGallery}
-                    className="border-2 border-dashed border-border text-muted-foreground hover:text-foreground hover:bg-accent/60 rounded"
-                  >
-                    <Plus className="size-4" />
-                    <span>Nouvelle galerie</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
 
         {/* ── GitHub Bonus Card (non-connecté) ── */}
         {!user && (

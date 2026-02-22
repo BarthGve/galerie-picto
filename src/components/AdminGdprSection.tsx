@@ -112,6 +112,7 @@ function GdprDetailPanel({
 }) {
   const [history, setHistory] = useState<GdprHistoryEntry[]>([]);
   const [busy, setBusy] = useState(false);
+  const [statusError, setStatusError] = useState<string | null>(null);
   const [showTraiteDialog, setShowTraiteDialog] = useState(false);
   const [responseMessage, setResponseMessage] = useState("");
 
@@ -126,11 +127,12 @@ function GdprDetailPanel({
 
   async function handleStatus(newStatus: string, response?: string) {
     setBusy(true);
+    setStatusError(null);
     try {
       await onUpdateStatus(request.id, newStatus, response);
       await loadHistory();
-    } catch {
-      // error handled by parent hook
+    } catch (err) {
+      setStatusError(err instanceof Error ? err.message : "Impossible de mettre à jour le statut.");
     } finally {
       setBusy(false);
     }
@@ -233,6 +235,13 @@ function GdprDetailPanel({
                 </span>
                 <span>· {formatDateTime(traiteEntry.createdAt)}</span>
               </div>
+            </div>
+          )}
+
+          {/* Erreur changement de statut */}
+          {statusError && (
+            <div className="rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-2.5 text-sm text-destructive">
+              {statusError}
             </div>
           )}
 

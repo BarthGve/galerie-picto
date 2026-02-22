@@ -11,7 +11,7 @@ export interface GdprRequest {
   rightType: string;
   message: string;
   status: string;
-  consentContact: number;
+  consentContact: boolean;
   createdAt: string | null;
   updatedAt: string | null;
 }
@@ -104,32 +104,28 @@ export function useAdminGdprRequests() {
     async (id: string, newStatus: string, responseMessage?: string) => {
       const token = getStoredToken();
       if (!token) return;
-      try {
-        const body: Record<string, string> = { status: newStatus };
-        if (responseMessage) body.responseMessage = responseMessage;
+      const body: Record<string, string> = { status: newStatus };
+      if (responseMessage) body.responseMessage = responseMessage;
 
-        const res = await fetch(
-          `${API_URL}/api/gdpr-requests/admin/${id}/status`,
-          {
-            method: "PATCH",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify(body),
+      const res = await fetch(
+        `${API_URL}/api/gdpr-requests/admin/${id}/status`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
-        );
-        if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
-          throw new Error(data.error || `Erreur ${res.status}`);
-        }
-        await Promise.allSettled([
-          fetchRequests(page, statusFilter),
-          fetchCount(),
-        ]);
-      } catch (err) {
-        throw err;
+          body: JSON.stringify(body),
+        },
+      );
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `Erreur ${res.status}`);
       }
+      await Promise.allSettled([
+        fetchRequests(page, statusFilter),
+        fetchCount(),
+      ]);
     },
     [fetchRequests, fetchCount, page, statusFilter],
   );

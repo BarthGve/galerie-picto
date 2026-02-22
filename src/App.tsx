@@ -686,6 +686,7 @@ function AppInner() {
           onLogin={handleLogin}
           onLogout={logout}
           onUploadClick={() => setUploadDialogOpen(true)}
+          onUploadSvgClick={() => setUserPictoUploadOpen(true)}
           onCreateGallery={handleCreateGallery}
           onEditGallery={handleEditGallery}
           onDeleteGallery={handleDeleteGallery}
@@ -766,6 +767,7 @@ function AppInner() {
                 <Suspense fallback={null}>
                   <ProfilePage
                     onDeleted={() => { logout(); navigateTo("home"); }}
+                    isCollaborator={isCollaborator}
                   />
                 </Suspense>
               ) : page === "admin" && isCollaborator ? (
@@ -835,7 +837,6 @@ function AppInner() {
                     onToggleLike={user ? toggleLike : undefined}
                     privateIds={collectionsPrivateIds}
                     onDeletePrivatePictogram={selectedUserCollectionId ? handleDeleteUserPictogram : undefined}
-                    onUploadSvgClick={() => setUserPictoUploadOpen(true)}
                     onDeletePictogram={user ? handleDeletePictogram : undefined}
                   />
                 </Suspense>
@@ -853,7 +854,9 @@ function AppInner() {
                             style={{ backgroundColor: gal.color ?? "var(--muted-foreground)", opacity: gal.color ? 1 : 0.4 }}
                           />
                           <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-tertiary">{gal.name}</h2>
-                          <span className="text-xs text-muted-foreground font-medium">{gal.pictogramIds.length} picto{gal.pictogramIds.length !== 1 ? "s" : ""}</span>
+                          <span className="inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground text-[11px] font-bold px-2 py-0.5 leading-none">
+                            {gal.pictogramIds.length} picto{gal.pictogramIds.length !== 1 ? "s" : ""}
+                          </span>
                         </div>
                         {gal.description && (
                           <p className="text-sm text-muted-foreground pl-6">{gal.description}</p>
@@ -911,15 +914,17 @@ function AppInner() {
           </Suspense>
         )}
 
-        {userPictoUploadOpen && selectedUserCollectionId && (() => {
-          const col = userCollections.find(c => c.id === selectedUserCollectionId);
-          if (!col) return null;
+        {userPictoUploadOpen && (() => {
+          const col = selectedUserCollectionId
+            ? userCollections.find(c => c.id === selectedUserCollectionId)
+            : undefined;
           return (
             <UserPictoUploadDialog
               open={userPictoUploadOpen}
               onOpenChange={setUserPictoUploadOpen}
-              collectionId={selectedUserCollectionId}
-              collectionName={col.name}
+              collectionId={col?.id}
+              collectionName={col?.name}
+              collections={userCollections}
               onUploadSuccess={handleUserPictoUploadSuccess}
             />
           );

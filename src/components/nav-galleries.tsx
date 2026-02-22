@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { CirclePlus, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 
 import {
   DropdownMenu,
@@ -13,7 +13,6 @@ import {
   SidebarMenu,
   SidebarMenuAction,
   SidebarMenuButton,
-  SidebarMenuBadge,
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
@@ -27,6 +26,7 @@ export function NavGalleries({
   onEditGallery,
   onDeleteGallery,
   onAddToGallery,
+  onCreateGallery,
 }: {
   galleries: Gallery[];
   selectedGalleryId: string | null;
@@ -34,6 +34,7 @@ export function NavGalleries({
   onEditGallery?: (gallery: Gallery) => void;
   onDeleteGallery?: (gallery: Gallery) => void;
   onAddToGallery?: (galleryId: string, pictogramId: string) => Promise<boolean>;
+  onCreateGallery?: () => void;
 }) {
   const { isMobile } = useSidebar();
   const [dragOverId, setDragOverId] = useState<string | null>(null);
@@ -71,8 +72,17 @@ export function NavGalleries({
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-      <div className="px-3 mb-1">
+      <div className="px-3 mb-1 flex items-center justify-between">
         <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Galeries</span>
+        {onCreateGallery && (
+          <button
+            onClick={onCreateGallery}
+            className="text-muted-foreground hover:text-foreground transition-colors"
+            title="Nouvelle galerie"
+          >
+            <CirclePlus className="size-3.5" />
+          </button>
+        )}
       </div>
       <SidebarMenu>
         {galleries.map((gallery) => (
@@ -99,9 +109,6 @@ export function NavGalleries({
               />
               <span className="text-sm font-bold">{gallery.name}</span>
             </SidebarMenuButton>
-            <SidebarMenuBadge className="group-hover/menu-item:opacity-0 transition-opacity text-[10px] font-black px-1.5 py-0.5 rounded-md bg-accent text-muted-foreground">
-              {gallery.pictogramIds.length}
-            </SidebarMenuBadge>
             {(onEditGallery || onDeleteGallery) && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

@@ -8,6 +8,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import type { Pictogram, Gallery, UserCollection } from "@/lib/types";
 import { fetchSvgText } from "@/lib/svg-to-png";
 import { usePictogramUrl } from "@/hooks/usePictogramUrl";
+import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
 import { GallerySelector } from "./GallerySelector";
 import { toast } from "sonner";
 import { useDownloads } from "@/hooks/useDownloads";
@@ -165,6 +166,7 @@ function PictoCardInner({
   const [cardPreviewUrl, setCardPreviewUrl] = useState<string | null>(null);
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
   const [svgText, setSvgText] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const svgCacheRef = useRef<string | null>(null);
   const displayUrl = usePictogramUrl(pictogram);
 
@@ -396,20 +398,32 @@ function PictoCardInner({
 
           {/* Bouton suppression picto privé */}
           {isPrivate && onDeletePrivatePictogram && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDeletePrivatePictogram(pictogram.id);
-                  }}
-                  className="absolute top-3 right-3 z-20 opacity-0 group-hover:opacity-100 transition-all duration-300 p-1.5 rounded-lg bg-background shadow-md border border-border text-muted-foreground hover:text-destructive hover:shadow-lg"
-                >
-                  <Trash2 className="size-3.5" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="left">Supprimer</TooltipContent>
-            </Tooltip>
+            <>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setConfirmDelete(true);
+                    }}
+                    className="absolute top-3 right-3 z-20 opacity-0 group-hover:opacity-100 transition-all duration-300 p-1.5 rounded-lg bg-background shadow-md border border-border text-muted-foreground hover:text-destructive hover:shadow-lg"
+                  >
+                    <Trash2 className="size-3.5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="left">Supprimer</TooltipContent>
+              </Tooltip>
+              <DeleteConfirmDialog
+                open={confirmDelete}
+                onOpenChange={setConfirmDelete}
+                onConfirm={() => {
+                  setConfirmDelete(false);
+                  onDeletePrivatePictogram(pictogram.id);
+                }}
+                title="Supprimer ce pictogramme ?"
+                description={<>Le pictogramme <span className="font-semibold">« {pictogram.name || pictogram.filename.replace(/\.svg$/i, "")} »</span> sera supprimé définitivement de votre espace personnel et retiré de toutes vos collections.</>}
+              />
+            </>
           )}
 
           {/* Quick actions right — slide in from right */}

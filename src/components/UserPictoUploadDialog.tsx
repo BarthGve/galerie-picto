@@ -1,8 +1,9 @@
 import { useState, useRef, useCallback } from "react";
-import { Upload, X, Plus, Loader2, FileUp } from "lucide-react";
+import { Upload, X, Plus, Loader2, FileUp, ChevronLeft } from "lucide-react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -15,24 +16,35 @@ import { validateSvgFile } from "@/lib/svg-metadata";
 import { API_URL } from "@/lib/config";
 import { useTheme } from "@/hooks/use-theme";
 import { transformSvgToDark } from "@/lib/svg-dark-transform";
+import type { UserCollection } from "@/lib/types";
 
 interface UserPictoUploadDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  collectionId: string;
-  collectionName: string;
+  collectionId?: string;
+  collectionName?: string;
+  collections?: UserCollection[];
   onUploadSuccess: () => Promise<void>;
 }
 
 export function UserPictoUploadDialog({
   open,
   onOpenChange,
-  collectionId,
-  collectionName,
+  collectionId: collectionIdProp,
+  collectionName: collectionNameProp,
+  collections,
   onUploadSuccess,
 }: UserPictoUploadDialogProps) {
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
+  const skipStep1 = !!collectionIdProp;
+  const [step, setStep] = useState<1 | 2>(skipStep1 ? 2 : 1);
+  const [pickedCollectionId, setPickedCollectionId] = useState<string | null>(null);
+  const [pickedCollectionName, setPickedCollectionName] = useState<string | null>(null);
+
+  const collectionId = collectionIdProp ?? pickedCollectionId ?? "";
+  const collectionName = collectionNameProp ?? pickedCollectionName ?? "";
+
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [darkPreviewUrl, setDarkPreviewUrl] = useState<string | null>(null);
@@ -154,6 +166,11 @@ export function UserPictoUploadDialog({
     setName("");
     setTags([]);
     setTagInput("");
+    if (!skipStep1) {
+      setStep(1);
+      setPickedCollectionId(null);
+      setPickedCollectionName(null);
+    }
   };
 
   const handleClose = (open: boolean) => {
@@ -161,9 +178,62 @@ export function UserPictoUploadDialog({
     onOpenChange(open);
   };
 
+  const handlePickCollection = (col: UserCollection) => {
+    setPickedCollectionId(col.id);
+    setPickedCollectionName(col.name);
+    setStep(2);
+  };
+
+  const handleBackToStep1 = () => {
+    setStep(1);
+  };
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-lg rounded-[4px] border-border" aria-describedby={undefined}>
+      <DialogContent className="sm:max-w-lg rounded-[4px] border-border" aria-describedby={step === 1 ? undefined : undefined}>
+        {step === 1 ? (
+          <>
+            <DialogHeader>
+              <DialogTitle className="text-tertiary">Choisir une collection</DialogTitle>
+              <DialogDescription>
+                Dans quelle collection souhaitez-vous ajouter votre SVG ?
+              </DialogDescription>
+            </DialogHeader>
+
+            {collections && collections.length > 0 ? (
+              <div className="space-y-1.5 max-h-[60vh] overflow-y-auto">
+                {collections.map((col) => (
+                  <button
+                    key={col.id}
+                    type="button"
+                    onClick={() => handlePickCollection(col)}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted/60 transition-colors text-left"
+                  >
+                    <span
+                      className="w-4 h-4 rounded-full shrink-0 border border-border"
+                      style={{ backgroundColor: col.color ?? "#6a6af4" }}
+                    />
+                    <span className="flex-1 text-sm font-medium truncate">{col.name}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {col.pictogramIds.length + col.userPictogramIds.length} picto{(col.pictogramIds.length + col.userPictogramIds.length) !== 1 ? "s" : ""}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground py-6 text-center">
+                Aucune collection. Créez-en une depuis le menu latéral.
+              </p>
+            )}
+
+            <div className="flex justify-end">
+              <Button variant="outline" onClick={() => handleClose(false)} className="rounded-[4px]">
+                Annuler
+              </Button>
+            </div>
+          </>
+        ) : (
+          <>
         <DialogHeader>
           <DialogTitle className="text-tertiary">
             Ajouter un SVG perso
@@ -172,6 +242,17 @@ export function UserPictoUploadDialog({
             </span>
           </DialogTitle>
         </DialogHeader>
+
+        {!skipStep1 && (
+          <button
+            type="button"
+            onClick={handleBackToStep1}
+            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors -mt-2 mb-1"
+          >
+            <ChevronLeft className="h-3.5 w-3.5" />
+            Changer de collection
+          </button>
+        )}
 
         {!file ? (
           <div
@@ -317,6 +398,8 @@ export function UserPictoUploadDialog({
               Annuler
             </Button>
           </div>
+        )}
+          </>
         )}
       </DialogContent>
     </Dialog>

@@ -1,10 +1,12 @@
 import { Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { AuthenticatedRequest, GitHubUser } from "./auth.js";
-import { upsertUser } from "../db/repositories/users.js";
+import { upsertUser, getUserByLogin } from "../db/repositories/users.js";
 import { config } from "../config.js";
 import { getCachedToken, setCachedToken } from "./token-cache.js";
 import { isBanned } from "./ban-list.js";
+import { notifyN8nNewUser } from "../services/n8n-notify.js";
+import { createNotification } from "../db/repositories/notifications.js";
 
 interface JwtPayload {
   login: string;
@@ -75,12 +77,53 @@ export function authAnyUser(
       isCollaborator: payload.isCollaborator,
     };
 
-    upsertUser({
+    const { isNew } = upsertUser({
       githubLogin: user.login,
       githubName: user.name,
       githubAvatarUrl: user.avatar_url,
       githubEmail: user.email,
     });
+
+    if (isNew) {
+      // Notify collaborators about the new user
+      const allowedLogins = config.github.allowedUsername
+        ? config.github.allowedUsername
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : [];
+      for (const collabLogin of allowedLogins) {
+        if (collabLogin !== user.login) {
+          // In-app notification
+          createNotification({
+            recipientLogin: collabLogin,
+            type: "new_user",
+            title: user.name || user.login,
+            message: `${user.name || user.login} vient de rejoindre La Boîte à Pictos`,
+            link: "/admin",
+          });
+
+          // Email notification
+          const collab = getUserByLogin(collabLogin);
+          if (collab?.githubEmail) {
+            notifyN8nNewUser({
+              event: "new_user_registered",
+              newUser: {
+                login: user.login,
+                name: user.name ?? undefined,
+                avatarUrl: user.avatar_url,
+              },
+              recipient: {
+                login: collabLogin,
+                name: collab.githubName ?? undefined,
+                email: collab.githubEmail,
+              },
+              siteUrl: config.corsOrigin,
+            });
+          }
+        }
+      }
+    }
 
     setCachedToken(token, user, payload.isCollaborator);
     req.user = user;

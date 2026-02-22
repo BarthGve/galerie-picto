@@ -506,7 +506,6 @@ export function AdminRequestsSection() {
   const [selectedRequest, setSelectedRequest] = useState<PictoRequest | null>(null);
   const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
 
-  // Fetch counts from all requests
   const fetchCounts = useCallback(async () => {
     const token = getStoredToken();
     if (!token) return;
@@ -525,9 +524,8 @@ export function AdminRequestsSection() {
     } catch { /* ignore */ }
   }, []);
 
-  useEffect(() => {
-    fetchCounts();
-  }, [fetchCounts]);
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data fetch on mount
+  useEffect(() => { fetchCounts(); }, [fetchCounts]);
 
   useEffect(() => {
     fetchAll(filter === "all" ? undefined : filter);

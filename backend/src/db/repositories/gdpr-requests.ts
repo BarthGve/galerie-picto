@@ -29,24 +29,30 @@ export interface CreateGdprRequestInput {
 export function createGdprRequest(input: CreateGdprRequestInput): string {
   const id = uuidv4();
   const now = new Date().toISOString();
-  db.insert(gdprRequests)
-    .values({
-      id,
-      requesterLogin: input.requesterLogin,
-      rightType: input.rightType,
-      message: input.message,
-      status: "nouveau",
-      consentContact: input.consentContact ? 1 : 0,
-      createdAt: now,
-      updatedAt: now,
-    })
-    .run();
 
-  addGdprHistoryEntry({
-    requestId: id,
-    actorLogin: input.requesterLogin,
-    action: "created",
-    toStatus: "nouveau",
+  db.transaction((tx) => {
+    tx.insert(gdprRequests)
+      .values({
+        id,
+        requesterLogin: input.requesterLogin,
+        rightType: input.rightType,
+        message: input.message,
+        status: "nouveau",
+        consentContact: input.consentContact ? 1 : 0,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .run();
+
+    addGdprHistoryEntry(
+      {
+        requestId: id,
+        actorLogin: input.requesterLogin,
+        action: "created",
+        toStatus: "nouveau",
+      },
+      tx,
+    );
   });
 
   return id;
@@ -123,15 +129,20 @@ export function updateGdprRequestStatus(
       .where(eq(gdprRequests.id, id))
       .run();
 
-    addGdprHistoryEntry({
-      requestId: id,
-      actorLogin,
-      action: "status_changed",
-      fromStatus: currentStatus,
-      toStatus: newStatus,
-      detail:
-        newStatus === "traite" && responseMessage ? responseMessage : undefined,
-    });
+    addGdprHistoryEntry(
+      {
+        requestId: id,
+        actorLogin,
+        action: "status_changed",
+        fromStatus: currentStatus,
+        toStatus: newStatus,
+        detail:
+          newStatus === "traite" && responseMessage
+            ? responseMessage
+            : undefined,
+      },
+      tx,
+    );
 
     return { success: true };
   });

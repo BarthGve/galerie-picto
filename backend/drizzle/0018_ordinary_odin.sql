@@ -1,0 +1,1 @@
+ALTER TABLE `users` ADD `notify_email_new_user` integer DEFAULT 1;

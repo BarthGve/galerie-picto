@@ -1,4 +1,4 @@
-import { Images, CirclePlus, Compass, Heart, BookOpen, MessageSquarePlus } from "lucide-react";
+import { Images, CirclePlus, Compass, Heart, BookOpen, MessageSquarePlus, FileUp } from "lucide-react";
 
 import {
   SidebarGroup,
@@ -17,6 +17,7 @@ export function NavMain({
   onSelectAll,
   isAuthenticated,
   onUploadClick,
+  onUploadSvgClick,
   onGoDiscover,
   onGoGuides,
   onGoRequests,
@@ -34,6 +35,7 @@ export function NavMain({
   onSelectAll: () => void;
   isAuthenticated: boolean;
   onUploadClick: () => void;
+  onUploadSvgClick?: () => void;
   onGoDiscover?: () => void;
   onGoGuides?: () => void;
   onGoRequests?: () => void;
@@ -57,6 +59,18 @@ export function NavMain({
               >
                 <CirclePlus />
                 <span>Ajouter</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          )}
+          {isAuthenticated && onUploadSvgClick && (
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                tooltip="Ajouter un SVG personnel"
+                onClick={onUploadSvgClick}
+                className="bg-accent text-foreground shadow-sm rounded hover:bg-accent/80 active:bg-accent/60"
+              >
+                <FileUp />
+                <span>Ajouter un SVG</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           )}

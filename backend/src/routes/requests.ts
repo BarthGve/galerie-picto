@@ -4,6 +4,7 @@ import { authAnyUser } from "../middleware/auth-any-user.js";
 import { authMiddleware, AuthenticatedRequest } from "../middleware/auth.js";
 import { config } from "../config.js";
 import { writeImageFile } from "../services/minio.js";
+import { getPictogramById } from "../db/repositories/pictograms.js";
 import {
   createRequest,
   getRequestById,
@@ -23,6 +24,8 @@ import {
   addHistoryEntry,
   getHistory,
 } from "../db/repositories/request-history.js";
+import { getUserByLogin } from "../db/repositories/users.js";
+import { notifyN8nPictoRequest } from "../services/n8n-notify.js";
 
 function buildImageUrl(key: string | null): string | null {
   if (!key) return null;
@@ -123,7 +126,61 @@ router.post(
             message: `Nouvelle demande de ${req.user!.name || login}`,
             link: `/requests/${id}`,
           });
+
+          // Email notification
+          const collabUser = getUserByLogin(collabLogin);
+          if (collabUser?.githubEmail) {
+            notifyN8nPictoRequest(
+              {
+                event: "picto_request_new",
+                request: {
+                  id,
+                  title: title.trim(),
+                  status: "nouvelle",
+                  requesterLogin: login,
+                  urgency: urgency || "normale",
+                },
+                recipient: {
+                  login: collabLogin,
+                  name: collabUser.githubName ?? undefined,
+                  email: collabUser.githubEmail,
+                },
+                siteUrl: config.corsOrigin,
+              },
+              "notifyEmailPictoNew",
+            );
+          }
         }
+      }
+
+      // In-app confirmation to requester
+      createNotification({
+        recipientLogin: login,
+        type: "request_submitted",
+        title: title.trim(),
+        message: "Votre demande a bien été enregistrée",
+        link: `/requests/${id}`,
+      });
+
+      // Confirmation email to the requester
+      const requesterUser = getUserByLogin(login);
+      if (requesterUser?.githubEmail) {
+        notifyN8nPictoRequest({
+          event: "picto_request_submitted",
+          request: {
+            id,
+            title: title.trim(),
+            status: "nouvelle",
+            requesterLogin: login,
+            urgency: urgency || "normale",
+          },
+          recipient: {
+            login,
+            name: requesterUser.githubName ?? undefined,
+            email: requesterUser.githubEmail,
+          },
+          siteUrl: config.corsOrigin,
+        }); // transactional — no pref check
       }
 
       res.json({ success: true, id });
@@ -292,6 +349,71 @@ router.patch(
           message: notif.message,
           link,
         });
+      }
+
+      // Email notification to requester on status change
+      const EMAIL_MAP: Partial<
+        Record<
+          RequestStatus,
+          {
+            event:
+              | "picto_request_en_cours"
+              | "picto_request_precisions"
+              | "picto_request_livree"
+              | "picto_request_refusee";
+            prefKey:
+              | "notifyEmailPictoEnCours"
+              | "notifyEmailPictoPrecision"
+              | "notifyEmailPictoLivre"
+              | "notifyEmailPictoRefuse";
+          }
+        >
+      > = {
+        en_cours: {
+          event: "picto_request_en_cours",
+          prefKey: "notifyEmailPictoEnCours",
+        },
+        precisions_requises: {
+          event: "picto_request_precisions",
+          prefKey: "notifyEmailPictoPrecision",
+        },
+        livree: {
+          event: "picto_request_livree",
+          prefKey: "notifyEmailPictoLivre",
+        },
+        refusee: {
+          event: "picto_request_refusee",
+          prefKey: "notifyEmailPictoRefuse",
+        },
+      };
+      const emailEntry = EMAIL_MAP[status as RequestStatus];
+      if (emailEntry) {
+        const requesterUser = getUserByLogin(request.requesterLogin);
+        if (requesterUser?.githubEmail) {
+          notifyN8nPictoRequest(
+            {
+              event: emailEntry.event,
+              request: {
+                id,
+                title: request.title,
+                status,
+                requesterLogin: request.requesterLogin,
+                rejectionReason: rejectionReason ?? undefined,
+                pictogramUrl:
+                  status === "livree" && deliveredPictogramId
+                    ? (getPictogramById(deliveredPictogramId)?.url ?? undefined)
+                    : undefined,
+              },
+              recipient: {
+                login: request.requesterLogin,
+                name: requesterUser.githubName ?? undefined,
+                email: requesterUser.githubEmail,
+              },
+              siteUrl: config.corsOrigin,
+            },
+            emailEntry.prefKey,
+          );
+        }
       }
 
       if (status === "livree") {

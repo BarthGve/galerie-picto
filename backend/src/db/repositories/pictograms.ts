@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, gte, desc } from "drizzle-orm";
 import { db } from "../index.js";
 import { pictograms, galleryPictograms } from "../schema.js";
 import type { Pictogram, Contributor } from "../../types.js";
@@ -68,6 +68,25 @@ export function getManifestCached(): { json: string; etag: string } {
 
   cachedManifest = { json, etag, updatedAt: Date.now() };
   return { json, etag };
+}
+
+export function getRecentPictograms(since: string): {
+  id: string;
+  name: string;
+  url: string;
+  createdAt: string | null;
+}[] {
+  return db
+    .select({
+      id: pictograms.id,
+      name: pictograms.name,
+      url: pictograms.url,
+      createdAt: pictograms.createdAt,
+    })
+    .from(pictograms)
+    .where(gte(pictograms.createdAt, since))
+    .orderBy(desc(pictograms.createdAt))
+    .all();
 }
 
 export function getPictogramById(id: string): Pictogram | null {

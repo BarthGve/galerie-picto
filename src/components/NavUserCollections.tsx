@@ -12,7 +12,6 @@ import {
   SidebarMenu,
   SidebarMenuAction,
   SidebarMenuButton,
-  SidebarMenuBadge,
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
@@ -147,9 +146,6 @@ export function NavUserCollections({
                   />
                   <span className="text-sm font-bold">{col.name}</span>
                 </SidebarMenuButton>
-                <SidebarMenuBadge className="group-hover/menu-item:opacity-0 transition-opacity text-[10px] font-black px-1.5 py-0.5 rounded-md bg-accent text-muted-foreground">
-                  {col.pictogramIds.length + (col.userPictogramIds?.length ?? 0)}
-                </SidebarMenuBadge>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <SidebarMenuAction showOnHover className="data-[state=open]:bg-accent rounded-[4px]">
