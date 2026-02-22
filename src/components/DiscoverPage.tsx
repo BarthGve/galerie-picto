@@ -265,13 +265,16 @@ export function DiscoverPage({
         </div>
 
         {/* ══════════════════════════════════════════
-            BENTO GRID
+            DEUX COLONNES
            ══════════════════════════════════════════ */}
-        <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-6 auto-rows-min">
+        <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6">
 
-          {/* ── Derniers ajouts (4 cols, 2 rows) ── */}
+          {/* ── Colonne gauche : Derniers ajouts + Galeries ── */}
+          <div className="flex flex-col gap-6">
+
+          {/* ── Derniers ajouts ── */}
           {latestPictos.length > 0 && (
-            <BentoCard className="md:col-span-4 lg:col-span-4 lg:row-span-2 hover:!shadow-sm hover:!translate-y-0">
+            <BentoCard className="hover:!shadow-sm hover:!translate-y-0">
               <SectionHeader
                 title="Derniers ajouts"
                 icon={Clock}
@@ -308,9 +311,79 @@ export function DiscoverPage({
             </BentoCard>
           )}
 
-          {/* ── Top téléchargés (2 cols, 1 row) ── */}
+          {/* ── Galeries à la une ── */}
+          {featuredGalleries.length > 0 && (
+            <BentoCard className="hover:!shadow-sm hover:!translate-y-0">
+              <SectionHeader
+                title="Galeries à la une"
+                icon={FolderOpen}
+              />
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {featuredGalleries.map((gallery) => {
+                  const previews = galleryPreviewPictos(gallery);
+                  return (
+                    <div
+                      key={gallery.id}
+                      className="relative rounded-lg overflow-hidden cursor-pointer hover:shadow-lg transition-all group/gallery"
+                      onClick={() =>
+                        onNavigateGallery({ galleryId: gallery.id })
+                      }
+                    >
+                      {/* Grille 2x2 de pictos */}
+                      <div className="grid grid-cols-2 gap-px bg-border/30 aspect-[4/3]">
+                        {[0, 1, 2, 3].map((i) => (
+                          <div
+                            key={i}
+                            className="bg-card flex items-center justify-center p-3 group-hover/gallery:bg-accent/20 transition-colors"
+                          >
+                            {previews[i] ? (
+                              <DarkAwarePicto
+                                pictogram={previews[i]}
+                                width={48}
+                                height={48}
+                                className="w-full h-full object-contain opacity-80 group-hover/gallery:opacity-100 transition-opacity"
+                              />
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-border/20" />
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                      {/* Overlay bas avec infos */}
+                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-card via-card/95 to-transparent pt-8 pb-4 px-4">
+                        <div className="flex items-center gap-2 mb-1">
+                          {gallery.color && (
+                            <div
+                              className="w-2.5 h-2.5 rounded-full shrink-0 ring-2 ring-card"
+                              style={{ backgroundColor: gallery.color }}
+                            />
+                          )}
+                          <h3 className="text-sm font-extrabold tracking-tight text-foreground truncate">
+                            {gallery.name}
+                          </h3>
+                        </div>
+                        {gallery.description && (
+                          <p className="text-xs text-muted-foreground font-medium line-clamp-1 leading-relaxed mb-2">
+                            {gallery.description}
+                          </p>
+                        )}
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-tertiary/10 text-tertiary text-[10px] font-bold">
+                          {gallery.pictogramIds.length} picto{gallery.pictogramIds.length > 1 ? "s" : ""}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </BentoCard>
+          )}
+
+          </div>
+
+          {/* ── Colonne droite : Top téléchargés + Podium + Tags ── */}
+          <div className="flex flex-col gap-6">
           {mostDownloaded.length > 0 && (
-            <BentoCard className="md:col-span-2 lg:col-span-2 bg-accent hover:!shadow-sm hover:!translate-y-0">
+            <BentoCard className="bg-accent hover:!shadow-sm hover:!translate-y-0">
               <SectionHeader title="Top téléchargés" icon={TrendingUp} />
               {(() => {
                 const maxCount = mostDownloaded.length > 0 ? getCount(mostDownloaded[0].id) : 1;
@@ -383,9 +456,9 @@ export function DiscoverPage({
             </BentoCard>
           )}
 
-          {/* ── Podium des likes (2 cols, 1 row) ── */}
+          {/* ── Podium des likes ── */}
           {podium.show && (
-            <BentoCard className="md:col-span-2 lg:col-span-2 hover:!shadow-sm hover:!translate-y-0">
+            <BentoCard className="hover:!shadow-sm hover:!translate-y-0">
               <SectionHeader title="Podium des likes" icon={ThumbsUp} />
 
               <div className="flex items-end justify-center gap-3 pt-1">
@@ -435,76 +508,9 @@ export function DiscoverPage({
             </BentoCard>
           )}
 
-          {/* ── Collections à la une (4 cols) ── */}
-          {featuredGalleries.length > 0 && (
-            <BentoCard className="md:col-span-4 lg:col-span-4 hover:!shadow-sm hover:!translate-y-0">
-              <SectionHeader
-                title="Galeries à la une"
-                icon={FolderOpen}
-              />
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {featuredGalleries.map((gallery) => {
-                  const previews = galleryPreviewPictos(gallery);
-                  return (
-                    <div
-                      key={gallery.id}
-                      className="relative rounded-lg overflow-hidden cursor-pointer hover:shadow-lg transition-all group/gallery"
-                      onClick={() =>
-                        onNavigateGallery({ galleryId: gallery.id })
-                      }
-                    >
-                      {/* Grille 2x2 de pictos */}
-                      <div className="grid grid-cols-2 gap-px bg-border/30 aspect-[4/3]">
-                        {[0, 1, 2, 3].map((i) => (
-                          <div
-                            key={i}
-                            className="bg-card flex items-center justify-center p-3 group-hover/gallery:bg-accent/20 transition-colors"
-                          >
-                            {previews[i] ? (
-                              <DarkAwarePicto
-                                pictogram={previews[i]}
-                                width={48}
-                                height={48}
-                                className="w-full h-full object-contain opacity-80 group-hover/gallery:opacity-100 transition-opacity"
-                              />
-                            ) : (
-                              <div className="w-8 h-8 rounded-full bg-border/20" />
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                      {/* Overlay bas avec infos */}
-                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-card via-card/95 to-transparent pt-8 pb-4 px-4">
-                        <div className="flex items-center gap-2 mb-1">
-                          {gallery.color && (
-                            <div
-                              className="w-2.5 h-2.5 rounded-full shrink-0 ring-2 ring-card"
-                              style={{ backgroundColor: gallery.color }}
-                            />
-                          )}
-                          <h3 className="text-sm font-extrabold tracking-tight text-foreground truncate">
-                            {gallery.name}
-                          </h3>
-                        </div>
-                        {gallery.description && (
-                          <p className="text-xs text-muted-foreground font-medium line-clamp-1 leading-relaxed mb-2">
-                            {gallery.description}
-                          </p>
-                        )}
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-tertiary/10 text-tertiary text-[10px] font-bold">
-                          {gallery.pictogramIds.length} picto{gallery.pictogramIds.length > 1 ? "s" : ""}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </BentoCard>
-          )}
-
-          {/* ── Tags populaires (2 cols) ── */}
+          {/* ── Tags populaires ── */}
           {topTags.length > 0 && (
-            <BentoCard className="md:col-span-2 lg:col-span-2 hover:!shadow-sm hover:!translate-y-0 bg-[var(--dsfr-blue-france-975)] dark:bg-[var(--dsfr-blue-france-main)]/[0.08]">
+            <BentoCard className="hover:!shadow-sm hover:!translate-y-0 bg-[var(--dsfr-blue-france-975)] dark:bg-[var(--dsfr-blue-france-main)]/[0.08]">
               <div className="flex items-center gap-4 mb-6">
                 <div className="w-9 h-9 rounded-lg bg-tertiary text-tertiary-foreground flex items-center justify-center shrink-0">
                   <Tag className="size-4.5" />
@@ -540,10 +546,12 @@ export function DiscoverPage({
               })()}
             </BentoCard>
           )}
+          </div>
+        </div>
 
-          {/* ── Contributeur à la une (full width banner) ── */}
+          {/* ── Contributeur à la une (full width) ── */}
           {topContributor && (
-            <BentoCard className="md:col-span-full lg:col-span-full bg-accent p-4 md:p-5">
+            <BentoCard className="mt-6 bg-accent p-4 md:p-5">
               <div className="absolute top-0 right-0 p-6 opacity-[0.05] group-hover:opacity-[0.1] transition-opacity pointer-events-none">
                 <svg className="w-32 h-32 rotate-12" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z" />
@@ -620,7 +628,6 @@ export function DiscoverPage({
             </BentoCard>
           )}
         </div>
-      </div>
 
       {selectedPicto && (
         <Suspense fallback={null}>

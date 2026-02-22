@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { PictoMosaic } from "@/components/PictoMosaic";
-import { DarkAwarePicto } from "@/components/DarkAwarePicto";
 import { useDarkPrefetch } from "@/hooks/useDarkPrefetch";
 import { usePictogramsCtx } from "@/contexts/PictogramsContext";
 import { useGalleriesCtx } from "@/contexts/GalleriesContext";
