@@ -747,7 +747,7 @@ const handleDownloadSvg = () => {
                 {isAuthenticated && onDeletePictogram && (
                   <>
                     <button
-                      className="p-1.5 rounded-xl hover:bg-muted transition-colors text-muted-foreground hover:text-destructive"
+                      className="p-1.5 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-destructive"
                       onClick={() => setConfirmDelete(true)}
                     >
                       <Trash2 className="h-4 w-4" />
