@@ -190,7 +190,7 @@ export function UserPictoUploadDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-lg rounded-[4px] border-border" aria-describedby={step === 1 ? undefined : undefined}>
+      <DialogContent className="sm:max-w-lg rounded-xl border-border" aria-describedby={step === 1 ? undefined : undefined}>
         {step === 1 ? (
           <>
             <DialogHeader>
@@ -227,7 +227,7 @@ export function UserPictoUploadDialog({
             )}
 
             <div className="flex justify-end">
-              <Button variant="outline" onClick={() => handleClose(false)} className="rounded-[4px]">
+              <Button variant="outline" onClick={() => handleClose(false)} className="rounded-xl">
                 Annuler
               </Button>
             </div>
@@ -316,7 +316,7 @@ export function UserPictoUploadDialog({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 disabled={uploading}
-                className="rounded-[4px]"
+                className="rounded-xl"
               />
             </div>
 
@@ -330,7 +330,7 @@ export function UserPictoUploadDialog({
                   onChange={(e) => setTagInput(e.target.value)}
                   onKeyDown={handleTagKeyDown}
                   disabled={uploading}
-                  className="rounded-[4px]"
+                  className="rounded-xl"
                 />
                 <Button
                   type="button"
@@ -338,7 +338,7 @@ export function UserPictoUploadDialog({
                   size="sm"
                   onClick={handleAddTag}
                   disabled={uploading || !tagInput.trim()}
-                  className="shrink-0 h-9 rounded-[4px]"
+                  className="shrink-0 h-9 rounded-xl"
                 >
                   <Plus className="h-4 w-4" />
                 </Button>
@@ -372,14 +372,14 @@ export function UserPictoUploadDialog({
                 variant="outline"
                 onClick={() => handleClose(false)}
                 disabled={uploading}
-                className="rounded-[4px]"
+                className="rounded-xl"
               >
                 Annuler
               </Button>
               <Button
                 onClick={handleUpload}
                 disabled={!file || !name.trim() || uploading}
-                className="rounded-[4px]"
+                className="rounded-xl"
               >
                 {uploading ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -394,7 +394,7 @@ export function UserPictoUploadDialog({
 
         {!file && (
           <div className="flex justify-end">
-            <Button variant="outline" onClick={() => handleClose(false)} className="rounded-[4px]">
+            <Button variant="outline" onClick={() => handleClose(false)} className="rounded-xl">
               Annuler
             </Button>
           </div>

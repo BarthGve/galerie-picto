@@ -84,50 +84,52 @@ export function authAnyUser(
       githubEmail: user.email,
     });
 
-    if (isNew) {
-      // Notify collaborators about the new user
-      const allowedLogins = config.github.allowedUsername
-        ? config.github.allowedUsername
-            .split(",")
-            .map((s) => s.trim())
-            .filter(Boolean)
-        : [];
-      for (const collabLogin of allowedLogins) {
-        if (collabLogin !== user.login) {
-          // In-app notification
-          createNotification({
-            recipientLogin: collabLogin,
-            type: "new_user",
-            title: user.name || user.login,
-            message: `${user.name || user.login} vient de rejoindre La Boîte à Pictos`,
-            link: "/admin",
-          });
-
-          // Email notification
-          const collab = getUserByLogin(collabLogin);
-          if (collab?.githubEmail) {
-            notifyN8nNewUser({
-              event: "new_user_registered",
-              newUser: {
-                login: user.login,
-                name: user.name ?? undefined,
-                avatarUrl: user.avatar_url,
-              },
-              recipient: {
-                login: collabLogin,
-                name: collab.githubName ?? undefined,
-                email: collab.githubEmail,
-              },
-              siteUrl: config.corsOrigin,
-            });
-          }
-        }
-      }
-    }
-
     setCachedToken(token, user, payload.isCollaborator);
     req.user = user;
     next();
+
+    // Notify collaborators about the new user (after response)
+    if (isNew) {
+      try {
+        const allowedLogins = config.github.allowedUsername
+          ? config.github.allowedUsername
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean)
+          : [];
+        for (const collabLogin of allowedLogins) {
+          if (collabLogin !== user.login) {
+            createNotification({
+              recipientLogin: collabLogin,
+              type: "new_user",
+              title: user.name || user.login,
+              message: `${user.name || user.login} vient de rejoindre la galerie`,
+              link: "/admin",
+            });
+
+            const collab = getUserByLogin(collabLogin);
+            if (collab?.githubEmail) {
+              notifyN8nNewUser({
+                event: "new_user_registered",
+                newUser: {
+                  login: user.login,
+                  name: user.name ?? undefined,
+                  avatarUrl: user.avatar_url,
+                },
+                recipient: {
+                  login: collabLogin,
+                  name: collab.githubName ?? undefined,
+                  email: collab.githubEmail,
+                },
+                siteUrl: config.corsOrigin,
+              });
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to notify collaborators about new user:", err);
+      }
+    }
   } catch {
     res.status(401).json({ error: "Invalid or expired token" });
   }

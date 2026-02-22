@@ -178,7 +178,7 @@ export function clearUserEmail(login: string): void {
 
 export function updateUserEmail(login: string, email: string): void {
   db.update(users)
-    .set({ githubEmail: email, emailOptOut: 0 })
+    .set({ githubEmail: email, emailOptOut: 1 })
     .where(eq(users.githubLogin, login))
     .run();
 }
@@ -215,11 +215,10 @@ export function setEmailNotifPreferences(
   for (const [key, val] of Object.entries(prefs)) {
     if (
       VALID_NOTIF_KEYS.includes(key as EmailNotifKey) &&
-      typeof val === "boolean"
+      typeof val === "boolean" &&
+      key in NOTIF_KEY_TO_COLUMN
     ) {
-      // Map camelCase key to snake_case column name
-      const snakeKey = key.replace(/[A-Z]/g, (m) => `_${m.toLowerCase()}`);
-      set[snakeKey] = val ? 1 : 0;
+      set[key] = val ? 1 : 0;
     }
   }
   if (Object.keys(set).length === 0) return;

@@ -55,7 +55,7 @@ export function NavMain({
               <SidebarMenuButton
                 tooltip="Ajouter un pictogramme"
                 onClick={onUploadClick}
-                className="bg-primary text-primary-foreground shadow-lg rounded hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/80 active:text-primary-foreground"
+                className="bg-primary text-primary-foreground shadow-lg rounded-xl hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/80 active:text-primary-foreground"
               >
                 <CirclePlus />
                 <span>Ajouter</span>
@@ -67,7 +67,7 @@ export function NavMain({
               <SidebarMenuButton
                 tooltip="Ajouter un SVG personnel"
                 onClick={onUploadSvgClick}
-                className="bg-accent text-foreground shadow-sm rounded hover:bg-accent/80 active:bg-accent/60"
+                className="bg-accent text-foreground shadow-sm rounded-xl hover:bg-accent/80 active:bg-accent/60"
               >
                 <FileUp />
                 <span>Ajouter un SVG</span>
@@ -79,7 +79,7 @@ export function NavMain({
               tooltip="Demander un pictogramme"
               onClick={onGoRequests}
               isActive={currentPage === "requests"}
-              className="bg-indigo-50 text-indigo-700 shadow-sm rounded hover:bg-indigo-100 hover:text-indigo-800 active:bg-indigo-200 dark:bg-indigo-950 dark:text-indigo-300 dark:hover:bg-indigo-900"
+              className="bg-indigo-50 text-indigo-700 shadow-sm rounded-xl hover:bg-indigo-100 hover:text-indigo-800 active:bg-indigo-200 dark:bg-indigo-950 dark:text-indigo-300 dark:hover:bg-indigo-900"
             >
               <MessageSquarePlus />
               <span>Demander un picto</span>
