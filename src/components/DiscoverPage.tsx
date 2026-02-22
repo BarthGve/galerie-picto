@@ -196,7 +196,7 @@ export function DiscoverPage({
           new Date(b.lastModified).getTime() -
           new Date(a.lastModified).getTime(),
       )
-      .slice(0, 6);
+      .slice(0, 8);
   }, [pictograms]);
 
   const mostDownloaded = useMemo(() => {
