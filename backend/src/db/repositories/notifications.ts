@@ -10,7 +10,8 @@ export type NotificationType =
   | "request_precisions"
   | "request_delivered"
   | "request_refused"
-  | "feedback_resolved";
+  | "feedback_resolved"
+  | "gdpr_new";
 
 export interface CreateNotificationInput {
   recipientLogin: string;

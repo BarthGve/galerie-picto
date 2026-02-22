@@ -10,6 +10,8 @@ import {
   type GdprStatus,
 } from "../db/repositories/gdpr-requests.js";
 import { getGdprHistory } from "../db/repositories/gdpr-request-history.js";
+import { createNotification } from "../db/repositories/notifications.js";
+import { config } from "../config.js";
 
 const router = Router();
 
@@ -63,6 +65,26 @@ router.post(
         message: message.trim(),
         consentContact: true,
       });
+
+      // Notify all collaborators
+      const collabLogins = config.github.allowedUsername
+        ? config.github.allowedUsername
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : [];
+      for (const collabLogin of collabLogins) {
+        if (collabLogin !== login) {
+          createNotification({
+            recipientLogin: collabLogin,
+            type: "gdpr_new",
+            title: "Nouvelle demande RGPD",
+            message: `Demande de ${req.user!.name || login} — ${rightType}`,
+            link: "/admin",
+          });
+        }
+      }
+
       res.status(201).json({ id });
     } catch {
       res.status(500).json({ error: "Failed to create GDPR request" });
