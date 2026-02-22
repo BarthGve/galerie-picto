@@ -11,6 +11,7 @@ import {
   dismissIssueSeen,
   dismissAllIssuesSeen,
 } from "../db/repositories/feedback-seen.js";
+import { createNotification } from "../db/repositories/notifications.js";
 
 interface GitHubLabel {
   name: string;
@@ -540,7 +541,7 @@ router.post("/webhook", async (req: Request, res: Response) => {
   // Invalidate public cache
   issuesCache = null;
 
-  // Push SSE notification asynchronously
+  // Push SSE notification + in-app notification
   const type = (issue.labels as GitHubLabel[])?.some((l) => l.name === "bug")
     ? "bug"
     : "improvement";
@@ -553,6 +554,13 @@ router.post("/webhook", async (req: Request, res: Response) => {
       title: issue.title,
       resolution,
       url: issue.html_url,
+    });
+    createNotification({
+      recipientLogin: reporterLogin,
+      type: "feedback_resolved",
+      title: `Votre signalement a été résolu`,
+      message: `« ${issue.title} » — ${resolution}`,
+      link: `/signalements`,
     });
   });
 

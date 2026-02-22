@@ -205,6 +205,7 @@ export function SiteHeader({
                               onAppMarkRead?.(n.id);
                               setBellOpen(false);
                               if (n.link?.startsWith("/requests")) onGoRequests?.();
+                              else if (n.link?.startsWith("/signalements")) onGoFeedback?.();
                             }}
                             onContextMenu={(e) => handleContextMenu(e, "app", n.id)}
                             className={`w-full text-left px-4 py-3 hover:bg-accent/60 transition-colors border-b border-border/50 last:border-0 ${!n.isRead ? "bg-accent/30" : ""}`}

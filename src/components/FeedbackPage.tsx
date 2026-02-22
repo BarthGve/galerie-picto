@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import Markdown from "react-markdown";
 import {
   Bug,
   Sparkles,
@@ -209,9 +210,9 @@ function IssueRow({
                 <p className="text-xs font-semibold text-foreground mb-0.5">
                   {label}
                 </p>
-                <p className="text-sm text-muted-foreground whitespace-pre-line">
-                  {content}
-                </p>
+                <div className="text-sm text-muted-foreground [&_p]:mb-2 [&_p:last-child]:mb-0 [&_a]:text-primary [&_a]:underline [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_code]:bg-muted [&_code]:px-1 [&_code]:rounded [&_pre]:bg-muted [&_pre]:p-2 [&_pre]:rounded [&_h1]:font-bold [&_h2]:font-bold [&_h3]:font-semibold [&_blockquote]:border-l-2 [&_blockquote]:border-border [&_blockquote]:pl-3 [&_blockquote]:italic">
+                  <Markdown>{content}</Markdown>
+                </div>
               </div>
             ))}
 
@@ -227,9 +228,9 @@ function IssueRow({
                     {" · "}
                     {formatDate(c.createdAt)}
                   </p>
-                  <p className="text-sm text-muted-foreground whitespace-pre-line">
-                    {c.body}
-                  </p>
+                  <div className="text-sm text-muted-foreground [&_p]:mb-2 [&_p:last-child]:mb-0 [&_a]:text-primary [&_a]:underline [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_code]:bg-muted [&_code]:px-1 [&_code]:rounded [&_pre]:bg-muted [&_pre]:p-2 [&_pre]:rounded [&_h1]:font-bold [&_h2]:font-bold [&_h3]:font-semibold [&_blockquote]:border-l-2 [&_blockquote]:border-border [&_blockquote]:pl-3 [&_blockquote]:italic">
+                    <Markdown>{c.body}</Markdown>
+                  </div>
                 </div>
               ))}
             </div>

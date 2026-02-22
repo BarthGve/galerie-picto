@@ -9,7 +9,8 @@ export type NotificationType =
   | "request_comment"
   | "request_precisions"
   | "request_delivered"
-  | "request_refused";
+  | "request_refused"
+  | "feedback_resolved";
 
 export interface CreateNotificationInput {
   recipientLogin: string;
